@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Re:Hub — пилот обзвона</title>
+<style>
+  body { font: 16px system-ui; max-width: 960px; margin: 2rem auto; padding: 0 1rem; color: #163254 }
+  label { display: inline-block; margin: 0 .8rem .6rem 0 }
+  select, input, button { font: inherit; padding: .3rem }
+  td, th { text-align: left; border-bottom: 1px solid #d6dde5; padding: .35rem .8rem }
+</style>
+<main>
+<h1>Пилот обзвона</h1>
+<p>Синтетические данные. Используйте набор и правила из протокола пилота.</p>
+<label>Набор <select id="group"><option>A</option><option>B</option></select></label>
+<button id="export">Скачать исходные строки CSV</button>
+<section>
+  <h2>Список обзвона</h2>
+  <label>Период <select id="period"><option>2026Q3</option><option>2026Q2</option></select></label>
+  <label>Непереданных от <input id="threshold" type="number" min="0" max="99" value="8"></label>
+  <p>В список попадают клиенты с наблюдением, без исключения и без звонка по выбранному периоду.</p>
+  <p><output id="clients" aria-live="polite"></output></p>
+</section>
+<section>
+  <h2>Карточка клиента</h2>
+  <label>ID <select id="client"></select></label>
+  <table><thead><tr><th>Период</th><th>Непереданных</th><th>Звонок</th><th>Срок обещания</th></tr></thead><tbody id="history"></tbody></table>
+</section>
+</main>
+<script type="module">
+  import {sample, callList} from "/pilot-data.mjs";
+  const element = (id) => document.getElementById(id);
+  const group = element("group");
+  const selected = element("client");
+  let rows = [];
+  function render() {
+    const matches = callList(rows, element("period").value, element("threshold").valueAsNumber);
+    element("clients").textContent = matches.map(({client}) => client).join(", ") || "Список пуст";
+    const client = rows.find(({client}) => client === selected.value);
+    element("history").replaceChildren(...(client?.periods ?? []).map((item) => {
+      const row = document.createElement("tr");
+      const values = [item.period, item.observed ? item.unsent : "Нет наблюдения", item.contacted ? "Был" : "Нет", item.promise || "—"];
+      for (const value of values) row.insertCell().textContent = value;
+      return row;
+    }));
+  }
+  function load() {
+    rows = sample(group.value);
+    selected.replaceChildren(...rows.map(({client}) => new Option(client, client)));
+    render();
+  }
+  group.addEventListener("change", load);
+  for (const id of ["client", "period", "threshold"]) element(id).addEventListener("input", render);
+  element("export").addEventListener("click", () => {
+    const data = rows.flatMap(({client, excluded, periods}) => periods.map(item =>
+      [client, item.period, item.observed ? item.unsent : "", Number(item.contacted), item.promise, Number(excluded)].join(",")));
+    const file = new Blob([["client,period,unsent,contacted,promise,excluded", ...data].join("\r\n")], {type:"text/csv"});
+    const url = URL.createObjectURL(file);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `pilot-${group.value}.csv`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+  load();
+</script>
+</html>

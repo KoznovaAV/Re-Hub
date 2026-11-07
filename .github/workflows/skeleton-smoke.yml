@@ -16,6 +16,14 @@ jobs:
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Verify XLSX and read-only fixtures
+        run: |
+          python3 -m venv "$RUNNER_TEMP/rehub-test"
+          "$RUNNER_TEMP/rehub-test/bin/python" -m pip install -r ai-service/requirements-import.txt
+          cd ai-service
+          "$RUNNER_TEMP/rehub-test/bin/python" -m unittest discover -s tests -v
+      - name: Verify pilot fixtures
+        run: node --test frontend/src/pilot-data.test.mjs
       - name: Verify startup and Python recovery
         run: make up smoke smoke-recovery
       - name: Show service logs

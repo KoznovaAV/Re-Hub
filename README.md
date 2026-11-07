@@ -85,6 +85,8 @@ Smoke измеряет доступность и корректность кон
 
 ## Документы проекта
 
+Начните с [индекса документов](docs/README.md) и [свидетельств спринта](reports/sprint-evidence.md). Прототип для проверки списка обзвона и карточки клиента доступен на `http://127.0.0.1:3000/pilot` после запуска. Проверка октябрьского XLSX выполняется отдельно через [локальный адаптер](docs/data/customer-october-xlsx.md).
+
 - [Скелет приложения — T-09](https://github.com/KoznovaAV/Re-Hub/issues/60)
 - [Контракт Go/Python — T-26](https://github.com/KoznovaAV/Re-Hub/issues/54)
 - [Правила импорта и периодов — T-02](https://github.com/KoznovaAV/Re-Hub/issues/48)

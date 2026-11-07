@@ -1,0 +1,9 @@
+{
+  "contract_version": "1.0",
+  "file_kind": "snapshot",
+  "key_mode": "anonymous",
+  "mapping_profile": "customer_october_tabs_v1",
+  "snapshot_date": "2026-10-20",
+  "period_scope": ["Y2025", "2026Q1", "2026Q2", "2026Q3"],
+  "coverage": "unknown"
+}

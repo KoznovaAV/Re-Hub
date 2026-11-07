@@ -1,0 +1,22 @@
+{
+  "contract_version": "1.0",
+  "file_kind": "clients",
+  "key_mode": "anonymous",
+  "nonempty_row_count": 1,
+  "rows": [
+    {
+      "source": {
+        "sheet": "clients",
+        "row": 2
+      },
+      "data": {
+        "external_id": "AAA00001",
+        "active": true,
+        "tags": [
+          "vip"
+        ]
+      }
+    }
+  ],
+  "errors": []
+}

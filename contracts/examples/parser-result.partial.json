@@ -1,0 +1,49 @@
+{
+  "contract_version": "1.0",
+  "file_kind": "snapshot",
+  "key_mode": "anonymous",
+  "nonempty_row_count": 3,
+  "rows": [
+    {
+      "source": {
+        "sheet": "snapshot",
+        "row": 2
+      },
+      "data": {
+        "external_id": "AAA00001",
+        "period_code": "2026Q1",
+        "total_docs": 100,
+        "unsent_docs": 40
+      }
+    },
+    {
+      "source": {
+        "sheet": "snapshot",
+        "row": 3
+      },
+      "data": {
+        "external_id": "AAA00001",
+        "period_code": "Y2025",
+        "total_docs": 80,
+        "unsent_docs": 0
+      }
+    }
+  ],
+  "errors": [
+    {
+      "scope": "row",
+      "code": "INVALID_INTEGER",
+      "message": "unsent_docs must be an integer",
+      "source": {
+        "sheet": "snapshot",
+        "row": 4,
+        "column": "unsent_docs"
+      },
+      "raw_value": "12,5",
+      "key_hint": {
+        "external_id": "AAA00002",
+        "period_code": "2026Q1"
+      }
+    }
+  ]
+}

@@ -1,0 +1,143 @@
+{
+  "note": "Expected domain cases; execute against the actual server validator. Not executed against Go/Python services in this package.",
+  "context": {
+    "snapshot_date": "2026-05-21",
+    "known_clients": [
+      "AAA00001"
+    ],
+    "known_periods": [
+      "2026Q1",
+      "Y2025"
+    ]
+  },
+  "cases": [
+    {
+      "case": "normal",
+      "row": {
+        "external_id": "AAA00001",
+        "period_code": "2026Q1",
+        "total_docs": 100,
+        "unsent_docs": 40
+      },
+      "history": [],
+      "expected": {
+        "accepted": true,
+        "total_docs": 100,
+        "unsent_percent": 40
+      }
+    },
+    {
+      "case": "inherited_same_period",
+      "row": {
+        "external_id": "AAA00001",
+        "period_code": "2026Q1",
+        "total_docs": null,
+        "unsent_docs": 40
+      },
+      "history": [
+        {
+          "external_id": "AAA00001",
+          "period_code": "2026Q1",
+          "snapshot_date": "2026-04-20",
+          "total_docs": 100
+        }
+      ],
+      "expected": {
+        "accepted": true,
+        "total_docs": 100,
+        "inherited": true
+      }
+    },
+    {
+      "case": "missing_first_total",
+      "row": {
+        "external_id": "AAA00001",
+        "period_code": "2026Q1",
+        "total_docs": null,
+        "unsent_docs": 40
+      },
+      "history": [],
+      "expected": {
+        "accepted": false,
+        "code": "TOTAL_MISSING_FIRST_OBSERVATION"
+      }
+    },
+    {
+      "case": "cannot_borrow_other_period",
+      "row": {
+        "external_id": "AAA00001",
+        "period_code": "2026Q1",
+        "total_docs": null,
+        "unsent_docs": 40
+      },
+      "history": [
+        {
+          "external_id": "AAA00001",
+          "period_code": "Y2025",
+          "snapshot_date": "2026-04-20",
+          "total_docs": 100
+        }
+      ],
+      "expected": {
+        "accepted": false,
+        "code": "TOTAL_MISSING_FIRST_OBSERVATION"
+      }
+    },
+    {
+      "case": "zero_denominator",
+      "row": {
+        "external_id": "AAA00001",
+        "period_code": "2026Q1",
+        "total_docs": 0,
+        "unsent_docs": 0
+      },
+      "history": [],
+      "expected": {
+        "accepted": true,
+        "unsent_percent": null
+      }
+    },
+    {
+      "case": "unsent_above_total",
+      "row": {
+        "external_id": "AAA00001",
+        "period_code": "2026Q1",
+        "total_docs": 100,
+        "unsent_docs": 101
+      },
+      "history": [],
+      "expected": {
+        "accepted": false,
+        "code": "UNSENT_GT_TOTAL"
+      }
+    },
+    {
+      "case": "unknown_client",
+      "row": {
+        "external_id": "AAA99999",
+        "period_code": "2026Q1",
+        "total_docs": 100,
+        "unsent_docs": 40
+      },
+      "history": [],
+      "expected": {
+        "accepted": false,
+        "code": "CLIENT_UNKNOWN"
+      }
+    },
+    {
+      "case": "missing_period",
+      "row": {
+        "external_id": "AAA00001",
+        "period_code": "",
+        "total_docs": 100,
+        "unsent_docs": 40
+      },
+      "history": [],
+      "expected": {
+        "accepted": false,
+        "code": "PERIOD_REQUIRED"
+      }
+    }
+  ]
+}

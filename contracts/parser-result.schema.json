@@ -1,0 +1,423 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "contract_version": {
+      "const": "1.0"
+    },
+    "file_kind": {
+      "enum": [
+        "clients",
+        "snapshot"
+      ]
+    },
+    "key_mode": {
+      "enum": [
+        "anonymous",
+        "kcr"
+      ]
+    },
+    "nonempty_row_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "source": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "sheet": {
+                "type": "string",
+                "minLength": 1
+              },
+              "row": {
+                "type": "integer",
+                "minimum": 2
+              }
+            },
+            "required": [
+              "sheet",
+              "row"
+            ]
+          },
+          "data": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "source",
+          "data"
+        ]
+      }
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "scope": {
+            "enum": [
+              "row",
+              "file"
+            ]
+          },
+          "code": {
+            "type": "string",
+            "pattern": "^[A-Z0-9_]+$"
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "sheet": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "row": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "column": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "sheet",
+                  "row",
+                  "column"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "raw_value": {
+            "type": [
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "key_hint": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "external_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "period_code": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "external_id",
+              "period_code"
+            ]
+          }
+        },
+        "required": [
+          "scope",
+          "code",
+          "message",
+          "source",
+          "raw_value"
+        ],
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "scope": {
+                  "const": "row"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "source": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "sheet": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "row": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "column": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "sheet",
+                    "row",
+                    "column"
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "required": [
+    "contract_version",
+    "file_kind",
+    "key_mode",
+    "nonempty_row_count",
+    "rows",
+    "errors"
+  ],
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:rehub:parser-result:v1",
+  "title": "ReHub parser result v1",
+  "$defs": {
+    "clientData": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "external_id": {
+          "type": "string",
+          "pattern": "^(?:[A-Z]{3}[0-9]{5}|[0-9]{7})$"
+        },
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "inn": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^([0-9]{10}|[0-9]{12})$"
+        },
+        "kpp": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9]{9}$"
+        },
+        "joined_on": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "blocked": {
+          "type": "boolean"
+        },
+        "excluded": {
+          "type": "boolean"
+        },
+        "excluded_reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "tags": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "vip",
+              "integrator",
+              "tech_partner",
+              "mpp",
+              "newcomer"
+            ]
+          }
+        },
+        "ekb_offset_hours": {
+          "type": "integer",
+          "minimum": -12,
+          "maximum": 14
+        },
+        "source_status_raw": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "external_id"
+      ]
+    },
+    "snapshotData": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "external_id": {
+          "type": "string",
+          "pattern": "^(?:[A-Z]{3}[0-9]{5}|[0-9]{7})$"
+        },
+        "period_code": {
+          "type": "string",
+          "pattern": "^[A-Z0-9_]{1,40}$"
+        },
+        "total_docs": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unsent_docs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        }
+      },
+      "required": [
+        "external_id",
+        "period_code",
+        "total_docs",
+        "unsent_docs"
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "file_kind": {
+            "const": "clients"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "rows": {
+            "items": {
+              "properties": {
+                "data": {
+                  "$ref": "#/$defs/clientData"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "file_kind": {
+            "const": "snapshot"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "rows": {
+            "items": {
+              "properties": {
+                "data": {
+                  "$ref": "#/$defs/snapshotData"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "key_mode": {
+            "const": "anonymous"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "rows": {
+            "items": {
+              "properties": {
+                "data": {
+                  "properties": {
+                    "external_id": {
+                      "pattern": "^[A-Z]{3}[0-9]{5}$"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "key_mode": {
+            "const": "kcr"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "rows": {
+            "items": {
+              "properties": {
+                "data": {
+                  "properties": {
+                    "external_id": {
+                      "pattern": "^[0-9]{7}$"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

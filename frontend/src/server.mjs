@@ -2,6 +2,8 @@ import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
 
 const html = await readFile(new URL("./index.html", import.meta.url));
+const pilot = await readFile(new URL("./pilot.html", import.meta.url));
+const pilotData = await readFile(new URL("./pilot-data.mjs", import.meta.url));
 const backend = process.env.BACKEND_URL ?? "http://127.0.0.1:8080";
 const routes = { "/api/health": "/health", "/api/probe": "/api/probe" };
 
@@ -21,6 +23,11 @@ createServer(async (request, response) => {
   if (request.url === "/") {
     response.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
     return response.end(html);
+  }
+  if (request.url === "/pilot" || request.url === "/pilot-data.mjs") {
+    const page = request.url === "/pilot";
+    response.writeHead(200, { "Content-Type": page ? "text/html; charset=utf-8" : "text/javascript; charset=utf-8" });
+    return response.end(page ? pilot : pilotData);
   }
   if (!Object.hasOwn(routes, request.url)) {
     return json(response, 404, { error: "not_found" });
