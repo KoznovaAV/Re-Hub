@@ -1,0 +1,399 @@
+{
+  "environment": {
+    "os": "Linux-6.18.57-x86_64-with-glibc2.39",
+    "machine": "x86_64",
+    "go": "go version go1.25.12 linux/amd64",
+    "python": "3.12.14",
+    "gomaxprocs": 2,
+    "cpu_quota": "800000 100000"
+  },
+  "rounds": 5,
+  "warmup_per_trial": 250,
+  "requests_per_trial": 2000,
+  "summary": {
+    "route": {
+      "net/http": {
+        "errors": 0,
+        "requests": 10000,
+        "p50_us": 95.38,
+        "p95_us": 271.471,
+        "requests_per_second": 7666.69,
+        "peak_rss_kib": 15232
+      },
+      "chi": {
+        "errors": 0,
+        "requests": 10000,
+        "p50_us": 95.181,
+        "p95_us": 271.081,
+        "requests_per_second": 7835.82,
+        "peak_rss_kib": 15232
+      },
+      "gin": {
+        "errors": 0,
+        "requests": 10000,
+        "p50_us": 96.153,
+        "p95_us": 241.148,
+        "requests_per_second": 8059.79,
+        "peak_rss_kib": 15232
+      }
+    },
+    "probe": {
+      "net/http": {
+        "errors": 0,
+        "requests": 10000,
+        "p50_us": 817.277,
+        "p95_us": 1719.207,
+        "requests_per_second": 1056.89,
+        "peak_rss_kib": 16108
+      },
+      "chi": {
+        "errors": 0,
+        "requests": 10000,
+        "p50_us": 853.871,
+        "p95_us": 1652.394,
+        "requests_per_second": 1034.44,
+        "peak_rss_kib": 15972
+      },
+      "gin": {
+        "errors": 0,
+        "requests": 10000,
+        "p50_us": 872.026,
+        "p95_us": 1881.372,
+        "requests_per_second": 982.33,
+        "peak_rss_kib": 16040
+      }
+    }
+  },
+  "trials": [
+    {
+      "round": 1,
+      "router": "net/http",
+      "mode": "route",
+      "requests": 2000,
+      "errors": 0,
+      "p50_us": 92.948,
+      "p95_us": 266.949,
+      "requests_per_second": 7917.69,
+      "peak_rss_kib": 14848
+    },
+    {
+      "round": 1,
+      "router": "chi",
+      "mode": "route",
+      "requests": 2000,
+      "errors": 0,
+      "p50_us": 100.437,
+      "p95_us": 271.081,
+      "requests_per_second": 7677.05,
+      "peak_rss_kib": 15232
+    },
+    {
+      "round": 1,
+      "router": "gin",
+      "mode": "route",
+      "requests": 2000,
+      "errors": 0,
+      "p50_us": 97.311,
+      "p95_us": 240.719,
+      "requests_per_second": 8183.87,
+      "peak_rss_kib": 15232
+    },
+    {
+      "round": 2,
+      "router": "chi",
+      "mode": "route",
+      "requests": 2000,
+      "errors": 0,
+      "p50_us": 104.223,
+      "p95_us": 322.932,
+      "requests_per_second": 6901.9,
+      "peak_rss_kib": 15232
+    },
+    {
+      "round": 2,
+      "router": "gin",
+      "mode": "route",
+      "requests": 2000,
+      "errors": 0,
+      "p50_us": 98.623,
+      "p95_us": 256.721,
+      "requests_per_second": 7870.36,
+      "peak_rss_kib": 15232
+    },
+    {
+      "round": 2,
+      "router": "net/http",
+      "mode": "route",
+      "requests": 2000,
+      "errors": 0,
+      "p50_us": 96.199,
+      "p95_us": 326.925,
+      "requests_per_second": 7041.06,
+      "peak_rss_kib": 15232
+    },
+    {
+      "round": 3,
+      "router": "gin",
+      "mode": "route",
+      "requests": 2000,
+      "errors": 0,
+      "p50_us": 94.582,
+      "p95_us": 275.808,
+      "requests_per_second": 7844.92,
+      "peak_rss_kib": 15232
+    },
+    {
+      "round": 3,
+      "router": "net/http",
+      "mode": "route",
+      "requests": 2000,
+      "errors": 0,
+      "p50_us": 92.753,
+      "p95_us": 225.116,
+      "requests_per_second": 8445.13,
+      "peak_rss_kib": 15232
+    },
+    {
+      "round": 3,
+      "router": "chi",
+      "mode": "route",
+      "requests": 2000,
+      "errors": 0,
+      "p50_us": 95.181,
+      "p95_us": 273.706,
+      "requests_per_second": 7835.82,
+      "peak_rss_kib": 15232
+    },
+    {
+      "round": 4,
+      "router": "net/http",
+      "mode": "route",
+      "requests": 2000,
+      "errors": 0,
+      "p50_us": 99.78,
+      "p95_us": 276.278,
+      "requests_per_second": 7532.23,
+      "peak_rss_kib": 15232
+    },
+    {
+      "round": 4,
+      "router": "chi",
+      "mode": "route",
+      "requests": 2000,
+      "errors": 0,
+      "p50_us": 90.996,
+      "p95_us": 266.041,
+      "requests_per_second": 7976.79,
+      "peak_rss_kib": 15232
+    },
+    {
+      "round": 4,
+      "router": "gin",
+      "mode": "route",
+      "requests": 2000,
+      "errors": 0,
+      "p50_us": 96.153,
+      "p95_us": 241.148,
+      "requests_per_second": 8059.79,
+      "peak_rss_kib": 15232
+    },
+    {
+      "round": 5,
+      "router": "chi",
+      "mode": "route",
+      "requests": 2000,
+      "errors": 0,
+      "p50_us": 92.411,
+      "p95_us": 234.605,
+      "requests_per_second": 8425.07,
+      "peak_rss_kib": 15232
+    },
+    {
+      "round": 5,
+      "router": "gin",
+      "mode": "route",
+      "requests": 2000,
+      "errors": 0,
+      "p50_us": 96.132,
+      "p95_us": 229.638,
+      "requests_per_second": 8185.86,
+      "peak_rss_kib": 15232
+    },
+    {
+      "round": 5,
+      "router": "net/http",
+      "mode": "route",
+      "requests": 2000,
+      "errors": 0,
+      "p50_us": 95.38,
+      "p95_us": 271.471,
+      "requests_per_second": 7666.69,
+      "peak_rss_kib": 15232
+    },
+    {
+      "round": 1,
+      "router": "net/http",
+      "mode": "probe",
+      "requests": 2000,
+      "errors": 0,
+      "p50_us": 847.041,
+      "p95_us": 1785.973,
+      "requests_per_second": 896.73,
+      "peak_rss_kib": 16108
+    },
+    {
+      "round": 1,
+      "router": "chi",
+      "mode": "probe",
+      "requests": 2000,
+      "errors": 0,
+      "p50_us": 883.283,
+      "p95_us": 1792.074,
+      "requests_per_second": 990.97,
+      "peak_rss_kib": 15852
+    },
+    {
+      "round": 1,
+      "router": "gin",
+      "mode": "probe",
+      "requests": 2000,
+      "errors": 0,
+      "p50_us": 827.927,
+      "p95_us": 1702.717,
+      "requests_per_second": 1055.87,
+      "peak_rss_kib": 16124
+    },
+    {
+      "round": 2,
+      "router": "chi",
+      "mode": "probe",
+      "requests": 2000,
+      "errors": 0,
+      "p50_us": 853.871,
+      "p95_us": 1652.394,
+      "requests_per_second": 1034.44,
+      "peak_rss_kib": 15900
+    },
+    {
+      "round": 2,
+      "router": "gin",
+      "mode": "probe",
+      "requests": 2000,
+      "errors": 0,
+      "p50_us": 907.842,
+      "p95_us": 3156.344,
+      "requests_per_second": 301.11,
+      "peak_rss_kib": 16108
+    },
+    {
+      "round": 2,
+      "router": "net/http",
+      "mode": "probe",
+      "requests": 2000,
+      "errors": 0,
+      "p50_us": 835.388,
+      "p95_us": 2277.849,
+      "requests_per_second": 636.17,
+      "peak_rss_kib": 15892
+    },
+    {
+      "round": 3,
+      "router": "gin",
+      "mode": "probe",
+      "requests": 2000,
+      "errors": 0,
+      "p50_us": 928.007,
+      "p95_us": 2905.586,
+      "requests_per_second": 739.7,
+      "peak_rss_kib": 15912
+    },
+    {
+      "round": 3,
+      "router": "net/http",
+      "mode": "probe",
+      "requests": 2000,
+      "errors": 0,
+      "p50_us": 817.277,
+      "p95_us": 1719.207,
+      "requests_per_second": 1056.89,
+      "peak_rss_kib": 16108
+    },
+    {
+      "round": 3,
+      "router": "chi",
+      "mode": "probe",
+      "requests": 2000,
+      "errors": 0,
+      "p50_us": 851.801,
+      "p95_us": 1610.003,
+      "requests_per_second": 1046.72,
+      "peak_rss_kib": 16108
+    },
+    {
+      "round": 4,
+      "router": "net/http",
+      "mode": "probe",
+      "requests": 2000,
+      "errors": 0,
+      "p50_us": 793.556,
+      "p95_us": 1535.374,
+      "requests_per_second": 1121.24,
+      "peak_rss_kib": 16108
+    },
+    {
+      "round": 4,
+      "router": "chi",
+      "mode": "probe",
+      "requests": 2000,
+      "errors": 0,
+      "p50_us": 814.133,
+      "p95_us": 1586.6,
+      "requests_per_second": 1078.44,
+      "peak_rss_kib": 15972
+    },
+    {
+      "round": 4,
+      "router": "gin",
+      "mode": "probe",
+      "requests": 2000,
+      "errors": 0,
+      "p50_us": 872.026,
+      "p95_us": 1881.372,
+      "requests_per_second": 982.33,
+      "peak_rss_kib": 16040
+    },
+    {
+      "round": 5,
+      "router": "chi",
+      "mode": "probe",
+      "requests": 2000,
+      "errors": 0,
+      "p50_us": 883.972,
+      "p95_us": 2131.54,
+      "requests_per_second": 879.72,
+      "peak_rss_kib": 16108
+    },
+    {
+      "round": 5,
+      "router": "gin",
+      "mode": "probe",
+      "requests": 2000,
+      "errors": 0,
+      "p50_us": 788.242,
+      "p95_us": 1506.44,
+      "requests_per_second": 1120.72,
+      "peak_rss_kib": 15596
+    },
+    {
+      "round": 5,
+      "router": "net/http",
+      "mode": "probe",
+      "requests": 2000,
+      "errors": 0,
+      "p50_us": 810.371,
+      "p95_us": 1438.121,
+      "requests_per_second": 1130.55,
+      "peak_rss_kib": 16288
+    }
+  ]
+}

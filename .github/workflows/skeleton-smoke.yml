@@ -1,0 +1,26 @@
+name: Skeleton smoke
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compose:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Verify startup and Python recovery
+        run: make up smoke smoke-recovery
+      - name: Show service logs
+        if: failure()
+        run: docker compose logs --tail=100
+      - name: Remove containers
+        if: always()
+        run: make down

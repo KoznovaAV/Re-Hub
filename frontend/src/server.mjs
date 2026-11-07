@@ -6,7 +6,7 @@ const backend = process.env.BACKEND_URL ?? "http://127.0.0.1:8080";
 const routes = { "/api/health": "/health", "/api/probe": "/api/probe" };
 
 function json(response, status, body) {
-  response.writeHead(status, { "Content-Type": "application/json" });
+  response.writeHead(status, { "Content-Type": "application/json", "Cache-Control": "no-store" });
   response.end(JSON.stringify(body));
 }
 
@@ -28,6 +28,7 @@ createServer(async (request, response) => {
   try {
     const upstream = await fetch(new URL(routes[request.url], backend), {
       signal: AbortSignal.timeout(3500),
+      redirect: "error",
     });
     json(response, upstream.status, await upstream.json());
   } catch {
