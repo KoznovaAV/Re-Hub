@@ -1,0 +1,33 @@
+openapi: 3.0.3
+info:
+  title: Re:Hub — API скелета
+  version: 0.1.0
+paths:
+  /health:
+    get:
+      summary: Проверить доступность процесса Go
+      responses:
+        "200":
+          description: Go отвечает независимо от Python
+          content:
+            application/json:
+              example: {status: ok, service: backend}
+  /api/probe:
+    get:
+      summary: Передать контрольный запрос в Python и вернуть результат
+      responses:
+        "200":
+          description: Python вернул ожидаемый JSON
+          content:
+            application/json:
+              example: {schema_version: 1, request_id: skeleton, status: ok}
+        "502":
+          description: Ответ Python не соответствует протоколу
+          content:
+            application/json:
+              example: {error: invalid_python_response}
+        "503":
+          description: Python недоступен или не ответил за две секунды
+          content:
+            application/json:
+              example: {error: python_unavailable}

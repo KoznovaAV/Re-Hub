@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Re:Hub — Контур MVP</title>
+  <style>
+    body { font: 1rem/1.5 system-ui, sans-serif; max-width: 38rem; margin: 3rem auto; padding: 0 1rem; }
+    button { font: inherit; padding: .5rem 1rem; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Re:Hub — Контур MVP</h1>
+    <p>Проверка связи интерфейса, Go API и Python.</p>
+    <button type="button">Проверить связь</button>
+    <p role="status" id="result">Проверка ещё не запускалась.</p>
+  </main>
+  <script type="module">
+    const button = document.querySelector("button");
+    const result = document.querySelector("#result");
+    button.addEventListener("click", async () => {
+      button.disabled = true;
+      result.textContent = "Проверяем связь…";
+      try {
+        const response = await fetch("/api/probe");
+        const data = await response.json();
+        if (!response.ok || data.status !== "ok") throw new Error();
+        result.textContent = "Go API и Python ответили.";
+      } catch {
+        result.textContent = "Связь недоступна. Проверьте, запущены ли сервисы.";
+      } finally {
+        button.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
