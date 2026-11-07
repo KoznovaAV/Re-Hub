@@ -1,0 +1,573 @@
+openapi: 3.0.3
+info:
+  title: ReHub API
+  description: |
+    API для сервиса контроля передачи оригиналов документов и коммуникации с клиентами КЦР.
+    Включает в себя управление клиентами, загрузку срезов, работу операторов и ИИ-помощника.
+  version: 1.0.0
+  contact:
+    name: Команда ReHub
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Локальная среда разработки (Go-бэкенд)
+
+tags:
+  - name: Auth
+    description: Авторизация
+  - name: Clients
+    description: Управление клиентами и их карточками
+  - name: Slices
+    description: Загрузка и управление срезами (Excel)
+  - name: Workflow
+    description: Рабочий процесс операторов (звонки, взятие в работу)
+  - name: AI
+    description: ИИ-помощник (Go-прокси до Python-сервиса)
+
+# Все эндпоинты, кроме логина, требуют JWT-токен в заголовке Authorization: Bearer <token>
+security:
+  - BearerAuth: []
+
+paths:
+  # ==========================================
+  # AUTH
+  # ==========================================
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Авторизация пользователя
+      security: [] # Для этого эндпоинта токен не нужен
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username:
+                  type: string
+                  example: "admin@rehub.ru"
+                password:
+                  type: string
+                  format: password
+                  example: "secretpassword"
+      responses:
+        '200':
+          description: Успешная авторизация. Возвращает токен и роль для разграничения доступа на фронте.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  role:
+                    type: string
+                    enum: [admin, operator]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ==========================================
+  # SLICES (Срезы)
+  # ==========================================
+  /slices:
+    get:
+      tags: [Slices]
+      summary: Получить историю загруженных срезов
+      parameters:
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/OffsetParam'
+      responses:
+        '200':
+          description: Список срезов (для экрана "История загрузок")
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Slice'
+    post:
+      tags: [Slices]
+      summary: Загрузить новый срез из Excel
+      description: |
+        Фронт отправляет файл, период и дату. 
+        Бэкенд (Go) парсит Excel через `excelize`, валидирует и сохраняет срез.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [period_id, slice_date, file]
+              properties:
+                period_id:
+                  type: integer
+                  description: ID отчётного периода из справочника
+                  example: 1
+                slice_date:
+                  type: string
+                  format: date
+                  description: Дата, на которую актуальны данные
+                  example: "2026-10-20"
+                file:
+                  type: string
+                  format: binary
+                  description: Excel файл (.xlsx)
+      responses:
+        '201':
+          description: |
+            Срез создан. Возвращаем статистику, чтобы админ видел результат загрузки.
+            Если rows_errors > 0, фронт должен показать кнопку "Скачать ошибки".
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  slice_id:
+                    type: integer
+                  rows_total:
+                    type: integer
+                  rows_ok:
+                    type: integer
+                  rows_errors:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /slices/{id}/errors:
+    get:
+      tags: [Slices]
+      summary: Скачать отчет об ошибках импорта
+      description: Возвращает CSV или Excel с проблемными строками (например, неизвестный код КЦР или дубликат).
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Файл с ошибками
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ==========================================
+  # CLIENTS (Клиенты)
+  # ==========================================
+  /clients:
+    get:
+      tags: [Clients]
+      summary: Получить список клиентов с фильтрами
+      description: Главный экран администратора (таблица со всеми клиентами).
+      parameters:
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/OffsetParam'
+        - name: code_kcr
+          in: query
+          description: Поиск по точному коду КЦР
+          schema: { type: string }
+        - name: inn
+          in: query
+          description: Поиск по ИНН
+          schema: { type: string }
+        - name: stage
+          in: query
+          description: Фильтр по этапу работы
+          schema: { type: string, example: "in_progress" }
+        - name: assigned_to
+          in: query
+          description: Фильтр по ID ответственного оператора
+          schema: { type: integer }
+        - name: min_share_not_sent
+          in: query
+          description: Минимальная доля непереданных документов (в %). Например, 25.
+          schema: { type: integer, example: 25 }
+        - name: dynamics
+          in: query
+          description: Фильтр по категории динамики (например, "повторно появились")
+          schema: 
+            type: string
+            enum: [all_sent, first_appeared, decreasing, unchanged, reappeared, chronic]
+      responses:
+        '200':
+          description: Список клиентов
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Client'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /clients/{code_kcr}:
+    get:
+      tags: [Clients]
+      summary: Получить полную карточку клиента
+      description: |
+        Экран карточки клиента. 
+        Возвращает базовые данные клиента + историю его срезов + все события (звонки, письма).
+      parameters:
+        - name: code_kcr
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Данные клиента
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientDetails'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ==========================================
+  # WORKFLOW (Действия операторов)
+  # ==========================================
+  /clients/{code_kcr}/take:
+    post:
+      tags: [Workflow]
+      summary: Взять клиента в работу
+      description: |
+        Назначает текущего пользователя (оператора) ответственным за клиента.
+        Важный нюанс: если клиента уже взял другой оператор, возвращаем 409.
+        Фронт должен показать toast: "Клиент уже взят в работу".
+      parameters:
+        - name: code_kcr
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Клиент успешно взят в работу (assigned_to обновился)
+        '409':
+          description: Конфликт. Клиент уже взят другим оператором.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /clients/{code_kcr}/events:
+    post:
+      tags: [Workflow]
+      summary: Зафиксировать событие (звонок, письмо, комментарий)
+      description: |
+        Сюда оператор пишет итог звонка.
+        В payload кладем гибкий JSON: результат, дату следующего контакта, комментарии.
+      parameters:
+        - name: code_kcr
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [event_type]
+              properties:
+                event_type:
+                  type: string
+                  enum: [call, email_sent, comment]
+                payload:
+                  type: object
+                  description: Произвольный JSON с деталями события
+                  example:
+                    result: "Не дозвонились"
+                    next_contact_date: "2026-11-01"
+                    comment: "Обещали передать документы после праздников"
+      responses:
+        '201':
+          description: Событие успешно создано (сохранилось в историю)
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /today:
+    get:
+      tags: [Workflow]
+      summary: Получить список "Сегодня нужно"
+      description: |
+        Экран оператора. Возвращает клиентов, у которых наступила дата следующего контакта, 
+        или которые требуют внимания (например, просрочен контакт).
+      responses:
+        '200':
+          description: Список задач на сегодня
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TodayTask'
+
+  # ==========================================
+  # AI ASSISTANT (ИИ-помощник)
+  # ==========================================
+  /ai/query:
+    post:
+      tags: [AI]
+      summary: Запрос к ИИ-помощнику
+      description: |
+        Go принимает запрос от фронта и перенаправляет в Python-сервис (FastAPI).
+        Python ищет данные в PostgreSQL (pgvector) и возвращает ответ.
+        Python НИЧЕГО НЕ МЕНЯЕТ в БД, он только читает.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query]
+              properties:
+                query:
+                  type: string
+                  example: "Покажи клиентов, которым пора позвонить повторно"
+                client_code_kcr:
+                  type: string
+                  description: Передается, если вопрос касается конкретного клиента
+      responses:
+        '200':
+          description: Ответ ИИ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AIResponse'
+        '422':
+          description: Вопрос вне области данных сервиса (ИИ не должен галлюцинировать)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+# ==========================================
+# COMPONENTS (Общие схемы)
+# ==========================================
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    LimitParam:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        default: 20
+        maximum: 100
+    OffsetParam:
+      name: offset
+      in: query
+      schema:
+        type: integer
+        default: 0
+
+  responses:
+    Unauthorized:
+      description: Требуется авторизация или токен недействителен
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    BadRequest:
+      description: Ошибка валидации данных
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Объект не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    # --- Общие схемы ---
+    PaginatedResponse:
+      type: object
+      description: Стандартная обертка для списков (пагинация)
+      properties:
+        meta:
+          type: object
+          properties:
+            total:
+              type: integer
+            limit:
+              type: integer
+            offset:
+              type: integer
+
+    ErrorResponse:
+      type: object
+      description: Универсальная модель ошибки для всего API
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          example: "VALIDATION_ERROR"
+        message:
+          type: string
+          example: "Некорректный формат файла"
+        details:
+          type: array
+          description: Детализация ошибки (например, какая строка в Excel сломалась)
+          items:
+            type: object
+            properties:
+              row:
+                type: integer
+              field:
+                type: string
+              issue:
+                type: string
+
+    # --- Доменные модели ---
+    Slice:
+      type: object
+      properties:
+        id:
+          type: integer
+        period_id:
+          type: integer
+        slice_date:
+          type: string
+          format: date
+        uploaded_by:
+          type: integer
+        uploaded_at:
+          type: string
+          format: date-time
+
+    Client:
+      type: object
+      description: Краткая информация о клиенте для таблицы
+      properties:
+        id:
+          type: integer
+        code_kcr:
+          type: string
+          example: "BTT76330"
+        inn:
+          type: string
+          example: "7701234567"
+        name:
+          type: string
+          example: "ООО Ромашка"
+        current_stage:
+          type: string
+          example: "in_progress"
+        assigned_to_id:
+          type: integer
+          nullable: true
+        last_slice_not_sent:
+          type: integer
+          description: Количество непереданных документов в последнем срезе
+        last_slice_share_not_sent:
+          type: number
+          format: float
+          description: Доля непереданных документов (в %)
+        dynamics_category:
+          type: string
+          enum: [all_sent, first_appeared, decreasing, unchanged, reappeared, chronic]
+
+    ClientDetails:
+      description: Полная карточка клиента (расширяет краткую модель)
+      allOf:
+        - $ref: '#/components/schemas/Client'
+        - type: object
+          properties:
+            kpp:
+              type: string
+            client_type:
+              type: array
+              items:
+                type: string
+            kc_active:
+              type: boolean
+            kc_blocked:
+              type: boolean
+            contact_name:
+              type: string
+            contact_phone:
+              type: string
+            contact_email:
+              type: string
+            next_contact_at:
+              type: string
+              format: date
+            events:
+              type: array
+              description: История всех действий (звонки, письма, комментарии)
+              items:
+                type: object
+                properties:
+                  id: { type: integer }
+                  event_type: { type: string }
+                  payload: { type: object }
+                  created_at: { type: string, format: date-time }
+            slices_history:
+              type: array
+              description: История срезов по этому клиенту
+              items:
+                type: object
+                properties:
+                  slice_date: { type: string, format: date }
+                  total_docs: { type: integer }
+                  not_sent_docs: { type: integer }
+
+    TodayTask:
+      type: object
+      properties:
+        client_code_kcr:
+          type: string
+        client_name:
+          type: string
+        task_type:
+          type: string
+          example: "Повторный звонок"
+        due_date:
+          type: string
+          format: date
+
+    AIResponse:
+      type: object
+      description: |
+        Ответ от Python-сервиса. 
+        Поле sources обязательно, чтобы мы могли проверить, на каких данных основан ответ (защита от галлюцинаций).
+      properties:
+        answer:
+          type: string
+          example: "Найдено 5 клиентов, которым нужно позвонить..."
+        sources:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                example: "client"
+              code_kcr:
+                type: string
+                example: "BTT76330"
