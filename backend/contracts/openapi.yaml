@@ -1,33 +1,346 @@
 openapi: 3.0.3
 info:
-  title: Re:Hub — API скелета
-  version: 0.1.0
+  title: ReHub API
+  description: |
+    API для сервиса контроля передачи оригиналов документов и коммуникации с клиентами КЦР.
+  version: 1.0.0
+  contact:
+    name: Команда ReHub
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Локальная среда разработки (Go-бэкенд)
+
+tags:
+  - name: Auth
+  - name: Clients
+  - name: Slices
+  - name: Workflow
+  - name: AI
+
+security:
+  - BearerAuth: []
+
 paths:
-  /health:
-    get:
-      summary: Проверить доступность процесса Go
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Авторизация пользователя
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username: { type: string, example: "admin@rehub.ru" }
+                password: { type: string, format: password, example: "secretpassword" }
       responses:
-        "200":
-          description: Go отвечает независимо от Python
+        '200':
+          description: Успешная авторизация
           content:
             application/json:
-              example: {status: ok, service: backend}
-  /api/probe:
+              schema:
+                type: object
+                properties:
+                  token: { type: string }
+                  role: { type: string, enum: [admin, operator] }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /slices:
     get:
-      summary: Передать контрольный запрос в Python и вернуть результат
+      tags: [Slices]
+      summary: Получить историю загруженных срезов
+      parameters:
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/OffsetParam'
       responses:
-        "200":
-          description: Python вернул ожидаемый JSON
+        '200':
+          description: Список срезов
           content:
             application/json:
-              example: {schema_version: 1, request_id: skeleton, status: ok}
-        "502":
-          description: Ответ Python не соответствует протоколу
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data: { type: array, items: { $ref: '#/components/schemas/Slice' } }
+    post:
+      tags: [Slices]
+      summary: Загрузить новый срез из Excel
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [period_id, slice_date, file]
+              properties:
+                period_id: { type: string, format: uuid }
+                slice_date: { type: string, format: date, example: "2026-10-20" }
+                file: { type: string, format: binary }
+      responses:
+        '201':
+          description: Срез создан
           content:
             application/json:
-              example: {error: invalid_python_response}
-        "503":
-          description: Python недоступен или не ответил за две секунды
+              schema:
+                type: object
+                properties:
+                  slice_id: { type: string, format: uuid }
+                  rows_total: { type: integer }
+                  rows_ok: { type: integer }
+                  rows_errors: { type: integer }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /slices/{id}/errors:
+    get:
+      tags: [Slices]
+      summary: Скачать отчет об ошибках импорта
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Файл с ошибками
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /clients:
+    get:
+      tags: [Clients]
+      summary: Получить список клиентов с фильтрами
+      parameters:
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/OffsetParam'
+        - name: external_id
+          in: query
+          description: Поиск по внешнему ID (код КЦР)
+          schema: { type: string }
+        - name: inn
+          in: query
+          schema: { type: string }
+        - name: stage
+          in: query
+          schema: { type: string }
+        - name: assigned_to
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Список клиентов
           content:
             application/json:
-              example: {error: python_unavailable}
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data: { type: array, items: { $ref: '#/components/schemas/Client' } }
+
+  /clients/{external_id}:
+    get:
+      tags: [Clients]
+      summary: Получить полную карточку клиента по external_id (код КЦР)
+      parameters:
+        - name: external_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Данные клиента
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClientDetails' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /clients/{external_id}/take:
+    post:
+      tags: [Workflow]
+      summary: Взять клиента в работу
+      parameters:
+        - name: external_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Клиент взят в работу }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /clients/{external_id}/events:
+    post:
+      tags: [Workflow]
+      summary: Зафиксировать событие
+      parameters:
+        - name: external_id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [event_type]
+              properties:
+                event_type: { type: string, enum: [call, email_sent, comment] }
+                payload: { type: object }
+      responses:
+        '201': { description: Событие создано }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /today:
+    get:
+      tags: [Workflow]
+      summary: Получить список "Сегодня нужно"
+      responses:
+        '200':
+          description: Список задач
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/TodayTask' }
+
+  /ai/query:
+    post:
+      tags: [AI]
+      summary: Запрос к ИИ-помощнику
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query]
+              properties:
+                query: { type: string, example: "Покажи клиентов, которым пора позвонить" }
+                client_external_id: { type: string }
+      responses:
+        '200':
+          description: Ответ ИИ
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AIResponse' }
+        '422': { $ref: '#/components/responses/BadRequest' }
+
+components:
+  securitySchemes:
+    BearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+
+  parameters:
+    LimitParam: { name: limit, in: query, schema: { type: integer, default: 20 } }
+    OffsetParam: { name: offset, in: query, schema: { type: integer, default: 0 } }
+
+  responses:
+    Unauthorized:
+      description: Не авторизован
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
+    BadRequest:
+      description: Ошибка валидации
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
+    NotFound:
+      description: Не найдено
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
+    Conflict:
+      description: Конфликт (например, клиент уже взят)
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
+
+  schemas:
+    PaginatedResponse:
+      type: object
+      properties:
+        meta:
+          type: object
+          properties:
+            total: { type: integer }
+            limit: { type: integer }
+            offset: { type: integer }
+
+    ErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string }
+        message: { type: string }
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              row: { type: integer }
+              column: { type: string }
+              issue: { type: string }
+      example:
+        code: "VALIDATION_ERROR"
+        message: "Ошибка импорта Excel"
+        details:
+          - row: 15
+            column: "external_id"
+            issue: "Пустой код КЦР"
+          - row: 42
+            column: "inn"
+            issue: "Некорректный формат ИНН"
+
+    Slice:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        period_id: { type: string, format: uuid }
+        slice_date: { type: string, format: date }
+        uploaded_by: { type: string, format: uuid }
+        uploaded_at: { type: string, format: date-time }
+
+    Client:
+      type: object
+      properties:
+        id: { type: string, format: uuid, description: Внутренний UUID }
+        external_id: { type: string, description: Внешний ID (код КЦР), уникальный }
+        inn: { type: string, description: ИНН не уникален }
+        name: { type: string }
+        current_stage: { type: string }
+        assigned_to_id: { type: string, format: uuid, nullable: true }
+        last_slice_not_sent: { type: integer }
+        last_slice_share_not_sent: { type: number }
+
+    ClientDetails:
+      allOf:
+        - $ref: '#/components/schemas/Client'
+        - type: object
+          properties:
+            kpp: { type: string }
+            contact_name: { type: string }
+            contact_phone: { type: string }
+            contact_email: { type: string }
+            next_contact_at: { type: string, format: date }
+            events:
+              type: array
+              items: { type: object }
+            slices_history:
+              type: array
+              items: { type: object }
+
+    TodayTask:
+      type: object
+      properties:
+        client_external_id: { type: string }
+        client_name: { type: string }
+        task_type: { type: string }
+        due_date: { type: string, format: date }
+
+    AIResponse:
+      type: object
+      properties:
+        answer: { type: string }
+        sources:
+          type: array
+          items: { type: object }
