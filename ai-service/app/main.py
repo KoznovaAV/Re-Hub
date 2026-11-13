@@ -32,7 +32,7 @@ class Handler(BaseHTTPRequestHandler):
         except (IntentError, ProviderError) as exc:
             # В логи идут типы ошибок, без вопроса и сырого ответа модели.
             cause = type(exc.__cause__).__name__ if exc.__cause__ else "none"
-            self.log_error("AI query failed: %s (cause: %s)", type(exc).__name__, cause)
+            self.log_error("AI query failed: %s: %s (cause: %s)", type(exc).__name__, exc, cause)
             if isinstance(exc, ProviderTimeout):
                 self.send_json(504, {"error": "ollama_timeout"})
             elif isinstance(exc, (IntentError, InvalidProviderResponse)):

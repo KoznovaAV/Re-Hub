@@ -155,17 +155,12 @@ def output_schema(periods, *, allow_docs=False):
             "properties": properties,
         })
     if allow_docs:
-        # Одна схема для демо. Связь между действием и полями проверяем в Python.
-        return {
-            "type": "object", "additionalProperties": False, "required": sorted(FIELDS),
-            "properties": {
-                "intent": {"enum": [*PARAMETERS, "search_docs"]},
-                "period": {"enum": [*periods, None]},
-                "client_ref": {"type": ["string", "null"], "maxLength": 120},
-                "min_unsent": {"type": ["integer", "null"], "minimum": 1, "maximum": MAX_MIN_UNSENT},
-                "reason": {"enum": [None, *sorted(set().union(*REASONS.values()))]},
-            },
-        }
+        properties = {field: {"type": "null"} for field in sorted(FIELDS)}
+        properties["intent"] = {"const": "search_docs"}
+        variants.append({
+            "type": "object", "additionalProperties": False,
+            "required": list(properties), "properties": properties,
+        })
     return {"oneOf": variants}
 
 
@@ -324,9 +319,18 @@ def ollama_chat(*, messages, schema, model, base_url, timeout, max_tokens=256):
     except OSError as exc:
         raise ProviderError("Ollama request failed") from exc
     try:
-        return json.loads(json.loads(raw_response)["message"]["content"])
+        envelope = json.loads(raw_response)
+        content = envelope["message"]["content"]
     except (ValueError, KeyError, TypeError) as exc:
-        raise InvalidProviderResponse("Ollama returned an invalid response") from exc
+        raise InvalidProviderResponse("Invalid Ollama response envelope") from exc
+    if envelope.get("done_reason") == "length":
+        raise InvalidProviderResponse("Ollama reached the generation limit")
+    if not isinstance(content, str) or not content.strip():
+        raise InvalidProviderResponse("Ollama returned empty or non-text content")
+    try:
+        return json.loads(content)
+    except ValueError as exc:
+        raise InvalidProviderResponse("Ollama content is not valid JSON") from exc
 
 
 def normalize_month_range(match):

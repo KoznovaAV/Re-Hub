@@ -41,6 +41,17 @@ class IntentTest(unittest.TestCase):
         self.assertIn("raw_sql", refused["reason"]["enum"])
         self.assertNotIn("missing_period", refused["reason"]["enum"])
 
+    def test_demo_schema_preserves_required_fields_per_intent(self):
+        variants = {
+            item["properties"]["intent"]["const"]: item["properties"]
+            for item in output_schema(self.periods, allow_docs=True)["oneOf"]
+        }
+        debt = variants["get_client_debt"]
+        self.assertEqual(debt["client_ref"]["type"], "string")
+        self.assertEqual(debt["min_unsent"], {"type": "null"})
+        self.assertEqual(debt["reason"], {"type": "null"})
+        self.assertEqual(variants["search_docs"]["period"], {"type": "null"})
+
     def test_question_prevents_misleading_lookup(self):
         list_result = self.intent | {
             "intent": "list_debtors", "period": "2025Q2_2025Q4", "client_ref": None, "min_unsent": 11,
