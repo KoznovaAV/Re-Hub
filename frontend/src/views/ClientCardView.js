@@ -4,7 +4,6 @@ import {
   TODAY,
   clientMetrics,
   formatDate,
-  meterClass,
   periodLabel,
   users,
 } from "../mock/data.js";
@@ -197,15 +196,14 @@ export default defineComponent({
       plural,
       formatDate,
       periodLabel,
-      meterClass,
       users,
       TODAY,
       EVENT_ICONS,
     };
   },
   template: `
-    <div v-if="client" class="page">
-      <div class="page__header">
+    <div v-if="client" class="page client-page">
+      <div class="page__header client-heading">
         <div>
           <button type="button" class="btn btn--ghost btn--sm" @click="$emit('back')">← Назад</button>
           <div class="row row--wrap page__title-row">
@@ -214,7 +212,7 @@ export default defineComponent({
             <UiBadge :tone="badgeToneFor(metrics.dynamics)">{{ metrics.dynamics }}</UiBadge>
             <UiBadge v-if="metrics.missing" tone="warning" dot>Нет в последнем срезе</UiBadge>
           </div>
-          <p class="page__subtitle mono">{{ client.externalId }} · ИНН {{ client.inn }} · КПП {{ client.kpp }}</p>
+          <p class="page__subtitle mono">КЦР {{ client.externalId }} · ИНН {{ client.inn }} · КПП {{ client.kpp }}</p>
         </div>
         <div class="row row--wrap">
           <UiButton v-if="metrics.free && !isAdmin" variant="secondary" :loading="loading.take" @click="take">Взять в работу</UiButton>
@@ -259,7 +257,7 @@ export default defineComponent({
 
       <div class="grid grid--sidebar">
         <div class="stack stack--lg">
-          <UiCard title="Текущая ситуация" :subtitle="metrics.last ? 'Последний срез: ' + periodLabel(metrics.last.period) : 'Нет наблюдений'">
+          <UiCard class="client-overview" title="Документы и сроки" :subtitle="metrics.last ? 'Последний срез: ' + periodLabel(metrics.last.period) : 'Нет наблюдений'">
             <div class="grid grid--2">
               <div class="stat">
                 <div class="stat__label">Всего документов</div>
@@ -268,7 +266,7 @@ export default defineComponent({
               </div>
               <div class="stat stat--warning">
                 <div class="stat__label">Не передано</div>
-                <div class="stat__value">{{ metrics.unsent }}</div>
+                <div class="stat__value">{{ metrics.last ? metrics.unsent : '—' }}</div>
                 <div class="stat__hint">{{ metrics.share == null ? 'Доля не рассчитана' : metrics.share + '% от всего' }}</div>
               </div>
               <div class="stat">
@@ -283,9 +281,14 @@ export default defineComponent({
               </div>
             </div>
             <div class="divider"></div>
-            <div class="meter" :class="metrics.share >= 50 ? 'meter--danger' : metrics.share >= 30 ? 'meter--warning' : ''">
-              <div class="meter__fill" :class="meterClass(metrics.share)"></div>
+            <div v-if="metrics.transferredPercent != null" class="client-progress">
+              <div class="row row--between">
+                <span>Передано оригиналов</span>
+                <strong>{{ metrics.transferred }} из {{ metrics.total }}</strong>
+              </div>
+              <progress :value="metrics.transferredPercent" max="100" aria-label="Доля переданных оригиналов"></progress>
             </div>
+            <p v-else class="muted small">Долю переданных оригиналов пока нельзя рассчитать.</p>
           </UiCard>
 
           <UiCard title="История срезов" subtitle="Данные и звонки прошлых циклов сохранены">

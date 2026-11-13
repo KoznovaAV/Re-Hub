@@ -29,6 +29,7 @@ export default defineComponent({
     const selectedId = ref("");
     const actor = ref("admin");
     const lastList = ref("clients");
+    const archiveGroup = ref("all");
 
     const actionCount = computed(
       () =>
@@ -40,12 +41,13 @@ export default defineComponent({
 
     const selectedClient = computed(() => store.clients.find((client) => client.id === selectedId.value) ?? null);
 
-    function navigate(next) {
+    function navigate(next, group) {
       if (next === "import" && actor.value !== "admin") {
         pushToast("Нет доступа", "Импорт доступен только администратору.", "warning");
         return;
       }
       if (["dashboard", "clients", "work", "history"].includes(next)) lastList.value = next;
+      if (next === "clients" && group) archiveGroup.value = group;
       view.value = next;
       if (next !== "client") selectedId.value = "";
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -68,6 +70,7 @@ export default defineComponent({
       selectedId,
       actor,
       lastList,
+      archiveGroup,
       actionCount,
       clientCount: computed(() => store.clients.length),
       selectedClient,
@@ -86,7 +89,7 @@ export default defineComponent({
         :actor="actor"
         :action-count="actionCount"
         :client-count="clientCount"
-        @navigate="navigate"
+        @navigate="navigate($event, 'all')"
       />
       <div class="app__main">
         <AppTopbar
@@ -105,6 +108,7 @@ export default defineComponent({
         />
         <ClientsView
           v-else-if="view === 'clients'"
+          v-model:archive-group="archiveGroup"
           :clients="store.clients"
           :actor="actor"
           @open-client="openClient"

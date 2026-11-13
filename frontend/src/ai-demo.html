@@ -4,41 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Помощник - Re:Hub</title>
-  <script>
-    try {
-      if (localStorage.getItem("rehub-assistant-theme") === "light") {
-        document.documentElement.dataset.theme = "light";
-      }
-    } catch {
-      // Настройка темы необязательна для работы страницы.
-    }
-  </script>
+  <link rel="stylesheet" href="/styles/tokens.css">
   <style>
     :root {
-      color-scheme: dark;
-      --bg: #10131a;
-      --panel: #181d27;
-      --input: #111620;
-      --text: #edf1f8;
-      --muted: #a9b5c9;
-      --line: #394354;
-      --accent: #aaf2ce;
-      --ink: #10281e;
-      --hero: #1c2a30;
-      --warning: #ffcf91;
-    }
-    [data-theme="light"] {
-      color-scheme: light;
-      --bg: #edf1f5;
-      --panel: #fff;
-      --input: #f6f8fb;
-      --text: #172338;
-      --muted: #4d5e74;
-      --line: #bcc8d8;
-      --accent: #155b45;
-      --ink: #fff;
-      --hero: #e4f0eb;
-      --warning: #865114;
+      --panel: var(--surface);
+      --input: var(--surface-2);
+      --line: var(--border-strong);
+      --ink: var(--on-accent);
+      --hero: var(--accent-soft);
     }
     * { box-sizing: border-box; }
     [hidden] { display: none !important; }
@@ -180,6 +153,9 @@
     </section>
   </main>
   <script type="module">
+    import { connectThemeToggle } from "/composables/theme.js";
+
+    connectThemeToggle(document.querySelector("#theme"));
     const form = document.querySelector("form");
     const question = document.querySelector("#question");
     const submit = form.querySelector('[type="submit"]');
@@ -188,8 +164,6 @@
     const sources = document.querySelector("#sources");
     const details = document.querySelector("details");
     const result = document.querySelector("#result");
-    const theme = document.querySelector("#theme");
-    const root = document.documentElement;
 
     const clarification = {
       missing_period: "Укажите отчётный период и год. Например, 2 квартал 2026.",
@@ -200,21 +174,6 @@
       document_content: "Поиск по текстам писем и документов пока недоступен.",
       unsupported_filter: "Попробуйте указать количество непереданных оригиналов.",
     };
-
-    function updateThemeLabel() {
-      theme.textContent = root.dataset.theme === "dark" ? "Светлая тема" : "Тёмная тема";
-    }
-
-    updateThemeLabel();
-    theme.addEventListener("click", () => {
-      root.dataset.theme = root.dataset.theme === "dark" ? "light" : "dark";
-      updateThemeLabel();
-      try {
-        localStorage.setItem("rehub-assistant-theme", root.dataset.theme);
-      } catch {
-        // Переключение работает и без доступа к хранилищу.
-      }
-    });
 
     function showStatus(text, tone) {
       status.textContent = text;

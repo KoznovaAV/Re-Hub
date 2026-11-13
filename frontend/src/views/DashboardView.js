@@ -1,5 +1,5 @@
 import { computed, defineComponent } from "vue";
-import { chartBucket, clientMetrics, formatDate, periods } from "../mock/data.js";
+import { archiveCount, archiveGroups, chartBucket, clientMetrics, formatDate, LATEST_PERIOD, periodLabel, periods } from "../mock/data.js";
 import UiStat from "../components/UiStat.js";
 import UiCard from "../components/UiCard.js";
 import UiBadge from "../components/UiBadge.js";
@@ -16,6 +16,12 @@ export default defineComponent({
   emits: ["open-client", "navigate"],
   setup(props) {
     const rows = computed(() => props.clients.map((client) => ({ client, metrics: clientMetrics(client) })));
+    const archive = computed(() => archiveGroups.map((group) => ({
+      ...group,
+      count: rows.value.reduce((sum, { metrics }) => sum + archiveCount(metrics, group.key), 0),
+    })));
+    const archivePeriod = periodLabel(LATEST_PERIOD);
+    const formatNumber = new Intl.NumberFormat("ru-RU").format;
     const total = computed(() => props.clients.length);
     const withUnsent = computed(() => rows.value.filter(({ metrics }) => metrics.unsent > 0 && !metrics.missing).length);
     const inWork = computed(() => props.clients.filter((client) => client.stage === "В работе").length);
@@ -85,6 +91,9 @@ export default defineComponent({
     }
 
     return {
+      archive,
+      archivePeriod,
+      formatNumber,
       total,
       withUnsent,
       inWork,
@@ -102,20 +111,43 @@ export default defineComponent({
     };
   },
   template: `
-    <div class="page">
+    <div class="page dashboard-page">
       <div class="page__header">
         <div class="page__header-copy">
           <div class="row">
             <h1>Главная</h1>
             <UiBadge tone="info" dot>Тестовые данные</UiBadge>
           </div>
-          <p class="page__subtitle">Общая ситуация по клиентской базе, документам и взаимодействиям.</p>
+          <p class="page__subtitle">Контроль передачи оригиналов</p>
         </div>
-        <div class="row">
+        <div class="row row--wrap">
           <UiButton variant="secondary" @click="$emit('navigate', 'work')">Работа с клиентами</UiButton>
           <UiButton v-if="actor === 'admin'" variant="primary" @click="$emit('navigate', 'import')">Импорт данных</UiButton>
         </div>
       </div>
+
+      <section class="archive section" aria-labelledby="archive-title">
+        <div class="archive__copy">
+          <p class="archive__period">{{ archivePeriod }} / последний срез</p>
+          <h2 id="archive-title">Архив документов</h2>
+          <p class="archive__hint">Выберите статус, чтобы открыть список клиентов.</p>
+        </div>
+        <div class="archive__scene" aria-hidden="true">
+          <div class="archive__platform">
+            <i class="archive__tile archive__tile--received"></i>
+            <i class="archive__tile archive__tile--waiting"></i>
+            <i class="archive__tile archive__tile--overdue"></i>
+          </div>
+        </div>
+        <div class="archive__groups">
+          <button v-for="group in archive" :key="group.key" type="button"
+            :class="'archive__group archive__group--' + group.key"
+            @click="$emit('navigate', 'clients', group.key)">
+            <span>{{ group.label }}</span>
+            <strong>{{ formatNumber(group.count) }}</strong>
+          </button>
+        </div>
+      </section>
 
       <div class="grid grid--4 section">
         <UiStat label="Всего клиентов" :value="total" hint="В демонстрационной базе" />

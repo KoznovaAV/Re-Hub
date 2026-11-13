@@ -89,6 +89,19 @@ export function clientMetrics(client) {
   };
 }
 
+export const archiveGroups = [
+  { key: "waiting", label: "Ожидаются" },
+  { key: "overdue", label: "Просрочены" },
+  { key: "received", label: "Получены" },
+];
+
+export function archiveCount(metrics, group) {
+  if (metrics.last?.period !== LATEST_PERIOD) return 0;
+  if (group === "waiting") return metrics.overdue ? 0 : metrics.unsent;
+  if (group === "overdue") return metrics.overdue ? metrics.unsent : 0;
+  return metrics.transferred ?? 0;
+}
+
 export function meterClass(share) {
   if (share == null) return "meter__fill--0";
   const bucket = Math.max(0, Math.min(100, Math.round(share / 5) * 5));

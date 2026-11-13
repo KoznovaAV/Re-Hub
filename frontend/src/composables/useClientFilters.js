@@ -1,7 +1,7 @@
 import { computed, ref } from "vue";
-import { clientMetrics } from "../mock/data.js";
+import { archiveCount, clientMetrics } from "../mock/data.js";
 
-export function useClientFilters(clients) {
+export function useClientFilters(clients, archiveGroup) {
   const search = ref("");
   const stage = ref("all");
   const tag = ref("all");
@@ -23,6 +23,7 @@ export function useClientFilters(clients) {
           const haystack = `${client.name} ${client.inn} ${client.externalId}`.toLowerCase();
           if (!haystack.includes(query)) return false;
         }
+        if (archiveGroup.value !== "all" && !archiveCount(metrics, archiveGroup.value)) return false;
         if (stage.value !== "all" && client.stage !== stage.value) return false;
         if (tag.value !== "all" && !client.tags.includes(tag.value)) return false;
         if (minShare.value !== "0" && (metrics.share ?? 0) < Number(minShare.value)) return false;

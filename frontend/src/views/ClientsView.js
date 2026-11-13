@@ -2,7 +2,7 @@ import { computed, defineComponent, reactive, ref } from "vue";
 import { useClientFilters } from "../composables/useClientFilters.js";
 import { addToPool, takeClient } from "../mock/api.js";
 import { pushToast } from "../composables/useToast.js";
-import { formatDate, meterClass } from "../mock/data.js";
+import { archiveGroups, formatDate, meterClass } from "../mock/data.js";
 import UiCard from "../components/UiCard.js";
 import UiBadge from "../components/UiBadge.js";
 import UiButton from "../components/UiButton.js";
@@ -16,10 +16,22 @@ export default defineComponent({
   props: {
     clients: { type: Array, required: true },
     actor: { type: String, required: true },
+    archiveGroup: { type: String, default: "all" },
   },
-  emits: ["open-client", "navigate"],
-  setup(props) {
-    const filters = useClientFilters(computed(() => props.clients));
+  emits: ["open-client", "navigate", "update:archiveGroup"],
+  setup(props, { emit }) {
+    const archiveGroup = computed({
+      get: () => props.archiveGroup,
+      set: (value) => emit("update:archiveGroup", value),
+    });
+    const filters = useClientFilters(computed(() => props.clients), archiveGroup);
+    const archiveOptions = [{ value: "all", label: "Все статусы документов" },
+      ...archiveGroups.map(({ key, label }) => ({ value: key, label }))];
+
+    function resetFilters() {
+      filters.reset();
+      archiveGroup.value = "all";
+    }
     const selected = ref([]);
     const loading = reactive({});
     const isAdmin = computed(() => props.actor === "admin");
@@ -83,6 +95,9 @@ export default defineComponent({
 
     return {
       ...filters,
+      archiveGroup,
+      archiveOptions,
+      resetFilters,
       selected,
       loading,
       isAdmin,
@@ -108,7 +123,7 @@ export default defineComponent({
           <p class="page__subtitle">Поиск по ИНН или коду КЦР, фильтры по доле, этапу и типу. Список собирается без Excel.</p>
         </div>
         <div class="row">
-          <UiButton variant="secondary" @click="reset">Сбросить фильтры</UiButton>
+          <UiButton variant="secondary" @click="resetFilters">Сбросить фильтры</UiButton>
           <UiButton v-if="isAdmin" variant="primary" @click="$emit('navigate', 'import')">Импорт</UiButton>
         </div>
       </div>
@@ -125,6 +140,7 @@ export default defineComponent({
         </div>
         <div class="row row--wrap row--between filters-actions">
           <div class="row row--wrap">
+            <UiSelect v-model="archiveGroup" :options="archiveOptions" label="Статус документов" />
             <UiSelect v-model="owner" :options="ownerOptions" />
             <label class="row small muted">
               <input v-model="includeMissing" type="checkbox" />
