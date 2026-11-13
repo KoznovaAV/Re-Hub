@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="ru" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Помощник - Re:Hub</title>
+  <link rel="stylesheet" href="/styles/tokens.css">
+  <style>
+    :root {
+      --panel: var(--surface);
+      --input: var(--surface-2);
+      --line: var(--border-strong);
+      --ink: var(--on-accent);
+      --hero: var(--accent-soft);
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 1rem/1.55 "Inter", system-ui, sans-serif;
+    }
+    main { width: min(62rem, calc(100% - 2rem)); margin: 0 auto 3rem; }
+    header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1.3rem 0; }
+    a { color: var(--text); text-underline-offset: .22em; font-weight: 700; }
+    h1 { margin: 0; font-size: clamp(1.85rem, 5vw, 3.2rem); line-height: 1.12; letter-spacing: -.04em; }
+    p { margin: 0; }
+    .hero, form, section { border: 1px solid var(--line); border-radius: 1rem; }
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 11rem;
+      align-items: center;
+      gap: 1rem;
+      min-height: 11rem;
+      padding: 1.5rem clamp(1.25rem, 4vw, 2.5rem);
+      overflow: hidden;
+      background: radial-gradient(ellipse at 86% 60%, var(--hero), transparent 64%), var(--panel);
+    }
+    .hero p { margin-top: .65rem; color: var(--muted); }
+    .stack {
+      position: relative;
+      place-self: center;
+      width: 8rem;
+      height: 7rem;
+      pointer-events: none;
+    }
+    .stack span {
+      position: absolute;
+      inset: 0;
+      width: 6.4rem;
+      height: 4.8rem;
+      border: 1px solid #81dabb;
+      border-radius: .55rem;
+      background: linear-gradient(150deg, #347d72, #1c3a47 77%);
+      box-shadow: 0 4px 0 #152c36, 0 9px 14px #10222680;
+      transform: translateY(var(--offset)) rotate(-28deg) skewX(26deg);
+      transition: transform 240ms ease;
+    }
+    .stack span:nth-child(1) { --offset: 2rem; }
+    .stack span:nth-child(2) { --offset: 1rem; }
+    .stack span:nth-child(3) { --offset: 0rem; background: linear-gradient(140deg, #b3f7d2, #66aab4); }
+    .stack span:last-child::after {
+      content: "";
+      position: absolute;
+      inset: 1.2rem 1.2rem auto;
+      height: 1.8rem;
+      background: repeating-linear-gradient(to bottom, #1b524c 0 2px, transparent 2px 9px);
+    }
+    @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+      .hero:hover .stack span:nth-child(1) { --offset: 2.6rem; }
+      .hero:hover .stack span:nth-child(3) { --offset: -.45rem; }
+    }
+    form, section { padding: clamp(1rem, 3vw, 1.5rem); margin-top: 1rem; background: var(--panel); }
+    label { display: block; font-weight: 700; }
+    textarea, button { font: inherit; border: 1px solid var(--line); border-radius: .6rem; color: var(--text); }
+    textarea {
+      display: block;
+      width: 100%;
+      min-height: 6rem;
+      resize: vertical;
+      margin: .55rem 0 .85rem;
+      padding: .7rem .85rem;
+      background: var(--input);
+    }
+    textarea::placeholder { color: var(--muted); }
+    button { padding: .5rem .8rem; cursor: pointer; background: var(--panel); }
+    button:hover { border-color: var(--accent); }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    button[type="submit"] { color: var(--ink); background: var(--accent); border-color: var(--accent); font-weight: 700; }
+    button:disabled { cursor: wait; opacity: .7; }
+    .actions, .examples { display: flex; flex-wrap: wrap; gap: .45rem; align-items: center; }
+    .actions { gap: .85rem; }
+    .examples button, header button { font-size: .875rem; }
+    #status { font-size: 1.2rem; font-weight: 700; }
+    #status[data-tone="info"] { color: var(--muted); font-size: 1rem; font-weight: 500; }
+    #status[data-tone="attention"] { color: var(--warning); }
+    dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: .35rem 1rem; margin: .85rem 0 0; }
+    dt, summary, .sources { color: var(--muted); }
+    dd { margin: 0; overflow-wrap: anywhere; }
+    .table-wrap { overflow: auto; margin-top: .85rem; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-variant-numeric: tabular-nums; }
+    th, td { padding: .55rem .65rem; border-bottom: 1px solid var(--line); }
+    th { color: var(--muted); font-size: .875rem; }
+    td:first-child { white-space: nowrap; }
+    th:last-child, td:last-child { text-align: right; }
+    .sources { margin-top: .85rem; font-size: .9rem; overflow-wrap: anywhere; }
+    details { margin-top: 1rem; padding-top: .7rem; border-top: 1px solid var(--line); }
+    summary { cursor: pointer; font-size: .9rem; }
+    pre { overflow: auto; background: var(--input); padding: .75rem; border-radius: .5rem; }
+    @media (max-width: 36rem) {
+      .hero { grid-template-columns: minmax(0, 1fr) 4rem; min-height: 8rem; }
+      .stack { scale: .52; }
+      .actions { align-items: flex-start; flex-direction: column; }
+      th, td { padding: .45rem .25rem; font-size: .78rem; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <a href="/">Re:Hub</a>
+      <button type="button" id="theme">Светлая тема</button>
+    </header>
+    <div class="hero">
+      <div>
+        <h1>Помощник по документам</h1>
+        <p>Тестовый режим. Синтетические данные.</p>
+      </div>
+      <div class="stack" aria-hidden="true"><span></span><span></span><span></span></div>
+    </div>
+    <form>
+      <label for="question">Вопрос помощнику</label>
+      <textarea id="question" maxlength="2000" required placeholder="Сколько оригиналов ждём от TST00001 за 3 квартал 2026?"></textarea>
+      <div class="actions">
+        <button type="submit">Отправить</button>
+        <div class="examples" role="group" aria-label="Примеры вопросов">
+          <button type="button" data-question="Сколько оригиналов ждём от TST00001 за 3 квартал 2026?">Нулевой долг</button>
+          <button type="button" data-question="За III квартал 2026 сколько не сдал клиент TST00002?">Нет среза</button>
+          <button type="button" data-question="Сколько оригиналов не передано по КЦР 7000022 за 3 квартал 2026?">Чужая запись</button>
+          <button type="button" data-question="К какому числу клиент с кодом КЦР 7000019 обещал передать оригиналы за 2026Q3?">Обещанный срок</button>
+        </div>
+      </div>
+    </form>
+    <section aria-label="Результат">
+      <p id="status" data-tone="info" role="status">Задайте вопрос или выберите пример.</p>
+      <div id="data"></div>
+      <p class="sources" id="sources" hidden></p>
+      <details hidden>
+        <summary>Технические детали</summary>
+        <pre id="result"></pre>
+      </details>
+    </section>
+  </main>
+  <script type="module">
+    import { connectThemeToggle } from "/composables/theme.js";
+
+    connectThemeToggle(document.querySelector("#theme"));
+    const form = document.querySelector("form");
+    const question = document.querySelector("#question");
+    const submit = form.querySelector('[type="submit"]');
+    const status = document.querySelector("#status");
+    const content = document.querySelector("#data");
+    const sources = document.querySelector("#sources");
+    const details = document.querySelector("details");
+    const result = document.querySelector("#result");
+
+    const clarification = {
+      missing_period: "Укажите отчётный период и год. Например, 2 квартал 2026.",
+      missing_client: "Укажите код КЦР или название клиента.",
+      ambiguous_deadline: "Уточните, о каком сроке речь. Например, об обещанной дате передачи оригиналов.",
+    };
+    const unsupported = {
+      document_content: "Поиск по текстам писем и документов пока недоступен.",
+      unsupported_filter: "Попробуйте указать количество непереданных оригиналов.",
+    };
+
+    function showStatus(text, tone) {
+      status.textContent = text;
+      status.dataset.tone = tone;
+    }
+
+    function periodLabel(code) {
+      const quarter = /^(\d{4})Q([1-4])$/.exec(code);
+      if (quarter) return `${quarter[2]} квартал ${quarter[1]}`;
+      const year = /^Y(\d{4})$/.exec(code);
+      return year ? year[1] + " год" : code;
+    }
+
+    function dateLabel(value) {
+      const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+      return match ? `${match[3]}.${match[2]}.${match[1]}` : value;
+    }
+
+    function appendText(parent, tag, value) {
+      const element = document.createElement(tag);
+      element.textContent = value;
+      parent.append(element);
+      return element;
+    }
+
+    function renderRecord(row) {
+      const fields = document.createElement("dl");
+      for (const [label, value] of [
+        ["Код КЦР", row.external_id],
+        ["Период", periodLabel(row.period_code)],
+        ["Дата среза", dateLabel(row.snapshot_date)],
+        ["Всего документов", row.total_docs],
+        ["Дата записи", dateLabel(row.recorded_at)],
+      ]) {
+        if (value == null || value === "") continue;
+        appendText(fields, "dt", label);
+        appendText(fields, "dd", value);
+      }
+      content.append(fields);
+    }
+
+    function renderTable(rows) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "table-wrap";
+      const table = document.createElement("table");
+      table.setAttribute("aria-label", "Клиенты с непереданными оригиналами");
+      const heading = table.createTHead().insertRow();
+      for (const label of ["Код КЦР", "Период", "Дата среза", "Не передано"]) {
+        appendText(heading, "th", label).scope = "col";
+      }
+      const body = table.createTBody();
+      for (const row of rows) {
+        const line = body.insertRow();
+        for (const value of [row.external_id, periodLabel(row.period_code), dateLabel(row.snapshot_date), row.unsent_docs]) {
+          line.insertCell().textContent = value ?? "";
+        }
+      }
+      wrapper.append(table);
+      content.append(wrapper);
+    }
+
+    function renderAnswer(payload) {
+      if (payload.status !== "ok") {
+        let message = payload.answer || "Не удалось получить ответ.";
+        if (payload.status === "clarify") message = clarification[payload.reason] ?? message;
+        if (payload.status === "unsupported") message = unsupported[payload.reason] ?? message;
+        showStatus(message, "attention");
+        return;
+      }
+
+      const rows = Array.isArray(payload.data) ? payload.data : [];
+      const row = rows[0];
+      const isList = rows.length > 1 || payload.answer?.startsWith("Найдено клиентов:");
+      let message = payload.answer || "Готово.";
+      if (isList && !row) message = "По этому условию клиенты не найдены.";
+      if (!isList && row?.unsent_docs === 0) message = "Непереданных оригиналов нет.";
+      if (!isList && row?.promised_on) message = `Обещанный срок: ${dateLabel(row.promised_on)}.`;
+      showStatus(message, "success");
+
+      if (isList && row) renderTable(rows);
+      else if (row) renderRecord(row);
+
+      if (Array.isArray(payload.sources) && payload.sources.length) {
+        const label = payload.sources.length === 1 ? "Источник" : "Источники";
+        sources.textContent = `${label}: ${payload.sources.join(", ")}`;
+        sources.hidden = false;
+      }
+    }
+
+    for (const example of form.querySelectorAll("[data-question]")) {
+      example.addEventListener("click", () => {
+        question.value = example.dataset.question;
+        question.focus();
+      });
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const query = question.value.trim();
+      if (!query || submit.disabled) return;
+      submit.disabled = true;
+      showStatus("Готовим ответ...", "info");
+      content.replaceChildren();
+      sources.hidden = true;
+      details.hidden = true;
+      details.open = false;
+      try {
+        const reply = await fetch("/api/ai/query", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query }),
+        });
+        const payload = await reply.json();
+        if (reply.ok) renderAnswer(payload);
+        else showStatus("Помощник недоступен. Попробуйте отправить вопрос ещё раз.", "attention");
+        result.textContent = JSON.stringify(payload, null, 2);
+        details.hidden = false;
+      } catch {
+        showStatus("Не удалось получить ответ. Проверьте контейнеры и Ollama.", "attention");
+      } finally {
+        submit.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

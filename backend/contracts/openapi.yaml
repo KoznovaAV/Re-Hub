@@ -214,16 +214,19 @@ paths:
   /ai/query:
     post:
       tags: [AI]
-      summary: Запрос к ИИ-помощнику
+      summary: Запрос к ИИ-помощнику в локальном демо
+      description: Маршрут включается явно и работает на синтетических данных от имени фиксированного тестового оператора.
+      security: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              additionalProperties: false
               required: [query]
               properties:
-                query: { type: string, example: "Покажи клиентов, которым пора позвонить" }
+                query: { type: string, minLength: 1, maxLength: 2000, example: "Сколько оригиналов ждём от TST00001 за 3 квартал 2026?" }
                 client_external_id: { type: string }
       responses:
         '200':
@@ -231,7 +234,11 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/AIResponse' }
-        '422': { $ref: '#/components/responses/BadRequest' }
+        '422': { description: Некорректные поля запроса }
+        '400': { description: Некорректное тело запроса }
+        '413': { description: Тело запроса превышает лимит }
+        '415': { description: Требуется application/json }
+        '502': { description: Ошибка Python или Ollama }
 
 components:
   securitySchemes:
@@ -339,8 +346,14 @@ components:
 
     AIResponse:
       type: object
+      required: [status, reason, answer, data, sources]
       properties:
+        status: { type: string, enum: [ok, clarify, unsupported, refused, unavailable, no_data] }
+        reason: { type: string, nullable: true }
         answer: { type: string }
-        sources:
+        data:
           type: array
           items: { type: object }
+        sources:
+          type: array
+          items: { type: string }

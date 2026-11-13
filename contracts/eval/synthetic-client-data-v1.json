@@ -1,0 +1,948 @@
+{
+  "version": 1,
+  "synthetic": true,
+  "clients": [
+    {
+      "external_id": "TST00001",
+      "key_mode": "anonymous",
+      "name": "Синтетический клиент 01",
+      "operator_id": "test-op-a"
+    },
+    {
+      "external_id": "TST00002",
+      "key_mode": "anonymous",
+      "name": "Синтетический клиент 02",
+      "operator_id": "test-op-a"
+    },
+    {
+      "external_id": "TST00003",
+      "key_mode": "anonymous",
+      "name": "Синтетический клиент 03",
+      "operator_id": "test-op-a"
+    },
+    {
+      "external_id": "TST00004",
+      "key_mode": "anonymous",
+      "name": "Синтетический клиент 04",
+      "operator_id": "test-op-a"
+    },
+    {
+      "external_id": "TST00005",
+      "key_mode": "anonymous",
+      "name": "Синтетический клиент 05",
+      "operator_id": "test-op-a"
+    },
+    {
+      "external_id": "TST00006",
+      "key_mode": "anonymous",
+      "name": "Синтетический клиент 06",
+      "operator_id": "test-op-a"
+    },
+    {
+      "external_id": "TST00007",
+      "key_mode": "anonymous",
+      "name": "Синтетический клиент 07",
+      "operator_id": "test-op-a"
+    },
+    {
+      "external_id": "TST00008",
+      "key_mode": "anonymous",
+      "name": "Синтетический клиент 08",
+      "operator_id": "test-op-a"
+    },
+    {
+      "external_id": "TST00009",
+      "key_mode": "anonymous",
+      "name": "Синтетический клиент 09",
+      "operator_id": "test-op-a"
+    },
+    {
+      "external_id": "TST00010",
+      "key_mode": "anonymous",
+      "name": "Синтетический клиент 10",
+      "operator_id": "test-op-a"
+    },
+    {
+      "external_id": "TST00011",
+      "key_mode": "anonymous",
+      "name": "Синтетический клиент 11",
+      "operator_id": "test-op-a"
+    },
+    {
+      "external_id": "TST00012",
+      "key_mode": "anonymous",
+      "name": "Синтетический клиент 12",
+      "operator_id": "test-op-a"
+    },
+    {
+      "external_id": "TST00013",
+      "key_mode": "anonymous",
+      "name": "Синтетический клиент 13",
+      "operator_id": "test-op-a"
+    },
+    {
+      "external_id": "TST00014",
+      "key_mode": "anonymous",
+      "name": "Синтетический клиент 14",
+      "operator_id": "test-op-a"
+    },
+    {
+      "external_id": "TST00015",
+      "key_mode": "anonymous",
+      "name": "Синтетический клиент 15",
+      "operator_id": "test-op-a"
+    },
+    {
+      "external_id": "7000016",
+      "key_mode": "kcr",
+      "name": "Синтетический клиент 16",
+      "operator_id": "test-op-a"
+    },
+    {
+      "external_id": "7000017",
+      "key_mode": "kcr",
+      "name": "Синтетический клиент 17",
+      "operator_id": "test-op-a"
+    },
+    {
+      "external_id": "7000018",
+      "key_mode": "kcr",
+      "name": "Синтетический клиент 18",
+      "operator_id": "test-op-a"
+    },
+    {
+      "external_id": "7000019",
+      "key_mode": "kcr",
+      "name": "Синтетический клиент 19",
+      "operator_id": "test-op-a"
+    },
+    {
+      "external_id": "7000020",
+      "key_mode": "kcr",
+      "name": "Синтетический клиент 20",
+      "operator_id": "test-op-a"
+    },
+    {
+      "external_id": "7000021",
+      "key_mode": "kcr",
+      "name": "Синтетический клиент 21",
+      "operator_id": "test-op-b"
+    },
+    {
+      "external_id": "7000022",
+      "key_mode": "kcr",
+      "name": "Синтетический клиент 22",
+      "operator_id": "test-op-b"
+    },
+    {
+      "external_id": "7000023",
+      "key_mode": "kcr",
+      "name": "Синтетический клиент 23",
+      "operator_id": "test-op-b"
+    },
+    {
+      "external_id": "7000024",
+      "key_mode": "kcr",
+      "name": "Синтетический клиент 24",
+      "operator_id": "test-op-b"
+    },
+    {
+      "external_id": "7000025",
+      "key_mode": "kcr",
+      "name": "Синтетический клиент 25",
+      "operator_id": "test-op-b"
+    },
+    {
+      "external_id": "7000026",
+      "key_mode": "kcr",
+      "name": "Синтетический клиент 26",
+      "operator_id": "test-op-b"
+    },
+    {
+      "external_id": "7000027",
+      "key_mode": "kcr",
+      "name": "Синтетический клиент 27",
+      "operator_id": "test-op-b"
+    },
+    {
+      "external_id": "7000028",
+      "key_mode": "kcr",
+      "name": "Синтетический клиент 28",
+      "operator_id": "test-op-b"
+    },
+    {
+      "external_id": "7000029",
+      "key_mode": "kcr",
+      "name": "Синтетический клиент 29",
+      "operator_id": "test-op-b"
+    },
+    {
+      "external_id": "7000030",
+      "key_mode": "kcr",
+      "name": "Синтетический клиент 30",
+      "operator_id": "test-op-b"
+    }
+  ],
+  "snapshots": [
+    {
+      "external_id": "TST00001",
+      "period_code": "2026Q1",
+      "snapshot_date": "2026-04-20",
+      "total_docs": 14,
+      "unsent_docs": 1,
+      "source_id": "test-slice-2026-04-20"
+    },
+    {
+      "external_id": "TST00001",
+      "period_code": "2026Q2",
+      "snapshot_date": "2026-07-20",
+      "total_docs": 15,
+      "unsent_docs": 2,
+      "source_id": "test-slice-2026-07-20"
+    },
+    {
+      "external_id": "TST00001",
+      "period_code": "2026Q3",
+      "snapshot_date": "2026-10-20",
+      "total_docs": 16,
+      "unsent_docs": 0,
+      "source_id": "test-slice-2026-10-20"
+    },
+    {
+      "external_id": "TST00002",
+      "period_code": "2026Q1",
+      "snapshot_date": "2026-04-20",
+      "total_docs": 17,
+      "unsent_docs": 2,
+      "source_id": "test-slice-2026-04-20"
+    },
+    {
+      "external_id": "TST00002",
+      "period_code": "2026Q2",
+      "snapshot_date": "2026-07-20",
+      "total_docs": 18,
+      "unsent_docs": 4,
+      "source_id": "test-slice-2026-07-20"
+    },
+    {
+      "external_id": "TST00003",
+      "period_code": "2026Q1",
+      "snapshot_date": "2026-04-20",
+      "total_docs": 20,
+      "unsent_docs": 3,
+      "source_id": "test-slice-2026-04-20"
+    },
+    {
+      "external_id": "TST00003",
+      "period_code": "2026Q2",
+      "snapshot_date": "2026-07-20",
+      "total_docs": 21,
+      "unsent_docs": 6,
+      "source_id": "test-slice-2026-07-20"
+    },
+    {
+      "external_id": "TST00003",
+      "period_code": "2026Q3",
+      "snapshot_date": "2026-10-20",
+      "total_docs": 22,
+      "unsent_docs": 9,
+      "source_id": "test-slice-2026-10-20"
+    },
+    {
+      "external_id": "TST00004",
+      "period_code": "2026Q1",
+      "snapshot_date": "2026-04-20",
+      "total_docs": 23,
+      "unsent_docs": 4,
+      "source_id": "test-slice-2026-04-20"
+    },
+    {
+      "external_id": "TST00004",
+      "period_code": "2026Q2",
+      "snapshot_date": "2026-07-20",
+      "total_docs": 24,
+      "unsent_docs": 8,
+      "source_id": "test-slice-2026-07-20"
+    },
+    {
+      "external_id": "TST00004",
+      "period_code": "2026Q3",
+      "snapshot_date": "2026-10-20",
+      "total_docs": 25,
+      "unsent_docs": 12,
+      "source_id": "test-slice-2026-10-20"
+    },
+    {
+      "external_id": "TST00005",
+      "period_code": "2026Q1",
+      "snapshot_date": "2026-04-20",
+      "total_docs": 26,
+      "unsent_docs": 5,
+      "source_id": "test-slice-2026-04-20"
+    },
+    {
+      "external_id": "TST00005",
+      "period_code": "2026Q2",
+      "snapshot_date": "2026-07-20",
+      "total_docs": 27,
+      "unsent_docs": 10,
+      "source_id": "test-slice-2026-07-20"
+    },
+    {
+      "external_id": "TST00005",
+      "period_code": "2026Q3",
+      "snapshot_date": "2026-10-20",
+      "total_docs": 0,
+      "unsent_docs": 0,
+      "source_id": "test-slice-2026-10-20"
+    },
+    {
+      "external_id": "TST00006",
+      "period_code": "2026Q1",
+      "snapshot_date": "2026-04-20",
+      "total_docs": 29,
+      "unsent_docs": 6,
+      "source_id": "test-slice-2026-04-20"
+    },
+    {
+      "external_id": "TST00006",
+      "period_code": "2026Q2",
+      "snapshot_date": "2026-07-20",
+      "total_docs": 30,
+      "unsent_docs": 12,
+      "source_id": "test-slice-2026-07-20"
+    },
+    {
+      "external_id": "TST00006",
+      "period_code": "2026Q3",
+      "snapshot_date": "2026-10-20",
+      "total_docs": 10,
+      "unsent_docs": 7,
+      "source_id": "test-slice-2026-10-20"
+    },
+    {
+      "external_id": "TST00007",
+      "period_code": "2026Q1",
+      "snapshot_date": "2026-04-20",
+      "total_docs": 11,
+      "unsent_docs": 7,
+      "source_id": "test-slice-2026-04-20"
+    },
+    {
+      "external_id": "TST00007",
+      "period_code": "2026Q2",
+      "snapshot_date": "2026-07-20",
+      "total_docs": 12,
+      "unsent_docs": 1,
+      "source_id": "test-slice-2026-07-20"
+    },
+    {
+      "external_id": "TST00007",
+      "period_code": "2026Q3",
+      "snapshot_date": "2026-10-20",
+      "total_docs": 13,
+      "unsent_docs": 7,
+      "source_id": "test-slice-2026-10-20"
+    },
+    {
+      "external_id": "TST00008",
+      "period_code": "2026Q2",
+      "snapshot_date": "2026-07-20",
+      "total_docs": 15,
+      "unsent_docs": 0,
+      "source_id": "test-slice-2026-07-20"
+    },
+    {
+      "external_id": "TST00008",
+      "period_code": "2026Q3",
+      "snapshot_date": "2026-10-20",
+      "total_docs": 16,
+      "unsent_docs": 7,
+      "source_id": "test-slice-2026-10-20"
+    },
+    {
+      "external_id": "TST00009",
+      "period_code": "2026Q1",
+      "snapshot_date": "2026-04-20",
+      "total_docs": 17,
+      "unsent_docs": 9,
+      "source_id": "test-slice-2026-04-20"
+    },
+    {
+      "external_id": "TST00009",
+      "period_code": "2026Q2",
+      "snapshot_date": "2026-07-20",
+      "total_docs": 18,
+      "unsent_docs": 18,
+      "source_id": "test-slice-2026-07-20"
+    },
+    {
+      "external_id": "TST00009",
+      "period_code": "2026Q3",
+      "snapshot_date": "2026-10-20",
+      "total_docs": 19,
+      "unsent_docs": 7,
+      "source_id": "test-slice-2026-10-20"
+    },
+    {
+      "external_id": "TST00010",
+      "period_code": "2026Q1",
+      "snapshot_date": "2026-04-20",
+      "total_docs": 20,
+      "unsent_docs": 10,
+      "source_id": "test-slice-2026-04-20"
+    },
+    {
+      "external_id": "TST00010",
+      "period_code": "2026Q2",
+      "snapshot_date": "2026-07-20",
+      "total_docs": 21,
+      "unsent_docs": 20,
+      "source_id": "test-slice-2026-07-20"
+    },
+    {
+      "external_id": "TST00010",
+      "period_code": "2026Q3",
+      "snapshot_date": "2026-10-20",
+      "total_docs": 22,
+      "unsent_docs": 7,
+      "source_id": "test-slice-2026-10-20"
+    },
+    {
+      "external_id": "TST00011",
+      "period_code": "2026Q1",
+      "snapshot_date": "2026-04-20",
+      "total_docs": 23,
+      "unsent_docs": 11,
+      "source_id": "test-slice-2026-04-20"
+    },
+    {
+      "external_id": "TST00011",
+      "period_code": "2026Q2",
+      "snapshot_date": "2026-07-20",
+      "total_docs": 24,
+      "unsent_docs": 22,
+      "source_id": "test-slice-2026-07-20"
+    },
+    {
+      "external_id": "TST00011",
+      "period_code": "2026Q3",
+      "snapshot_date": "2026-10-20",
+      "total_docs": 25,
+      "unsent_docs": 7,
+      "source_id": "test-slice-2026-10-20"
+    },
+    {
+      "external_id": "TST00012",
+      "period_code": "2026Q1",
+      "snapshot_date": "2026-04-20",
+      "total_docs": 26,
+      "unsent_docs": 12,
+      "source_id": "test-slice-2026-04-20"
+    },
+    {
+      "external_id": "TST00012",
+      "period_code": "2026Q2",
+      "snapshot_date": "2026-07-20",
+      "total_docs": 27,
+      "unsent_docs": 24,
+      "source_id": "test-slice-2026-07-20"
+    },
+    {
+      "external_id": "TST00012",
+      "period_code": "2026Q3",
+      "snapshot_date": "2026-10-20",
+      "total_docs": 28,
+      "unsent_docs": 7,
+      "source_id": "test-slice-2026-10-20"
+    },
+    {
+      "external_id": "TST00013",
+      "period_code": "2026Q1",
+      "snapshot_date": "2026-04-20",
+      "total_docs": 29,
+      "unsent_docs": 13,
+      "source_id": "test-slice-2026-04-20"
+    },
+    {
+      "external_id": "TST00013",
+      "period_code": "2026Q2",
+      "snapshot_date": "2026-07-20",
+      "total_docs": 30,
+      "unsent_docs": 26,
+      "source_id": "test-slice-2026-07-20"
+    },
+    {
+      "external_id": "TST00013",
+      "period_code": "2026Q3",
+      "snapshot_date": "2026-10-20",
+      "total_docs": 10,
+      "unsent_docs": 6,
+      "source_id": "test-slice-2026-10-20"
+    },
+    {
+      "external_id": "TST00014",
+      "period_code": "2026Q1",
+      "snapshot_date": "2026-04-20",
+      "total_docs": 11,
+      "unsent_docs": 2,
+      "source_id": "test-slice-2026-04-20"
+    },
+    {
+      "external_id": "TST00014",
+      "period_code": "2026Q2",
+      "snapshot_date": "2026-07-20",
+      "total_docs": 12,
+      "unsent_docs": 2,
+      "source_id": "test-slice-2026-07-20"
+    },
+    {
+      "external_id": "TST00014",
+      "period_code": "2026Q3",
+      "snapshot_date": "2026-10-20",
+      "total_docs": 13,
+      "unsent_docs": 0,
+      "source_id": "test-slice-2026-10-20"
+    },
+    {
+      "external_id": "TST00015",
+      "period_code": "2026Q1",
+      "snapshot_date": "2026-04-20",
+      "total_docs": 14,
+      "unsent_docs": 0,
+      "source_id": "test-slice-2026-04-20"
+    },
+    {
+      "external_id": "TST00015",
+      "period_code": "2026Q2",
+      "snapshot_date": "2026-07-20",
+      "total_docs": 15,
+      "unsent_docs": 14,
+      "source_id": "test-slice-2026-07-20"
+    },
+    {
+      "external_id": "TST00015",
+      "period_code": "2026Q3",
+      "snapshot_date": "2026-10-20",
+      "total_docs": 16,
+      "unsent_docs": 11,
+      "source_id": "test-slice-2026-10-20"
+    },
+    {
+      "external_id": "7000016",
+      "period_code": "2026Q2",
+      "snapshot_date": "2026-07-20",
+      "total_docs": 18,
+      "unsent_docs": 13,
+      "source_id": "test-slice-2026-07-20"
+    },
+    {
+      "external_id": "7000016",
+      "period_code": "2026Q3",
+      "snapshot_date": "2026-10-20",
+      "total_docs": 19,
+      "unsent_docs": 8,
+      "source_id": "test-slice-2026-10-20"
+    },
+    {
+      "external_id": "7000017",
+      "period_code": "2026Q1",
+      "snapshot_date": "2026-04-20",
+      "total_docs": 20,
+      "unsent_docs": 17,
+      "source_id": "test-slice-2026-04-20"
+    },
+    {
+      "external_id": "7000017",
+      "period_code": "2026Q2",
+      "snapshot_date": "2026-07-20",
+      "total_docs": 21,
+      "unsent_docs": 12,
+      "source_id": "test-slice-2026-07-20"
+    },
+    {
+      "external_id": "7000017",
+      "period_code": "2026Q3",
+      "snapshot_date": "2026-10-20",
+      "total_docs": 22,
+      "unsent_docs": 5,
+      "source_id": "test-slice-2026-10-20"
+    },
+    {
+      "external_id": "7000018",
+      "period_code": "2026Q1",
+      "snapshot_date": "2026-04-20",
+      "total_docs": 23,
+      "unsent_docs": 18,
+      "source_id": "test-slice-2026-04-20"
+    },
+    {
+      "external_id": "7000018",
+      "period_code": "2026Q2",
+      "snapshot_date": "2026-07-20",
+      "total_docs": 24,
+      "unsent_docs": 11,
+      "source_id": "test-slice-2026-07-20"
+    },
+    {
+      "external_id": "7000018",
+      "period_code": "2026Q3",
+      "snapshot_date": "2026-10-20",
+      "total_docs": 25,
+      "unsent_docs": 2,
+      "source_id": "test-slice-2026-10-20"
+    },
+    {
+      "external_id": "7000019",
+      "period_code": "2026Q1",
+      "snapshot_date": "2026-04-20",
+      "total_docs": 26,
+      "unsent_docs": 19,
+      "source_id": "test-slice-2026-04-20"
+    },
+    {
+      "external_id": "7000019",
+      "period_code": "2026Q2",
+      "snapshot_date": "2026-07-20",
+      "total_docs": 27,
+      "unsent_docs": 10,
+      "source_id": "test-slice-2026-07-20"
+    },
+    {
+      "external_id": "7000019",
+      "period_code": "2026Q3",
+      "snapshot_date": "2026-10-20",
+      "total_docs": 28,
+      "unsent_docs": 28,
+      "source_id": "test-slice-2026-10-20"
+    },
+    {
+      "external_id": "7000020",
+      "period_code": "2026Q1",
+      "snapshot_date": "2026-04-20",
+      "total_docs": 29,
+      "unsent_docs": 20,
+      "source_id": "test-slice-2026-04-20"
+    },
+    {
+      "external_id": "7000020",
+      "period_code": "2026Q2",
+      "snapshot_date": "2026-07-20",
+      "total_docs": 30,
+      "unsent_docs": 9,
+      "source_id": "test-slice-2026-07-20"
+    },
+    {
+      "external_id": "7000020",
+      "period_code": "2026Q3",
+      "snapshot_date": "2026-10-20",
+      "total_docs": 10,
+      "unsent_docs": 5,
+      "source_id": "test-slice-2026-10-20"
+    },
+    {
+      "external_id": "7000021",
+      "period_code": "2026Q1",
+      "snapshot_date": "2026-04-20",
+      "total_docs": 11,
+      "unsent_docs": 9,
+      "source_id": "test-slice-2026-04-20"
+    },
+    {
+      "external_id": "7000021",
+      "period_code": "2026Q2",
+      "snapshot_date": "2026-07-20",
+      "total_docs": 12,
+      "unsent_docs": 3,
+      "source_id": "test-slice-2026-07-20"
+    },
+    {
+      "external_id": "7000021",
+      "period_code": "2026Q3",
+      "snapshot_date": "2026-10-20",
+      "total_docs": 13,
+      "unsent_docs": 7,
+      "source_id": "test-slice-2026-10-20"
+    },
+    {
+      "external_id": "7000022",
+      "period_code": "2026Q1",
+      "snapshot_date": "2026-04-20",
+      "total_docs": 14,
+      "unsent_docs": 7,
+      "source_id": "test-slice-2026-04-20"
+    },
+    {
+      "external_id": "7000022",
+      "period_code": "2026Q2",
+      "snapshot_date": "2026-07-20",
+      "total_docs": 15,
+      "unsent_docs": 12,
+      "source_id": "test-slice-2026-07-20"
+    },
+    {
+      "external_id": "7000022",
+      "period_code": "2026Q3",
+      "snapshot_date": "2026-10-20",
+      "total_docs": 16,
+      "unsent_docs": 15,
+      "source_id": "test-slice-2026-10-20"
+    },
+    {
+      "external_id": "7000023",
+      "period_code": "2026Q1",
+      "snapshot_date": "2026-04-20",
+      "total_docs": 17,
+      "unsent_docs": 5,
+      "source_id": "test-slice-2026-04-20"
+    },
+    {
+      "external_id": "7000023",
+      "period_code": "2026Q2",
+      "snapshot_date": "2026-07-20",
+      "total_docs": 18,
+      "unsent_docs": 8,
+      "source_id": "test-slice-2026-07-20"
+    },
+    {
+      "external_id": "7000023",
+      "period_code": "2026Q3",
+      "snapshot_date": "2026-10-20",
+      "total_docs": 19,
+      "unsent_docs": 9,
+      "source_id": "test-slice-2026-10-20"
+    },
+    {
+      "external_id": "7000024",
+      "period_code": "2026Q2",
+      "snapshot_date": "2026-07-20",
+      "total_docs": 21,
+      "unsent_docs": 4,
+      "source_id": "test-slice-2026-07-20"
+    },
+    {
+      "external_id": "7000024",
+      "period_code": "2026Q3",
+      "snapshot_date": "2026-10-20",
+      "total_docs": 22,
+      "unsent_docs": 3,
+      "source_id": "test-slice-2026-10-20"
+    },
+    {
+      "external_id": "7000025",
+      "period_code": "2026Q1",
+      "snapshot_date": "2026-04-20",
+      "total_docs": 23,
+      "unsent_docs": 1,
+      "source_id": "test-slice-2026-04-20"
+    },
+    {
+      "external_id": "7000025",
+      "period_code": "2026Q2",
+      "snapshot_date": "2026-07-20",
+      "total_docs": 24,
+      "unsent_docs": 0,
+      "source_id": "test-slice-2026-07-20"
+    },
+    {
+      "external_id": "7000025",
+      "period_code": "2026Q3",
+      "snapshot_date": "2026-10-20",
+      "total_docs": 25,
+      "unsent_docs": 23,
+      "source_id": "test-slice-2026-10-20"
+    },
+    {
+      "external_id": "7000026",
+      "period_code": "2026Q1",
+      "snapshot_date": "2026-04-20",
+      "total_docs": 26,
+      "unsent_docs": 26,
+      "source_id": "test-slice-2026-04-20"
+    },
+    {
+      "external_id": "7000026",
+      "period_code": "2026Q2",
+      "snapshot_date": "2026-07-20",
+      "total_docs": 27,
+      "unsent_docs": 24,
+      "source_id": "test-slice-2026-07-20"
+    },
+    {
+      "external_id": "7000026",
+      "period_code": "2026Q3",
+      "snapshot_date": "2026-10-20",
+      "total_docs": 28,
+      "unsent_docs": 20,
+      "source_id": "test-slice-2026-10-20"
+    },
+    {
+      "external_id": "7000027",
+      "period_code": "2026Q1",
+      "snapshot_date": "2026-04-20",
+      "total_docs": 29,
+      "unsent_docs": 27,
+      "source_id": "test-slice-2026-04-20"
+    },
+    {
+      "external_id": "7000027",
+      "period_code": "2026Q2",
+      "snapshot_date": "2026-07-20",
+      "total_docs": 30,
+      "unsent_docs": 23,
+      "source_id": "test-slice-2026-07-20"
+    },
+    {
+      "external_id": "7000027",
+      "period_code": "2026Q3",
+      "snapshot_date": "2026-10-20",
+      "total_docs": 10,
+      "unsent_docs": 4,
+      "source_id": "test-slice-2026-10-20"
+    },
+    {
+      "external_id": "7000028",
+      "period_code": "2026Q1",
+      "snapshot_date": "2026-04-20",
+      "total_docs": 11,
+      "unsent_docs": 4,
+      "source_id": "test-slice-2026-04-20"
+    },
+    {
+      "external_id": "7000028",
+      "period_code": "2026Q2",
+      "snapshot_date": "2026-07-20",
+      "total_docs": 12,
+      "unsent_docs": 4,
+      "source_id": "test-slice-2026-07-20"
+    },
+    {
+      "external_id": "7000028",
+      "period_code": "2026Q3",
+      "snapshot_date": "2026-10-20",
+      "total_docs": 13,
+      "unsent_docs": 0,
+      "source_id": "test-slice-2026-10-20"
+    },
+    {
+      "external_id": "7000029",
+      "period_code": "2026Q1",
+      "snapshot_date": "2026-04-20",
+      "total_docs": 14,
+      "unsent_docs": 14,
+      "source_id": "test-slice-2026-04-20"
+    },
+    {
+      "external_id": "7000029",
+      "period_code": "2026Q2",
+      "snapshot_date": "2026-07-20",
+      "total_docs": 15,
+      "unsent_docs": 10,
+      "source_id": "test-slice-2026-07-20"
+    },
+    {
+      "external_id": "7000029",
+      "period_code": "2026Q3",
+      "snapshot_date": "2026-10-20",
+      "total_docs": 16,
+      "unsent_docs": 2,
+      "source_id": "test-slice-2026-10-20"
+    },
+    {
+      "external_id": "7000030",
+      "period_code": "2026Q1",
+      "snapshot_date": "2026-04-20",
+      "total_docs": 17,
+      "unsent_docs": 12,
+      "source_id": "test-slice-2026-04-20"
+    },
+    {
+      "external_id": "7000030",
+      "period_code": "2026Q2",
+      "snapshot_date": "2026-07-20",
+      "total_docs": 18,
+      "unsent_docs": 3,
+      "source_id": "test-slice-2026-07-20"
+    },
+    {
+      "external_id": "7000030",
+      "period_code": "2026Q3",
+      "snapshot_date": "2026-10-20",
+      "total_docs": 19,
+      "unsent_docs": 10,
+      "source_id": "test-slice-2026-10-20"
+    }
+  ],
+  "promises": [
+    {
+      "external_id": "TST00001",
+      "period_code": "2026Q3",
+      "recorded_at": "2026-10-23",
+      "promised_on": "2026-11-11",
+      "source_id": "test-call-01"
+    },
+    {
+      "external_id": "TST00004",
+      "period_code": "2026Q3",
+      "recorded_at": "2026-10-23",
+      "promised_on": "2026-11-14",
+      "source_id": "test-call-04"
+    },
+    {
+      "external_id": "TST00007",
+      "period_code": "2026Q3",
+      "recorded_at": "2026-10-23",
+      "promised_on": "2026-11-17",
+      "source_id": "test-call-07"
+    },
+    {
+      "external_id": "TST00010",
+      "period_code": "2026Q3",
+      "recorded_at": "2026-10-23",
+      "promised_on": "2026-11-20",
+      "source_id": "test-call-10"
+    },
+    {
+      "external_id": "TST00013",
+      "period_code": "2026Q3",
+      "recorded_at": "2026-10-23",
+      "promised_on": "2026-11-23",
+      "source_id": "test-call-13"
+    },
+    {
+      "external_id": "7000016",
+      "period_code": "2026Q3",
+      "recorded_at": "2026-10-23",
+      "promised_on": "2026-11-26",
+      "source_id": "test-call-16"
+    },
+    {
+      "external_id": "7000019",
+      "period_code": "2026Q3",
+      "recorded_at": "2026-10-23",
+      "promised_on": "2026-11-29",
+      "source_id": "test-call-19"
+    },
+    {
+      "external_id": "7000022",
+      "period_code": "2026Q3",
+      "recorded_at": "2026-10-23",
+      "promised_on": "2026-11-12",
+      "source_id": "test-call-22"
+    },
+    {
+      "external_id": "7000025",
+      "period_code": "2026Q3",
+      "recorded_at": "2026-10-23",
+      "promised_on": "2026-11-15",
+      "source_id": "test-call-25"
+    },
+    {
+      "external_id": "7000028",
+      "period_code": "2026Q3",
+      "recorded_at": "2026-10-23",
+      "promised_on": "2026-11-18",
+      "source_id": "test-call-28"
+    }
+  ]
+}
