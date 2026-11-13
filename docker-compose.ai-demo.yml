@@ -1,0 +1,14 @@
+services:
+  ai-service:
+    build:
+      context: .
+      dockerfile: ai-service/Dockerfile.demo
+    environment:
+      REHUB_AI_DEMO: "1"
+      OLLAMA_BASE_URL: "${OLLAMA_BASE_URL:-http://host.docker.internal:11434}"
+      OLLAMA_MODEL: "${OLLAMA_MODEL:-qwen3:4b}"
+  backend:
+    environment:
+      REHUB_AI_DEMO: "1"
+    ports:
+      - "127.0.0.1:${AI_DEMO_PORT:-8080}:8080"

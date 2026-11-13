@@ -41,3 +41,24 @@ python -m app.ml_intent_eval ../contracts/eval/intent-cases-v1.jsonl --warmup > 
 В `contracts/eval/synthetic-client-data-v1.json` лежат 30 вымышленных клиентов, 86 наблюдений за три квартала и 10 обещанных сроков. Это фикстура для тестов чтения, в которой объединены оба режима ключей. Для импорта каждый режим проверяется отдельным файлом.
 
 В `contracts/eval/intent-synthetic-v1.jsonl` поле `expected` задаёт ожидаемый разбор вопроса. Дополнительное поле `expected_read` задаёт результат для будущей проверки Go от имени указанного тестового оператора. В нём различаются нулевой долг, отсутствующее наблюдение, пустой список и недоступная запись. Статус `unavailable` обозначает отсутствие доступной записи в тесте и не задаёт HTTP-статус. Текущий runner проверяет только `expected`.
+
+## Локальный сквозной запуск через Go
+
+Дополнительный файл Compose включает `POST /ai/query` для синтетических данных. Запросы исполняются от имени фиксированного тестового оператора `test-op-a`. Поле `client_external_id` может только сузить выборку. Серверная авторизация и чтение из PostgreSQL потребуются для работы с данными заказчика.
+
+Из корня проекта в PowerShell с Docker Desktop и запущенным Ollama:
+
+```powershell
+ollama list
+docker compose -f docker-compose.yml -f docker-compose.ai-demo.yml up --build -d --wait
+$body = @{ query = 'Сколько оригиналов ждём от TST00001 за 3 квартал 2026?' } | ConvertTo-Json -Compress
+Invoke-RestMethod http://127.0.0.1:8080/ai/query -Method Post -ContentType 'application/json; charset=utf-8' -Body ([Text.Encoding]::UTF8.GetBytes($body)) | ConvertTo-Json -Depth 6
+```
+
+Для проверки четырёх сценариев из корня проекта запустите `py -3 scripts/smoke-ai-query.py`.
+
+В ответе для `TST00001` ожидаются `status: ok`, `unsent_docs: 0` и источник `test-slice-2026-10-20`. Для `TST00002` ожидается `no_data`. Остальные сценарии перечислены в `intent-synthetic-v1.jsonl`. Если сервис возвращает 502, проверьте запуск Ollama, наличие модели `qwen3:4b` и доступность Ollama из Docker. Адрес можно задать через `OLLAMA_BASE_URL`.
+
+```powershell
+docker compose -f docker-compose.yml -f docker-compose.ai-demo.yml down
+```

@@ -16,6 +16,23 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def handle_query(self, payload):
+        from ai_query import answer
+        from ml_intent import IntentError, ProviderError, QuestionError
+
+        if (not isinstance(payload, dict) or set(payload) - {"query", "client_external_id"}
+                or not isinstance(payload.get("client_external_id", ""), str)):
+            self.send_json(422, {"error": "invalid_query"})
+            return
+        try:
+            result = answer(payload.get("query"), payload.get("client_external_id"))
+        except QuestionError:
+            self.send_json(422, {"error": "invalid_query"})
+        except (IntentError, ProviderError):
+            self.send_json(502, {"error": "model_unavailable_or_invalid"})
+        else:
+            self.send_json(200, result)
+
     def do_GET(self):
         if self.path == "/health":
             self.send_json(200, {"status": "ok", "service": "python"})
@@ -23,7 +40,8 @@ class Handler(BaseHTTPRequestHandler):
         self.send_json(404, {"error": "not_found"})
 
     def do_POST(self):
-        if self.path != "/probe":
+        is_query = self.path == "/ai/query" and os.environ.get("REHUB_AI_DEMO") == "1"
+        if self.path != "/probe" and not is_query:
             self.send_json(404, {"error": "not_found"})
             return
         if self.headers.get_content_type() != "application/json":
@@ -31,11 +49,14 @@ class Handler(BaseHTTPRequestHandler):
             return
         try:
             length = int(self.headers.get("Content-Length", "0"))
-            if not 0 < length <= 4096:
+            if not 0 < length <= (32768 if is_query else 4096):
                 raise ValueError
             payload = json.loads(self.rfile.read(length))
         except (ValueError, TimeoutError):
             self.send_json(400, {"error": "invalid_json"})
+            return
+        if is_query:
+            self.handle_query(payload)
             return
         if (
             not isinstance(payload, dict)
