@@ -3,6 +3,7 @@
 from functools import lru_cache
 import json
 import os
+import re
 import time
 
 from doc_qa import answer_docs
@@ -11,6 +12,7 @@ from ml_intent import ROOT, ProviderTimeout, load_periods, predict
 
 # Codespaces может выполнять модель на CPU. Внешние прокси ждут дольше.
 DEMO_OLLAMA_TIMEOUT = 90
+CLIENT_CODE = re.compile(r"\b(?:[A-Z]{3}[0-9]{5}|[0-9]{7})\b", re.IGNORECASE)
 
 
 @lru_cache(maxsize=1)
@@ -29,7 +31,9 @@ def answer(question, client_external_id):
         "timeout": DEMO_OLLAMA_TIMEOUT,
     }
     started = time.monotonic()
-    intent = predict(question, periods=load_periods(), allow_docs=True, **options)
+    # При явном коде модель выбирает действие по клиенту, а не поиск по регламентам.
+    has_client_code = isinstance(question, str) and CLIENT_CODE.search(question) is not None
+    intent = predict(question, periods=load_periods(), allow_docs=not has_client_code, **options)
     if intent["intent"] == "search_docs":
         remaining = DEMO_OLLAMA_TIMEOUT - (time.monotonic() - started)
         if remaining <= 0:
