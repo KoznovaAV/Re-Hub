@@ -2,7 +2,7 @@
 
 Re:Hub помогает администратору и оператору КЦР контролировать передачу оригиналов документов. Целевой сценарий: администратор загружает срез, сравнивает динамику по периодам и формирует список на обзвон. Оператор фиксирует результат звонка и видит историю клиента.
 
-## Что доступно в спринте 2
+## Что доступно в прототипе
 
 | Функция | Состояние | Как посмотреть |
 |---|---|---|
@@ -28,41 +28,69 @@ Re:Hub помогает администратору и оператору КЦ�
 | [`docker-compose.yml`](docker-compose.yml) | Сборка, сеть и проверки доступности трёх компонентов |
 | [`scripts/smoke.mjs`](scripts/smoke.mjs) | Проверка страницы, Go API и 10 JSON-запросов |
 
-## Как запустить
+## Как запустить через Docker
 
-Нужны Git и Docker с Compose v2, поддерживающим `up --wait`. Compose собирает образы с Go 1.25, Python 3.12 и Node.js 22. Скелет использует стандартные библиотеки. При первой сборке Docker скачивает базовые образы.
+Для локальной работы нужны Git и запущенный Docker Desktop (Windows/macOS) или Docker Engine с плагином Compose v2 (Linux). Проверить, что Docker запущен и Compose доступен, можно командами `docker info` и `docker compose version`. Для запуска нужны Compose v2 с поддержкой `up --wait` и доступ к реестру образов при первой сборке.
+
+### Первый запуск
 
 ```bash
-git clone https://github.com/KoznovaAV/Re-Hub.git
+git clone --branch main https://github.com/KoznovaAV/Re-Hub.git
 cd Re-Hub
 docker compose up --build -d --wait
 docker compose ps
-docker compose exec -T frontend node --input-type=module - < scripts/smoke.mjs
 ```
 
-Откройте http://127.0.0.1:3000/. Ожидаемая строка smoke-проверки: `OK: интерфейс и Go доступны, JSON Go → Python: 10/10.` В PowerShell проверку можно запустить так:
+Compose собирает фронтенд, Go API и Python-сервис. Откройте [главную](http://127.0.0.1:3000/). В обычном режиме доступны главная, клиенты, карточки, рабочая очередь, история и экран импорта. Действия выполняются на демо-данных в памяти браузера, включая имитацию импорта Excel. После перезагрузки страницы изменения сбрасываются. Базовому запуску не нужны Ollama, PostgreSQL, ключи или файлы заказчика.
+
+### Проверка запуска
+
+PowerShell:
 
 ```powershell
 Get-Content -Raw scripts/smoke.mjs | docker compose exec -T frontend node --input-type=module -
 ```
 
-При установленном Make команды из корня — `make up`, `make smoke` и `make down`. Команда `make smoke-recovery` проверяет отказ Python, запускает его снова и повторяет smoke.
+Bash:
+
+```bash
+docker compose exec -T frontend node --input-type=module - < scripts/smoke.mjs
+```
+
+Ожидаемый результат - 10 из 10 успешных JSON-запросов через Go и Python. При установленном Make можно использовать `make up`, `make smoke` и `make down`.
+
+### Обновление и остановка
+
+В рабочей копии с чистой веткой `main`:
+
+```bash
+git switch main
+git pull --ff-only origin main
+docker compose up --build -d --wait
+```
+
+Чтобы остановить контейнеры, выполните `docker compose down`. Если сервис не запустился, посмотрите `docker compose ps -a` и `docker compose logs --tail=80`. Если порт 3000 занят, добавьте `WEB_PORT=3001` в локальный `.env` в корне репозитория, повторите запуск и откройте [порт 3001](http://127.0.0.1:3001/).
 
 ### Демо интерфейса с помощником
 
-Обычный запуск открывает главную, список клиентов, карточки, рабочую очередь, историю и экран импорта. Сценарии этих экранов выполняются на демо-данных в браузере и сбрасываются при перезагрузке. Экран импорта имитирует разбор XLSX и подтверждение.
-
-На Windows с запущенным Ollama и скачанной моделью `qwen3:4b` можно подключить помощника к тому же интерфейсу:
+На Windows запустите Ollama и один раз скачайте модель командой `ollama pull qwen3:4b`. Затем из корня репозитория выполните в PowerShell:
 
 ```powershell
 $env:WEB_PORT = "3002"
 $env:AI_DEMO_PORT = "8082"
 docker compose -f docker-compose.yml -f docker-compose.ai-demo.yml up --build -d --wait
 Start-Process "http://127.0.0.1:3002/"
-py -3 -X utf8 scripts/smoke-ai-query.py --url http://127.0.0.1:3002/api/ai/query
 ```
 
 Откройте «Тест помощника» в боковом меню. Запросы проходят через Node, Go и Python к Ollama. Помощник использует отдельный набор синтетических клиентов для тестового оператора. Смена роли и изменения в основных экранах на ответы помощника не влияют.
+
+Для smoke-проверки помощника установите Python 3 и выполните:
+
+```powershell
+py -3 -X utf8 scripts/smoke-ai-query.py --url http://127.0.0.1:3002/api/ai/query
+```
+
+Чтобы остановить демо, выполните `docker compose -f docker-compose.yml -f docker-compose.ai-demo.yml down`.
 
 ### Проверка отказа и восстановления
 
@@ -91,7 +119,7 @@ node frontend/src/server.mjs
 
 По умолчанию Compose открывает только интерфейс на `127.0.0.1:3000`. Если порт занят, укажите `WEB_PORT=3001` в окружении или в локальном `.env`. Go и Python доступны внутри сети Compose.
 
-Ключи, база данных, модель и файлы заказчика для запуска не нужны. Контрольный запрос содержит только версию схемы и тестовый идентификатор. Расходы ограничены загрузкой образов и локальными ресурсами. Для проверки доступен локальный запуск.
+В режиме помощника Compose дополнительно публикует Go API на локальном порту `AI_DEMO_PORT` (по умолчанию 8080). Python остаётся доступен внутри сети Compose.
 
 ## Проверка и выбор маршрутизатора
 
