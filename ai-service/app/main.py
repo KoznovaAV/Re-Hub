@@ -19,7 +19,7 @@ class Handler(BaseHTTPRequestHandler):
     def handle_query(self, payload):
         # Обычный образ для /probe не содержит модулей демо.
         from ai_query import answer
-        from ml_intent import IntentError, ProviderError, QuestionError
+        from ml_intent import InvalidProviderResponse, IntentError, ProviderError, ProviderTimeout, QuestionError
 
         if (not isinstance(payload, dict) or set(payload) - {"query", "client_external_id"}
                 or not isinstance(payload.get("client_external_id", ""), str)):
@@ -33,7 +33,12 @@ class Handler(BaseHTTPRequestHandler):
             # В логи идут типы ошибок, без вопроса и сырого ответа модели.
             cause = type(exc.__cause__).__name__ if exc.__cause__ else "none"
             self.log_error("AI query failed: %s (cause: %s)", type(exc).__name__, cause)
-            self.send_json(502, {"error": "model_unavailable_or_invalid"})
+            if isinstance(exc, ProviderTimeout):
+                self.send_json(504, {"error": "ollama_timeout"})
+            elif isinstance(exc, (IntentError, InvalidProviderResponse)):
+                self.send_json(502, {"error": "ollama_invalid_response"})
+            else:
+                self.send_json(502, {"error": "ollama_unavailable"})
         else:
             self.send_json(200, result)
 

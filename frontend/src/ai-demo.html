@@ -175,6 +175,15 @@
       unsupported_filter: "Попробуйте указать количество непереданных оригиналов.",
     };
 
+    const requestErrors = new Map([
+      ["ollama_timeout", "Qwen не успела ответить. Попробуйте отправить вопрос ещё раз."],
+      ["ollama_invalid_response", "Qwen вернула ответ, который не удалось разобрать. Попробуйте переформулировать вопрос."],
+      ["ollama_unavailable", "Не удалось связаться с Qwen. Проверьте Ollama и наличие модели."],
+      ["python_unavailable", "Go не получил ответ от сервиса помощника."],
+      ["invalid_python_response", "Сервис помощника вернул некорректный ответ."],
+      ["backend_unavailable", "Интерфейс не получил ответ от Go."],
+    ]);
+
     function showStatus(text, tone) {
       status.textContent = text;
       status.dataset.tone = tone;
@@ -286,10 +295,14 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ query }),
         });
-        const payload = await reply.json();
-        if (reply.ok) renderAnswer(payload);
-        else showStatus("Помощник недоступен. Попробуйте отправить вопрос ещё раз.", "attention");
-        result.textContent = JSON.stringify(payload, null, 2);
+        const payload = await reply.json().catch(() => null);
+        if (reply.ok && payload) {
+          renderAnswer(payload);
+        } else {
+          const message = requestErrors.get(payload?.error) ?? `Не удалось получить ответ (HTTP ${reply.status}).`;
+          showStatus(message, "attention");
+        }
+        result.textContent = JSON.stringify(payload ?? { http_status: reply.status }, null, 2);
         details.hidden = false;
       } catch {
         showStatus("Не удалось получить ответ. Проверьте контейнеры и Ollama.", "attention");

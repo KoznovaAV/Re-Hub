@@ -6,7 +6,7 @@ import os
 import time
 
 from doc_qa import answer_docs
-from ml_intent import ROOT, ProviderError, load_periods, predict
+from ml_intent import ROOT, ProviderTimeout, load_periods, predict
 
 
 # Codespaces может выполнять модель на CPU. Внешние прокси ждут дольше.
@@ -33,7 +33,7 @@ def answer(question, client_external_id):
     if intent["intent"] == "search_docs":
         remaining = DEMO_OLLAMA_TIMEOUT - (time.monotonic() - started)
         if remaining <= 0:
-            raise ProviderError("Documentation query timed out")
+            raise ProviderTimeout("Documentation query timed out")
         excerpts = answer_docs(question, **(options | {"timeout": remaining}))
         if not excerpts:
             return response("no_data", "В доступной документации проекта ответа нет.")

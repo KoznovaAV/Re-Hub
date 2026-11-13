@@ -239,6 +239,7 @@ paths:
         '413': { description: Тело запроса превышает лимит }
         '415': { description: Требуется application/json }
         '502': { description: Ошибка Python или Ollama }
+        '504': { description: Ollama не ответила за отведённое время }
 
 components:
   securitySchemes:

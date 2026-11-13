@@ -4,7 +4,7 @@ from functools import lru_cache
 import json
 from pathlib import Path
 import re
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 
@@ -14,6 +14,14 @@ class IntentError(ValueError):
 
 class ProviderError(RuntimeError):
     """Ollama could not return a usable response."""
+
+
+class ProviderTimeout(ProviderError):
+    """Ollama did not answer before the request deadline."""
+
+
+class InvalidProviderResponse(ProviderError):
+    """Ollama returned an invalid JSON response."""
 
 
 class QuestionError(ValueError):
@@ -304,12 +312,16 @@ def ollama_chat(*, messages, schema, model, base_url, timeout, max_tokens=256):
             raw_response = response.read()
     except HTTPError as exc:
         raise ProviderError(f"Ollama returned HTTP {exc.code}") from exc
+    except (TimeoutError, URLError) as exc:
+        if isinstance(exc, TimeoutError) or isinstance(getattr(exc, "reason", None), TimeoutError):
+            raise ProviderTimeout("Ollama request timed out") from exc
+        raise ProviderError("Ollama request failed") from exc
     except OSError as exc:
         raise ProviderError("Ollama request failed") from exc
     try:
         return json.loads(json.loads(raw_response)["message"]["content"])
     except (ValueError, KeyError, TypeError) as exc:
-        raise ProviderError("Ollama returned an invalid response") from exc
+        raise InvalidProviderResponse("Ollama returned an invalid response") from exc
 
 
 def normalize_month_range(match):
