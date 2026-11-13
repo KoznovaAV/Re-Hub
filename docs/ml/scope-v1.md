@@ -62,3 +62,16 @@ Invoke-RestMethod http://127.0.0.1:8080/ai/query -Method Post -ContentType 'appl
 ```powershell
 docker compose -f docker-compose.yml -f docker-compose.ai-demo.yml down
 ```
+
+### Тест в браузере
+
+Если основной стек уже занимает порт 3000, задайте отдельный порт для демо. В этом примере фронтенд работает на 3001, а прямой запрос к Go доступен на 8081.
+
+```powershell
+$env:WEB_PORT = "3001"
+$env:AI_DEMO_PORT = "8081"
+docker compose -f docker-compose.yml -f docker-compose.ai-demo.yml up --build -d --wait frontend
+Start-Process "http://127.0.0.1:3001/ai-demo"
+```
+
+Выберите пример и нажмите "Отправить". Страница показывает ответ и JSON с источниками. Фронтенд отправляет запрос через Go, как в сквозном тесте.

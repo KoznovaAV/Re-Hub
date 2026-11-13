@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Re:Hub - тест помощника</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f3f6fa; color: #182434; font: 1rem/1.55 system-ui, sans-serif; }
+    main { max-width: 48rem; margin: 2.5rem auto; padding: 0 1rem; }
+    h1 { margin: .5rem 0; font-size: clamp(1.6rem, 5vw, 2.3rem); }
+    p { margin: .5rem 0 1rem; }
+    a { color: #174aa5; }
+    form, section { background: #fff; border: 1px solid #d9e1ed; border-radius: .8rem; padding: 1.25rem; margin-top: 1rem; }
+    label { display: block; font-weight: 650; }
+    textarea { display: block; width: 100%; min-height: 5.5rem; resize: vertical; margin: .5rem 0 .75rem; }
+    textarea, button { font: inherit; border: 1px solid #8190a5; border-radius: .4rem; padding: .55rem .75rem; }
+    button { cursor: pointer; color: #182434; background: #fff; margin: 0 .25rem .35rem 0; }
+    button[type="submit"] { background: #174aa5; color: #fff; border-color: #174aa5; }
+    button:disabled { cursor: wait; opacity: .7; }
+    #status { font-weight: 650; }
+    pre { overflow: auto; background: #eef3fa; padding: .75rem; }
+  </style>
+</head>
+<body>
+  <main>
+    <a href="/">Re:Hub</a>
+    <h1>Тест помощника</h1>
+    <p>Синтетические данные, тестовый оператор <code>test-op-a</code>.</p>
+    <form>
+      <label for="question">Вопрос помощнику</label>
+      <textarea id="question" maxlength="2000" required placeholder="Сколько оригиналов ждём от TST00001 за 3 квартал 2026?"></textarea>
+      <button type="submit">Отправить</button>
+      <button type="button" data-question="Сколько оригиналов ждём от TST00001 за 3 квартал 2026?">Нулевой долг</button>
+      <button type="button" data-question="За III квартал 2026 сколько не сдал клиент TST00002?">Нет среза</button>
+      <button type="button" data-question="Сколько оригиналов не передано по КЦР 7000022 за 3 квартал 2026?">Чужая запись</button>
+      <button type="button" data-question="К какому числу клиент с кодом КЦР 7000019 обещал передать оригиналы за 2026Q3?">Обещанный срок</button>
+    </form>
+    <section aria-label="Результат">
+      <p id="status" role="status">Задайте вопрос или выберите пример.</p>
+      <p id="answer" hidden></p>
+      <details hidden>
+        <summary>Ответ JSON и источники</summary>
+        <pre id="result"></pre>
+      </details>
+    </section>
+  </main>
+  <script type="module">
+    const form = document.querySelector("form");
+    const question = document.querySelector("#question");
+    const submit = form.querySelector('[type="submit"]');
+    const status = document.querySelector("#status");
+    const answer = document.querySelector("#answer");
+    const details = document.querySelector("details");
+    const result = document.querySelector("#result");
+
+    for (const example of form.querySelectorAll("[data-question]")) {
+      example.addEventListener("click", () => {
+        question.value = example.dataset.question;
+        question.focus();
+      });
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const query = question.value.trim();
+      if (!query || submit.disabled) return;
+      submit.disabled = true;
+      status.textContent = "Ждём ответ от Ollama...";
+      answer.hidden = true;
+      details.hidden = true;
+      try {
+        const reply = await fetch("/api/ai/query", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query }),
+        });
+        const data = await reply.json();
+        status.textContent = reply.ok ? `Статус: ${data.status}` : `Ошибка HTTP ${reply.status}`;
+        answer.textContent = data.answer ?? data.error ?? "";
+        answer.hidden = !answer.textContent;
+        result.textContent = JSON.stringify(data, null, 2);
+        details.hidden = false;
+      } catch {
+        status.textContent = "Не удалось получить ответ. Проверьте контейнеры и Ollama.";
+      } finally {
+        submit.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

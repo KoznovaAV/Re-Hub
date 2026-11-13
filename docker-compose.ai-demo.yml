@@ -12,3 +12,6 @@ services:
       REHUB_AI_DEMO: "1"
     ports:
       - "127.0.0.1:${AI_DEMO_PORT:-8080}:8080"
+  frontend:
+    environment:
+      REHUB_AI_DEMO: "1"
