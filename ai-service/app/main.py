@@ -29,7 +29,10 @@ class Handler(BaseHTTPRequestHandler):
             result = answer(payload.get("query"), payload.get("client_external_id"))
         except QuestionError:
             self.send_json(422, {"error": "invalid_query"})
-        except (IntentError, ProviderError):
+        except (IntentError, ProviderError) as exc:
+            # В логи идут типы ошибок, без вопроса и сырого ответа модели.
+            cause = type(exc.__cause__).__name__ if exc.__cause__ else "none"
+            self.log_error("AI query failed: %s (cause: %s)", type(exc).__name__, cause)
             self.send_json(502, {"error": "model_unavailable_or_invalid"})
         else:
             self.send_json(200, result)

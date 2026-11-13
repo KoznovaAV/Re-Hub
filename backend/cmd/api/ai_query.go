@@ -10,9 +10,12 @@ import (
 	"time"
 )
 
+// Wait longer than the Python demo client so its response can reach the browser.
+const aiQueryTimeout = 95 * time.Second
+
 func aiQuery(pythonURL string) http.HandlerFunc {
 	client := &http.Client{
-		Timeout:       32 * time.Second,
+		Timeout:       aiQueryTimeout,
 		CheckRedirect: func(_ *http.Request, _ []*http.Request) error { return http.ErrUseLastResponse },
 	}
 	return func(w http.ResponseWriter, r *http.Request) {

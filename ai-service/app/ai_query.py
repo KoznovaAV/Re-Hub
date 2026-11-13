@@ -7,6 +7,10 @@ import os
 from ml_intent import ROOT, load_periods, predict
 
 
+# Codespaces может выполнять модель на CPU. Внешние прокси ждут дольше.
+DEMO_OLLAMA_TIMEOUT = 90
+
+
 @lru_cache(maxsize=1)
 def fixture():
     path = ROOT / "contracts" / "eval" / "synthetic-client-data-v1.json"
@@ -21,6 +25,7 @@ def answer(question, client_external_id):
         question, periods=load_periods(),
         model=os.environ.get("OLLAMA_MODEL", "qwen3:4b"),
         base_url=os.environ.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434"),
+        timeout=DEMO_OLLAMA_TIMEOUT,
     )
     return resolve(intent, fixture(), client_external_id)
 

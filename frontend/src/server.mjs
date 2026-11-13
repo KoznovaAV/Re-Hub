@@ -66,7 +66,8 @@ createServer(async (request, response) => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: Buffer.concat(chunks),
-        signal: AbortSignal.timeout(36_000),
+        // Keep the proxy open beyond the Go response deadline.
+        signal: AbortSignal.timeout(105_000),
         redirect: "error",
       });
       return json(response, upstream.status, await upstream.json());

@@ -22,7 +22,7 @@ func main() {
 	if os.Getenv("REHUB_AI_DEMO") == "1" {
 		mux.HandleFunc("POST /ai/query", aiQuery(pythonURL))
 		// Даём Python дождаться Ollama до истечения таймаута ответа Go.
-		writeTimeout = 35 * time.Second
+		writeTimeout = aiQueryTimeout + 5*time.Second
 	}
 
 	addr := env("BACKEND_ADDR", "127.0.0.1:8080")
