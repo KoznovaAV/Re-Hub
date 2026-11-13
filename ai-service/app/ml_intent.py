@@ -31,8 +31,12 @@ PROMPT_PATH = ROOT / "docs" / "ml" / "intent-prompt-v1.txt"
 PERIOD_REGISTRY_PATH = ROOT / "contracts" / "periods.v1.json"
 MAX_QUESTION_CHARS = 2_000
 MAX_MIN_UNSENT = 1_000_000
+GREETING_ONLY = re.compile(
+    r"(?:привет|здравствуй(?:те)?|доброе\s+утро|добрый\s+(?:день|вечер))[\s.!?,…]*",
+    re.IGNORECASE,
+)
 REASONS = {
-    "clarify": {"missing_period", "missing_client", "ambiguous_deadline"},
+    "clarify": {"missing_period", "missing_client", "ambiguous_deadline", "missing_question"},
     "refused": {"write_request", "raw_sql", "access_override", "hidden_instructions"},
     "unsupported": {"document_content", "unsupported_filter"},
 }
@@ -269,6 +273,8 @@ def check_question(result, question, periods):
 def predict(question, *, periods, model, base_url, timeout=30):
     if not isinstance(question, str) or not question.strip() or len(question) > MAX_QUESTION_CHARS:
         raise QuestionError(f"Expected a non-empty question up to {MAX_QUESTION_CHARS} characters")
+    if GREETING_ONLY.fullmatch(question.strip()):
+        return no_action("clarify", "missing_question")
     prompt = load_prompt()
     period_text = "\n".join(f"{code} = {label}" for code, label in periods.items())
     body = {

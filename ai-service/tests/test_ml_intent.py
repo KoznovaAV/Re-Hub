@@ -197,6 +197,16 @@ class IntentTest(unittest.TestCase):
             validate_intent(list_result | {"min_unsent": MAX_MIN_UNSENT + 1}, self.question, self.periods)
 
     @patch("app.ml_intent.urlopen")
+    def test_greeting_asks_for_question_without_calling_provider(self, urlopen):
+        for greeting in ("привет", " Привет! ", "Здравствуйте.", "Добрый день!"):
+            with self.subTest(greeting=greeting):
+                result = predict(greeting, periods=self.periods, model="test", base_url="http://127.0.0.1:11434")
+                self.assertEqual(result, dict.fromkeys(self.intent) | {
+                    "intent": "clarify", "reason": "missing_question",
+                })
+        urlopen.assert_not_called()
+
+    @patch("app.ml_intent.urlopen")
     def test_predict_checks_structured_response(self, urlopen):
         response = MagicMock()
         response.read.return_value = json.dumps(

@@ -45,7 +45,13 @@ def resolve(intent, data, client_external_id):
             "unsupported": "Этот запрос пока не поддерживается.",
             "refused": "Этот запрос отклонён.",
         }
-        return response(action, messages[action], reason=intent["reason"])
+        message = messages[action]
+        if intent["reason"] == "missing_question":
+            message = (
+                "Привет! Задайте вопрос по документам. "
+                "Если вопрос об одном клиенте, укажите его код или название и отчётный период."
+            )
+        return response(action, message, reason=intent["reason"])
 
     # В демо оператор фиксирован. Код клиента из запроса только сужает его выборку.
     allowed = {
