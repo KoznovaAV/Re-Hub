@@ -189,7 +189,7 @@ def explicit_periods(question):
         prefix = question[:match.start()]
         mentions.append((code, PERIOD_CONTEXT.search(prefix) is not None))
 
-    # Keep offsets while masking periods already read as codes or ranges.
+    # Заменяем уже разобранные периоды пробелами той же длины, чтобы сохранить позиции в вопросе.
     for match in PERIOD_CODE.finditer(question):
         remember(match, match[0].upper())
     text = PERIOD_CODE.sub(lambda match: " " * len(match[0]), question)
@@ -224,7 +224,7 @@ def check_question(result, question, periods):
         if PERCENT.search(question) or UNSUPPORTED_LIST.search(question):
             return no_action("unsupported", "unsupported_filter")
     if intent == "list_debtors":
-        # Dropping a client reference would broaden the requested read.
+        # Если отбросить указание на клиента, запрос по одному клиенту может стать общим списком.
         references = {
             value.strip() for match in CLIENT_REFERENCE.findall(question) for value in match if value.strip()
         }
@@ -255,7 +255,7 @@ def check_question(result, question, periods):
     if period is None:
         return result
     mentioned = explicit_periods(question)
-    # The registry can contain a full year and a partial interval for the same year.
+    # В справочнике могут быть полный год и отдельный интервал за тот же год.
     full_year = WHOLE_YEAR.search(question)
     if full_year and len(mentioned) == 1:
         annual_period = f"Y{full_year[1]}"

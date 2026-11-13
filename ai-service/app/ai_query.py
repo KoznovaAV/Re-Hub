@@ -42,7 +42,7 @@ def resolve(intent, data, client_external_id):
         }
         return response(action, messages[action], reason=intent["reason"])
 
-    # The demo always uses a fixed synthetic operator. Request JSON cannot grant access.
+    # В демо оператор фиксирован. Код клиента из запроса только сужает его выборку.
     allowed = {
         client["external_id"]: client["name"] for client in data["clients"]
         if client["operator_id"] == "test-op-a"
@@ -59,6 +59,7 @@ def resolve(intent, data, client_external_id):
 
     reference = intent["client_ref"].casefold()
     matches = [key for key, name in allowed.items() if reference in (key.casefold(), name.casefold())]
+    # Один ответ для неизвестного и чужого клиента скрывает само наличие записи.
     if not matches:
         return response("unavailable", "Доступная запись клиента не найдена.")
     if len(matches) != 1:
@@ -69,6 +70,7 @@ def resolve(intent, data, client_external_id):
     else:
         records, field, label = data["snapshots"], "unsent_docs", "Не передано оригиналов"
     row = next((row for row in records if row["external_id"] == key and row["period_code"] == period), None)
+    # Отсутствующая строка отличается от существующей строки с нулевым долгом.
     if row is None:
         return response("no_data", "За выбранный период запись отсутствует.")
     return response("ok", f"{label}: {row[field]}.", (row,))

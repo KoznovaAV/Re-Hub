@@ -21,6 +21,7 @@ func main() {
 	writeTimeout := 5 * time.Second
 	if os.Getenv("REHUB_AI_DEMO") == "1" {
 		mux.HandleFunc("POST /ai/query", aiQuery(pythonURL))
+		// Даём Python дождаться Ollama до истечения таймаута ответа Go.
 		writeTimeout = 35 * time.Second
 	}
 

@@ -17,6 +17,7 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def handle_query(self, payload):
+        # Обычный образ для /probe не содержит модулей демо.
         from ai_query import answer
         from ml_intent import IntentError, ProviderError, QuestionError
 
