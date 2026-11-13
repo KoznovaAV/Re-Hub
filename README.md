@@ -28,25 +28,52 @@ Re:Hub помогает администратору и оператору КЦ�
 | [`docker-compose.yml`](docker-compose.yml) | Сборка, сеть и проверки доступности трёх компонентов |
 | [`scripts/smoke.mjs`](scripts/smoke.mjs) | Проверка страницы, Go API и 10 JSON-запросов |
 
-## Как запустить
+## Как запустить через Docker
 
-Нужны Git и Docker с Compose v2, поддерживающим `up --wait`. Compose собирает образы с Go 1.25, Python 3.12 и Node.js 22. Скелет использует стандартные библиотеки. При первой сборке Docker скачивает базовые образы.
+Для локальной работы нужны Git и запущенный Docker Desktop (Windows/macOS) или Docker Engine с плагином Compose v2 (Linux). Проверить, что Docker запущен и Compose доступен, можно командами `docker info` и `docker compose version`. Для запуска нужны Compose v2 с поддержкой `up --wait` и доступ к реестру образов при первой сборке.
+
+### Первый запуск
 
 ```bash
-git clone https://github.com/KoznovaAV/Re-Hub.git
+git clone --branch main https://github.com/KoznovaAV/Re-Hub.git
 cd Re-Hub
 docker compose up --build -d --wait
 docker compose ps
-docker compose exec -T frontend node --input-type=module - < scripts/smoke.mjs
 ```
 
-Откройте http://127.0.0.1:3000/ и нажмите «Проверить связь». Ожидаемая строка smoke-проверки: `OK: интерфейс и Go доступны, JSON Go → Python: 10/10.` В PowerShell проверку можно запустить так:
+Compose собирает фронтенд, Go API и Python-сервис. Откройте [главную](http://127.0.0.1:3000/) и нажмите "Проверить связь". Сценарий обзвона на тестовых данных доступен по адресу [`/pilot`](http://127.0.0.1:3000/pilot). Базовому запуску из `main` не нужны Ollama, PostgreSQL, ключи или файлы заказчика.
+
+### Проверка запуска
+
+PowerShell:
 
 ```powershell
 Get-Content -Raw scripts/smoke.mjs | docker compose exec -T frontend node --input-type=module -
 ```
 
-При установленном Make команды из корня — `make up`, `make smoke` и `make down`. Команда `make smoke-recovery` проверяет отказ Python, запускает его снова и повторяет smoke.
+Bash:
+
+```bash
+docker compose exec -T frontend node --input-type=module - < scripts/smoke.mjs
+```
+
+Ожидаемый результат - 10 из 10 успешных JSON-запросов через Go и Python. При установленном Make можно использовать `make up`, `make smoke` и `make down`.
+
+### Обновление и остановка
+
+В рабочей копии с чистой веткой `main`:
+
+```bash
+git switch main
+git pull --ff-only origin main
+docker compose up --build -d --wait
+```
+
+Чтобы остановить контейнеры, выполните `docker compose down`. Если сервис не запустился, посмотрите `docker compose ps -a` и `docker compose logs --tail=80`. Если порт 3000 занят, добавьте `WEB_PORT=3001` в локальный `.env` в корне репозитория, повторите запуск и откройте [порт 3001](http://127.0.0.1:3001/).
+
+### Демо с помощником
+
+Полный интерфейс и помощник пока доступны в [ветке `feature/full-ui-demo`](https://github.com/KoznovaAV/Re-Hub/tree/feature/full-ui-demo#демо-интерфейса-с-помощником). В README этой ветки описан запуск с отдельным Compose-файлом и локальной Ollama.
 
 ### Проверка отказа и восстановления
 
