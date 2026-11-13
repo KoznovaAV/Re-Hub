@@ -1,9 +1,12 @@
 FROM python:3.12-slim
 WORKDIR /app
-COPY ai-service/app/main.py ai-service/app/ai_query.py ai-service/app/ml_intent.py ai-service/app/
+COPY ai-service/app/main.py ai-service/app/ai_query.py ai-service/app/ml_intent.py ai-service/app/doc_qa.py ai-service/app/
 COPY contracts/periods.v1.json contracts/
 COPY contracts/eval/synthetic-client-data-v1.json contracts/eval/
 COPY docs/ml/intent-prompt-v1.txt docs/ml/
+COPY docs/data/T-02_import_and_period_rules.md docs/data/ReHub_common_data_contract.md docs/data/
+COPY docs/parser_ml/parser.md docs/parser_ml/
+COPY docs/scenarios/pilot.md docs/scenarios/
 USER 65534:65534
 EXPOSE 8001
 CMD ["python", "-u", "ai-service/app/main.py"]

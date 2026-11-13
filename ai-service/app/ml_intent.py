@@ -104,6 +104,11 @@ QUARTER_RANGE = re.compile(
 )
 QUARTER_PERIOD = re.compile(rf"\b{QUARTER_TEXT}", re.IGNORECASE)
 ANNUAL_PERIOD = re.compile(r"\b(?:за\s+)?(\d{4})\s+год\w*\b", re.IGNORECASE)
+QUARTER_MONTHS = {"январь-март": 1, "апрель-июнь": 2, "июль-сентябрь": 3, "октябрь-декабрь": 4}
+MONTH_RANGE = re.compile(
+    r"\b(январь|апрель|июль|октябрь)\s*[-–—]\s*(март|июнь|сентябрь|декабрь)\s+(\d{4})\b",
+    re.IGNORECASE,
+)
 PERIOD_CONTEXT = re.compile(r"(?:[.!?(]\s*в|\bне путать с)\s*$", re.IGNORECASE)
 PROMISE_MENTION = re.compile(
     r"\b(?:обещ\w*|согласова\w*|договорил\w*|договор[её]нност\w*|назва(?:л|ла|ли))\b",
@@ -121,7 +126,7 @@ def load_prompt():
     return PROMPT_PATH.read_text(encoding="utf-8")
 
 
-def output_schema(periods):
+def output_schema(periods, *, allow_docs=False):
     value_schemas = {
         "period": {"enum": list(periods)},
         "client_ref": {"type": "string", "minLength": 1, "maxLength": 120},
@@ -140,6 +145,13 @@ def output_schema(periods):
             "additionalProperties": False,
             "required": list(properties),
             "properties": properties,
+        })
+    if allow_docs:
+        properties = {field: {"type": "null"} for field in sorted(FIELDS)}
+        properties["intent"] = {"const": "search_docs"}
+        variants.append({
+            "type": "object", "additionalProperties": False,
+            "required": list(properties), "properties": properties,
         })
     return {"oneOf": variants}
 
@@ -222,6 +234,8 @@ def check_question(result, question, periods):
                             (WRITE_REQUEST, "write_request"), (HIDDEN_REQUEST, "hidden_instructions")):
         if pattern.search(normalized):
             return no_action("refused", reason)
+    if intent == "search_docs":
+        return result
     if intent != "refused":
         if DOCUMENT_REQUEST.search(question):
             return no_action("unsupported", "document_content")
@@ -270,23 +284,14 @@ def check_question(result, question, periods):
     return no_action("clarify", "missing_period")
 
 
-def predict(question, *, periods, model, base_url, timeout=30):
-    if not isinstance(question, str) or not question.strip() or len(question) > MAX_QUESTION_CHARS:
-        raise QuestionError(f"Expected a non-empty question up to {MAX_QUESTION_CHARS} characters")
-    if GREETING_ONLY.fullmatch(question.strip()):
-        return no_action("clarify", "missing_question")
-    prompt = load_prompt()
-    period_text = "\n".join(f"{code} = {label}" for code, label in periods.items())
+def ollama_chat(*, messages, schema, model, base_url, timeout, max_tokens=256):
     body = {
         "model": model,
         "stream": False,
         "think": False,
-        "format": output_schema(periods),
-        "options": {"temperature": 0, "seed": 42, "num_predict": 256},
-        "messages": [
-            {"role": "system", "content": f"{prompt}\nПериоды:\n{period_text}"},
-            {"role": "user", "content": question},
-        ],
+        "format": schema,
+        "options": {"temperature": 0, "seed": 42, "num_predict": max_tokens},
+        "messages": messages,
     }
     request = Request(
         f"{base_url.rstrip('/')}/api/chat",
@@ -302,9 +307,42 @@ def predict(question, *, periods, model, base_url, timeout=30):
     except OSError as exc:
         raise ProviderError("Ollama request failed") from exc
     try:
-        payload = json.loads(json.loads(raw_response)["message"]["content"])
+        return json.loads(json.loads(raw_response)["message"]["content"])
     except (ValueError, KeyError, TypeError) as exc:
         raise ProviderError("Ollama returned an invalid response") from exc
+
+
+def normalize_month_range(match):
+    quarter = QUARTER_MONTHS.get(f"{match[1]}-{match[2]}".casefold())
+    return f"{match[3]}Q{quarter}" if quarter else match[0]
+
+
+def predict(question, *, periods, model, base_url, timeout=30, allow_docs=False):
+    if not isinstance(question, str) or not question.strip() or len(question) > MAX_QUESTION_CHARS:
+        raise QuestionError(f"Expected a non-empty question up to {MAX_QUESTION_CHARS} characters")
+    if GREETING_ONLY.fullmatch(question.strip()):
+        return no_action("clarify", "missing_question")
+    question = MONTH_RANGE.sub(normalize_month_range, question)
+    prompt = load_prompt()
+    if allow_docs:
+        prompt += (
+            "\nsearch_docs: вопрос о правилах проекта, импорте, формате, полях, статусах "
+            "или значении периода/среза. Все остальные поля null. "
+            "Для фактов о клиенте используй действия get или list. "
+            "Письма и договоры клиентов сюда не относятся. "
+            "Период отчёта не требуется для вопроса о правилах.\n"
+        )
+    period_text = "\n".join(f"{code} = {label}" for code, label in periods.items())
+    payload = ollama_chat(
+        messages=[
+            {"role": "system", "content": f"{prompt}\nПериоды:\n{period_text}"},
+            {"role": "user", "content": question},
+        ],
+        schema=output_schema(periods, allow_docs=allow_docs),
+        model=model, base_url=base_url, timeout=timeout,
+    )
+    if allow_docs and payload == no_action("search_docs", None):
+        return check_question(payload, question, periods)
     try:
         result = validate_intent(payload, question, periods)
     except UnresolvedReference as exc:

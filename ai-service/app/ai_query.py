@@ -3,12 +3,10 @@
 from functools import lru_cache
 import json
 import os
-import re
+import time
 
-from ml_intent import (
-    MAX_MIN_UNSENT, MAX_QUESTION_CHARS, QUARTER_TEXT, ROOT, check_question, explicit_periods,
-    load_periods, no_action, predict, validate_intent,
-)
+from doc_qa import answer_docs
+from ml_intent import ROOT, ProviderError, load_periods, predict
 
 
 # Codespaces может выполнять модель на CPU. Внешние прокси ждут дольше.
@@ -24,56 +22,24 @@ def fixture():
     return data
 
 
-# Короткий путь только для однозначных формулировок. Остальные разбирает модель.
-CLIENT_CODE = r"(?P<client>[a-z]{3}[0-9]{5}|[0-9]{7})"
-REPORT_PERIOD = rf"(?:[0-9]{{4}}Q[1-4]|{QUARTER_TEXT})"
-DIRECT_QUERIES = tuple((intent, re.compile(pattern, re.IGNORECASE)) for intent, pattern in (
-    ("get_client_debt",
-     rf"сколько оригиналов (?:жд[её]м от|не передано по КЦР) {CLIENT_CODE} за {REPORT_PERIOD}"),
-    ("get_client_debt",
-     rf"за {REPORT_PERIOD} сколько не сдал клиент {CLIENT_CODE}"),
-    ("get_client_debt",
-     rf"по коду КЦР {CLIENT_CODE}, сколько оригиналов не передано за {REPORT_PERIOD}"),
-    ("get_client_promise",
-     rf"к какому числу клиент с кодом КЦР {CLIENT_CODE} обещал передать оригиналы за {REPORT_PERIOD}"),
-    ("list_debtors",
-     rf"кто не передал минимум (?P<minimum>[0-9]{{1,7}}) оригиналов за {REPORT_PERIOD}"),
-))
-
-
-def direct_intent(question, periods):
-    if not isinstance(question, str) or len(question) > MAX_QUESTION_CHARS:
-        return None
-    normalized = " ".join(question.strip().rstrip("?! .").split())
-    for intent, pattern in DIRECT_QUERIES:
-        match = pattern.fullmatch(normalized)
-        if not match:
-            continue
-        mentioned = explicit_periods(normalized)
-        if len(mentioned) != 1 or not mentioned <= periods.keys():
-            return no_action("clarify", "missing_period")
-        fields = match.groupdict()
-        minimum = int(fields["minimum"]) if "minimum" in fields else None
-        if minimum is not None and not 1 <= minimum <= MAX_MIN_UNSENT:
-            return None
-        result = {
-            "intent": intent, "period": mentioned.pop(), "client_ref": fields.get("client"),
-            "min_unsent": minimum, "reason": None,
-        }
-        return check_question(validate_intent(result, question, periods), question, periods)
-    return None
-
-
 def answer(question, client_external_id):
-    periods = load_periods()
-    intent = direct_intent(question, periods)
-    if intent is None:
-        intent = predict(
-            question, periods=periods,
-            model=os.environ.get("OLLAMA_MODEL", "qwen3:4b"),
-            base_url=os.environ.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434"),
-            timeout=DEMO_OLLAMA_TIMEOUT,
-        )
+    options = {
+        "model": os.environ.get("OLLAMA_MODEL", "qwen3:4b"),
+        "base_url": os.environ.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434"),
+        "timeout": DEMO_OLLAMA_TIMEOUT,
+    }
+    started = time.monotonic()
+    intent = predict(question, periods=load_periods(), allow_docs=True, **options)
+    if intent["intent"] == "search_docs":
+        remaining = DEMO_OLLAMA_TIMEOUT - (time.monotonic() - started)
+        if remaining <= 0:
+            raise ProviderError("Documentation query timed out")
+        excerpts = answer_docs(question, **(options | {"timeout": remaining}))
+        if not excerpts:
+            return response("no_data", "В доступной документации проекта ответа нет.")
+        return response("ok", "\n\n".join(quote for _, quote in excerpts)) | {
+            "sources": list(dict.fromkeys(path for path, _ in excerpts)),
+        }
     return resolve(intent, fixture(), client_external_id)
 
 
