@@ -29,9 +29,32 @@ health() {
   compose exec -T frontend wget -q -O /dev/null http://127.0.0.1:3000/health
 }
 
+rollback() {
+  if [[ -n "${PREVIOUS_TAG}" && "${PREVIOUS_TAG}" != "${IMAGE_TAG}" ]]; then
+    echo "Restoring previous image tag ${PREVIOUS_TAG}" >&2
+    export IMAGE_TAG="${PREVIOUS_TAG}"
+    echo "${PREVIOUS_TAG}" > "${PREVIOUS_FILE}"
+    compose pull || true
+    compose up -d --wait --wait-timeout 180 --remove-orphans || true
+    health || true
+    echo "Previous version restored; deployment is marked failed." >&2
+  else
+    echo "No previous tag to restore." >&2
+  fi
+  exit 1
+}
+
 echo "Deploying image tag ${IMAGE_TAG} (previous: ${PREVIOUS_TAG:-none})"
-compose pull
-compose up -d --wait --wait-timeout 180 --remove-orphans
+if ! compose pull; then
+  echo "Image pull failed; current containers were not changed." >&2
+  exit 1
+fi
+
+if ! compose up -d --wait --wait-timeout 180 --remove-orphans; then
+  echo "Compose startup failed for ${IMAGE_TAG}" >&2
+  compose logs --tail=100 >&2 || true
+  rollback
+fi
 
 if health; then
   echo "Deployment succeeded: ${IMAGE_TAG}"
@@ -41,17 +64,4 @@ fi
 
 echo "Health checks failed for ${IMAGE_TAG}" >&2
 compose logs --tail=100 >&2 || true
-
-if [[ -n "${PREVIOUS_TAG}" && "${PREVIOUS_TAG}" != "${IMAGE_TAG}" ]]; then
-  echo "Restoring previous image tag ${PREVIOUS_TAG}" >&2
-  export IMAGE_TAG="${PREVIOUS_TAG}"
-  echo "${PREVIOUS_TAG}" > "${PREVIOUS_FILE}"
-  compose pull
-  compose up -d --wait --wait-timeout 180 --remove-orphans
-  health || true
-  echo "Previous version restored; deployment is marked failed." >&2
-else
-  echo "No previous tag to restore." >&2
-fi
-
-exit 1
+rollback

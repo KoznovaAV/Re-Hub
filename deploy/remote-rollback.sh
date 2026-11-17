@@ -22,8 +22,16 @@ health() {
 }
 
 echo "Rolling back to ${IMAGE_TAG}"
-compose pull
-compose up -d --wait --wait-timeout 180 --remove-orphans
+if ! compose pull; then
+  echo "Image pull failed; rollback was not applied." >&2
+  exit 1
+fi
+
+if ! compose up -d --wait --wait-timeout 180 --remove-orphans; then
+  echo "Compose startup failed for ${IMAGE_TAG}" >&2
+  compose logs --tail=100 >&2 || true
+  exit 1
+fi
 
 if health; then
   echo "${IMAGE_TAG}" > .previous_image_tag
