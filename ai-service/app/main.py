@@ -1,6 +1,10 @@
 import json
 import os
+from email.parser import BytesParser
+from email.policy import default as email_policy
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -42,6 +46,76 @@ class Handler(BaseHTTPRequestHandler):
         else:
             self.send_json(200, result)
 
+    def handle_parse(self):
+        if self.headers.get_content_type() != "multipart/form-data":
+            self.send_json(415, {"error": "expected_multipart"})
+            return
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+        except ValueError:
+            length = 0
+        if not 0 < length <= 25 * 1024 * 1024:
+            self.send_json(413, {"error": "file_too_large"})
+            return
+
+        raw = self.rfile.read(length)
+        message = BytesParser(policy=email_policy).parsebytes(
+            b"Content-Type: " + self.headers.get("Content-Type", "").encode("latin-1")
+            + b"\r\nMIME-Version: 1.0\r\n\r\n" + raw
+        )
+        file_data = None
+        file_name = ""
+        context_text = None
+        for part in message.iter_parts():
+            name = part.get_param("name", header="content-disposition")
+            payload = part.get_payload(decode=True)
+            if name == "file" and payload is not None:
+                file_name = part.get_filename() or ""
+                file_data = payload
+            elif name == "context" and payload is not None:
+                context_text = payload.decode("utf-8", errors="replace")
+        if file_data is None or context_text is None:
+            self.send_json(400, {"error": "file_and_context_required"})
+            return
+
+        suffix = Path(file_name).suffix.lower()
+        if suffix != ".xlsx":
+            self.send_json(422, {"error": "xlsx_required"})
+            return
+
+        try:
+            context = json.loads(context_text)
+        except (TypeError, ValueError):
+            self.send_json(422, {"error": "invalid_context"})
+            return
+        if not isinstance(context, dict):
+            self.send_json(422, {"error": "invalid_context"})
+            return
+
+        kind = context.get("file_kind")
+        temp_name = None
+        try:
+            with NamedTemporaryFile(delete=False, suffix=".xlsx") as temp:
+                temp.write(file_data)
+                temp_name = temp.name
+            if kind == "clients":
+                from customer_clients import parse_file
+            elif kind == "snapshot":
+                from customer_xlsx import parse_file
+            else:
+                self.send_json(422, {"error": "unsupported_file_kind"})
+                return
+            result = parse_file(temp_name, context)
+            self.send_json(200, result)
+        except ValueError as exc:
+            self.send_json(422, {"error": "invalid_context", "message": str(exc)})
+        finally:
+            if temp_name:
+                try:
+                    os.unlink(temp_name)
+                except OSError:
+                    pass
+
     def do_GET(self):
         if self.path == "/health":
             self.send_json(200, {"status": "ok", "service": "python"})
@@ -49,6 +123,9 @@ class Handler(BaseHTTPRequestHandler):
         self.send_json(404, {"error": "not_found"})
 
     def do_POST(self):
+        if self.path == "/parse":
+            self.handle_parse()
+            return
         is_query = self.path == "/ai/query" and os.environ.get("REHUB_AI_DEMO") == "1"
         if self.path != "/probe" and not is_query:
             self.send_json(404, {"error": "not_found"})
