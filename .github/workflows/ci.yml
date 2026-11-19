@@ -40,6 +40,8 @@ jobs:
       - name: Unit tests
         working-directory: ai-service
         run: python -m unittest discover -s tests -v
+      - name: Deployment script regression tests
+        run: python -m unittest discover -s deploy/tests -v
       - name: Validate evaluation fixtures
         working-directory: ai-service
         run: python -m app.ml_intent_eval ../contracts/eval/intent-*.jsonl --check-fixtures
@@ -89,7 +91,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: false
       - name: Syntax check
         run: |
           find src -type f \( -name "*.js" -o -name "*.mjs" \) -not -path "*/vendor/*" -print0 \
@@ -129,7 +130,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Trivy vulnerability and misconfiguration report
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@915b19bbe73b92a6cf82a1bc12b087c9a19a5fe2 # v0.28.0
         with:
           scan-type: fs
           scan-ref: .
@@ -139,7 +140,7 @@ jobs:
           ignore-unfixed: true
           exit-code: "0"
       - name: Trivy secret scan
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@915b19bbe73b92a6cf82a1bc12b087c9a19a5fe2 # v0.28.0
         with:
           scan-type: fs
           scan-ref: .
@@ -154,7 +155,7 @@ jobs:
 
   images:
     name: Build ${{ matrix.image }}
-    needs: [python, go, frontend, security]
+    needs: [python, go, frontend, compose, security]
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     permissions:
@@ -230,6 +231,16 @@ jobs:
     needs: [python, go, frontend, compose, security, images, release]
     runs-on: ubuntu-24.04
     steps:
-      - name: Fail when a required job failed
-        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
-        run: exit 1
+      - name: Require all checks and image builds
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          python3 - <<'PYTHON'
+          import json, os
+          results = json.loads(os.environ["RESULTS"])
+          failed = {name: job["result"] for name, job in results.items()
+                    if job["result"] != "success" and not
+                    (name == "release" and job["result"] == "skipped")}
+          if failed:
+              raise SystemExit(f"Required jobs did not succeed: {failed}")
+          PYTHON

@@ -34,6 +34,8 @@ jobs:
        github.event.workflow_run.event == 'push' &&
        github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-24.04
+    environment:
+      name: ${{ inputs.environment || 'staging' }}
     outputs:
       configured: ${{ steps.check.outputs.configured }}
       environment: ${{ steps.meta.outputs.environment }}
@@ -66,6 +68,10 @@ jobs:
           echo "image_tag=${tag}" >> "$GITHUB_OUTPUT"
           echo "sha=${HEAD_SHA}" >> "$GITHUB_OUTPUT"
           echo "owner=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+      - name: Validate image tag
+        env:
+          IMAGE_TAG: ${{ steps.meta.outputs.image_tag }}
+        run: '[[ "$IMAGE_TAG" =~ ^[a-zA-Z0-9_][a-zA-Z0-9_.-]{0,127}$ ]]'
       - name: Check deployment secrets
         id: check
         run: |
@@ -73,7 +79,11 @@ jobs:
             echo "configured=true" >> "$GITHUB_OUTPUT"
           else
             echo "configured=false" >> "$GITHUB_OUTPUT"
-            echo "::notice title=Deployment skipped::DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY or DEPLOY_PATH is not configured."
+            if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+              echo "::error::Deployment secrets are missing in the selected environment."
+              exit 1
+            fi
+            echo "::notice title=Deployment skipped::Deployment secrets are not configured."
           fi
 
   deploy:

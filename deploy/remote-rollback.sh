@@ -4,7 +4,13 @@ set -euo pipefail
 : "${IMAGE_TAG:?IMAGE_TAG is required}"
 : "${IMAGE_OWNER:?IMAGE_OWNER is required}"
 
+# Тег приходит из workflow и не должен содержать команды или пробелы.
+[[ "${IMAGE_TAG}" =~ ^[a-zA-Z0-9_][a-zA-Z0-9_.-]{0,127}$ ]] || {
+  echo "Invalid image tag" >&2
+  exit 1
+}
 COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.prod.yml}"
+PREVIOUS_FILE="${PREVIOUS_FILE:-.previous_image_tag}"
 export IMAGE_TAG IMAGE_OWNER
 
 if [[ -n "${GHCR_TOKEN:-}" ]]; then
@@ -16,8 +22,8 @@ compose() {
 }
 
 health() {
-  compose exec -T backend wget -q -O /dev/null http://127.0.0.1:8080/health
-  compose exec -T ai-service python -c "from urllib.request import urlopen; urlopen('http://127.0.0.1:8001/health', timeout=2).close()"
+  compose exec -T backend wget -q -O /dev/null http://127.0.0.1:8080/health || return 1
+  compose exec -T ai-service python -c "from urllib.request import urlopen; urlopen('http://127.0.0.1:8001/health', timeout=2).close()" || return 1
   compose exec -T frontend wget -q -O /dev/null http://127.0.0.1:3000/health
 }
 
@@ -34,7 +40,8 @@ if ! compose up -d --wait --wait-timeout 180 --remove-orphans; then
 fi
 
 if health; then
-  echo "${IMAGE_TAG}" > .previous_image_tag
+  printf '%s\n' "${IMAGE_TAG}" > "${PREVIOUS_FILE}.tmp"
+  mv "${PREVIOUS_FILE}.tmp" "${PREVIOUS_FILE}"
   echo "Rollback succeeded: ${IMAGE_TAG}"
   compose ps
   exit 0
