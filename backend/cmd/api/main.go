@@ -1,38 +1,84 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
+	"github.com/KoznovaAV/Re-Hub/backend/internal/api"
+	"github.com/KoznovaAV/Re-Hub/backend/internal/db"
 	"github.com/KoznovaAV/Re-Hub/backend/internal/probe"
+	"github.com/KoznovaAV/Re-Hub/backend/internal/store"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func main() {
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
 	pythonURL := strings.TrimRight(env("PYTHON_SERVICE_URL", "http://127.0.0.1:8001"), "/")
-	mux := http.NewServeMux()
-	mux.HandleFunc("GET /health", func(w http.ResponseWriter, _ *http.Request) {
-		writeJSON(w, http.StatusOK, map[string]string{"status": "ok", "service": "backend"})
-	})
-	mux.Handle("GET /api/probe", probe.NewHandler(pythonURL))
-	writeTimeout := 5 * time.Second
-	if os.Getenv("REHUB_AI_DEMO") == "1" {
-		mux.HandleFunc("POST /ai/query", aiQuery(pythonURL))
-		// Даём Python дождаться Ollama до истечения таймаута ответа Go.
-		writeTimeout = aiQueryTimeout + 5*time.Second
+
+	var pool *pgxpool.Pool
+	var data *store.Store
+	if databaseURL := env("DATABASE_URL", ""); databaseURL != "" {
+		var err error
+		pool, err = db.Open(ctx, databaseURL)
+		if err != nil {
+			log.Fatalf("database connection failed: %v", err)
+		}
+		defer pool.Close()
+		if applied, err := db.Migrate(ctx, pool); err != nil {
+			log.Fatalf("database migration failed: %v", err)
+		} else {
+			log.Printf("database ready, migrations applied: %d", len(applied))
+		}
+		data = store.New(pool)
+	} else {
+		log.Printf("DATABASE_URL is empty; data API is disabled")
 	}
 
-	addr := env("BACKEND_ADDR", "127.0.0.1:8080")
-	server := &http.Server{
-		Addr: addr, Handler: mux,
-		ReadHeaderTimeout: 3 * time.Second, IdleTimeout: 30 * time.Second,
-		WriteTimeout: writeTimeout,
+	mux := http.NewServeMux()
+	mux.Handle("GET /api/probe", probe.NewHandler(pythonURL))
+	writeTimeout := 120 * time.Second
+	if os.Getenv("REHUB_AI_DEMO") == "1" {
+		mux.HandleFunc("POST /ai/query", aiQuery(pythonURL))
 	}
-	log.Printf("Go API listening on %s", addr)
-	log.Fatal(server.ListenAndServe())
+	api.New(pool, data, pythonURL).Register(mux)
+
+	server := &http.Server{
+		Addr:              env("BACKEND_ADDR", "127.0.0.1:8080"),
+		Handler:           mux,
+		ReadHeaderTimeout: 3 * time.Second,
+		WriteTimeout:      writeTimeout,
+		IdleTimeout:       30 * time.Second,
+	}
+
+	go func() {
+		log.Printf("Go API listening on %s", server.Addr)
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("server failed: %v", err)
+		}
+	}()
+
+	<-ctx.Done()
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		log.Printf("server shutdown: %v", err)
+	}
+}
+
+func writeJSON(w http.ResponseWriter, status int, data any) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(data)
 }
 
 func env(key, fallback string) string {
@@ -40,10 +86,4 @@ func env(key, fallback string) string {
 		return value
 	}
 	return fallback
-}
-
-func writeJSON(w http.ResponseWriter, status int, data any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(data)
 }
