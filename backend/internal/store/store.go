@@ -298,7 +298,7 @@ func (s *Store) History(ctx context.Context, clientID string) ([]Record, error) 
 	}
 	defer rows.Close()
 
-	var records []Record
+	records := make([]Record, 0)
 	for rows.Next() {
 		var (
 			record Record
@@ -333,7 +333,7 @@ func (s *Store) Events(ctx context.Context, clientID string) ([]Event, error) {
 	}
 	defer rows.Close()
 
-	var events []Event
+	events := make([]Event, 0)
 	for rows.Next() {
 		var (
 			event    Event
