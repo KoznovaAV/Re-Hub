@@ -22,6 +22,10 @@ func (s *Server) importClients(w http.ResponseWriter, r *http.Request) {
 	if !s.ready(w) {
 		return
 	}
+	if !isAdmin(r) {
+		writeError(w, http.StatusForbidden, "FORBIDDEN", "Only an administrator can import clients")
+		return
+	}
 	path, name, cleanup, err := receiveUpload(w, r)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "UPLOAD_ERROR", err.Error())
@@ -77,6 +81,10 @@ func (s *Server) importClients(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) importSnapshot(w http.ResponseWriter, r *http.Request) {
 	if !s.ready(w) {
+		return
+	}
+	if !isAdmin(r) {
+		writeError(w, http.StatusForbidden, "FORBIDDEN", "Only an administrator can import snapshots")
 		return
 	}
 	path, name, cleanup, err := receiveUpload(w, r)

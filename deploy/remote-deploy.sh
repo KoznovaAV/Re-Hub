@@ -44,6 +44,19 @@ rollback() {
   exit 1
 }
 
+BACKUP_BEFORE_DEPLOY="${BACKUP_BEFORE_DEPLOY:-1}"
+if [[ "${BACKUP_BEFORE_DEPLOY}" == "1" ]] && [[ -n "$(compose ps -q db 2>/dev/null || true)" ]]; then
+  mkdir -p backups
+  backup_file="backups/rehub-$(date -u +%Y%m%dT%H%M%SZ).sql"
+  echo "Creating database backup ${backup_file}"
+  if ! compose exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB"' > "${backup_file}"; then
+    rm -f "${backup_file}"
+    echo "Database backup failed; deployment aborted before image change." >&2
+    exit 1
+  fi
+  find backups -name '*.sql' -type f -mtime +7 -delete 2>/dev/null || true
+fi
+
 echo "Deploying image tag ${IMAGE_TAG} (previous: ${PREVIOUS_TAG:-none})"
 if ! compose pull; then
   echo "Image pull failed; current containers were not changed." >&2

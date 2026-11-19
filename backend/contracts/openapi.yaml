@@ -491,9 +491,12 @@ components:
       type: object
       properties:
         id: { type: string, format: uuid }
-        period_id: { type: string, format: uuid }
+        period_code: { type: string }
         slice_date: { type: string, format: date }
-        uploaded_by: { type: string, format: uuid }
+        file_name: { type: string }
+        rows: { type: integer }
+        clients: { type: integer }
+        unsent_docs: { type: integer }
         uploaded_at: { type: string, format: date-time }
 
     Client:

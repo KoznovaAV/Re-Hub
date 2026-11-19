@@ -48,6 +48,22 @@ jobs:
     name: Go tests
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    env:
+      TEST_DATABASE_URL: postgres://rehub:rehub@127.0.0.1:5432/rehub?sslmode=disable
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: rehub
+          POSTGRES_USER: rehub
+          POSTGRES_PASSWORD: rehub
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rehub -d rehub"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
