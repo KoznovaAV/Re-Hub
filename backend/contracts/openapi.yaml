@@ -18,8 +18,7 @@ tags:
   - name: Workflow
   - name: AI
 
-security:
-  - BearerAuth: []
+security: []
 
 paths:
   /auth/login:
@@ -69,31 +68,34 @@ paths:
                       data: { type: array, items: { $ref: '#/components/schemas/Slice' } }
     post:
       tags: [Slices]
-      summary: Загрузить новый срез из Excel
+      summary: Загрузить срез из Excel (4 вкладки, ParserResult v1)
+      parameters:
+        - $ref: '#/components/parameters/ActorHeader'
       requestBody:
         required: true
         content:
           multipart/form-data:
             schema:
               type: object
-              required: [period_id, slice_date, file]
+              required: [file]
               properties:
-                period_id: { type: string, format: uuid }
-                slice_date: { type: string, format: date, example: "2026-10-20" }
                 file: { type: string, format: binary }
+                snapshot_date: { type: string, format: date, example: "2026-10-20" }
+                period_scope:
+                  type: string
+                  description: Коды периодов через запятую; по умолчанию Y2025,2026Q1,2026Q2,2026Q3
+                context:
+                  type: string
+                  description: JSON ImportContext v1; поля можно передать отдельными form-полями
       responses:
         '201':
-          description: Срез создан
+          description: Срез обработан; частичные ошибки возвращаются в errors
           content:
             application/json:
-              schema:
-                type: object
-                properties:
-                  slice_id: { type: string, format: uuid }
-                  rows_total: { type: integer }
-                  rows_ok: { type: integer }
-                  rows_errors: { type: integer }
+              schema: { $ref: '#/components/schemas/ImportResult' }
         '400': { $ref: '#/components/responses/BadRequest' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+        '502': { description: Python-парсер недоступен или вернул ошибку }
 
   /slices/{id}/errors:
     get:
@@ -112,6 +114,82 @@ paths:
               schema: { type: string, format: binary }
         '404': { $ref: '#/components/responses/NotFound' }
 
+  /periods:
+    get:
+      tags: [Slices]
+      summary: Справочник отчётных периодов
+      responses:
+        '200':
+          description: Периоды, доступные для импорта
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Period' }
+
+  /call-list:
+    get:
+      tags: [Workflow]
+      summary: Список обзвона по трём независимым фильтрам
+      parameters:
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/OffsetParam'
+        - name: min_share
+          in: query
+          description: Минимальная доля непереданных документов, %
+          schema: { type: number, minimum: 0, maximum: 100 }
+        - name: tag
+          in: query
+          description: Тег клиента (vip, integrator, tech_partner, mpp)
+          schema: { type: string }
+        - name: contacted
+          in: query
+          description: Был ли по клиенту хотя бы один звонок
+          schema: { type: string, enum: [yes, no] }
+        - name: stage
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Свободные клиенты без исключений, отсортированные по доле долга
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Client' }
+                  meta: { type: object }
+
+  /clients/import:
+    post:
+      tags: [Slices]
+      summary: Загрузить справочник клиентов из Excel
+      parameters:
+        - $ref: '#/components/parameters/ActorHeader'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+                context:
+                  type: string
+                  description: JSON ImportContext v1 с file_kind=clients
+      responses:
+        '201':
+          description: Клиенты созданы или обновлены; ошибки строк возвращаются в errors
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ImportResult' }
+
   /clients:
     get:
       tags: [Clients]
@@ -129,9 +207,31 @@ paths:
         - name: stage
           in: query
           schema: { type: string }
-        - name: assigned_to
+        - name: assigned
           in: query
-          schema: { type: string, format: uuid }
+          description: free — без ответственного, assigned — с ответственным, mine — мои
+          schema: { type: string, enum: [free, assigned, mine] }
+        - name: tag
+          in: query
+          schema: { type: string }
+        - name: contacted
+          in: query
+          schema: { type: string, enum: [yes, no] }
+        - name: min_share
+          in: query
+          schema: { type: number, minimum: 0, maximum: 100 }
+        - name: excluded
+          in: query
+          schema: { type: boolean }
+        - name: inactive
+          in: query
+          schema: { type: boolean }
+        - name: sort
+          in: query
+          schema: { type: string, enum: [name, external_id, stage, promised_at, updated_at, share, unsent] }
+        - name: order
+          in: query
+          schema: { type: string, enum: [asc, desc], default: asc }
       responses:
         '200':
           description: Список клиентов
@@ -158,7 +258,16 @@ paths:
           description: Данные клиента
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ClientDetails' }
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Client' }
+                  history:
+                    type: array
+                    items: { $ref: '#/components/schemas/SliceRecord' }
+                  events:
+                    type: array
+                    items: { $ref: '#/components/schemas/ClientEvent' }
         '404': { $ref: '#/components/responses/NotFound' }
 
   /clients/{external_id}/take:
@@ -173,6 +282,29 @@ paths:
       responses:
         '200': { description: Клиент взят в работу }
         '409': { $ref: '#/components/responses/Conflict' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /clients/{external_id}/reassign:
+    post:
+      tags: [Workflow]
+      summary: Переназначить клиента другому оператору
+      parameters:
+        - name: external_id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id]
+              properties:
+                user_id: { type: string, format: uuid }
+      responses:
+        '200': { description: Ответственный изменён }
+        '403': { description: Нужны права администратора }
         '404': { $ref: '#/components/responses/NotFound' }
 
   /clients/{external_id}/events:
@@ -192,8 +324,12 @@ paths:
               type: object
               required: [event_type]
               properties:
-                event_type: { type: string, enum: [call, email_sent, comment] }
-                payload: { type: object }
+                event_type: { type: string, enum: [call, email, comment] }
+                result: { type: string, enum: [Дозвон, Обещание, Отказ, Недозвон] }
+                comment: { type: string }
+                stage: { type: string }
+                promised_at: { type: string, format: date }
+                event_date: { type: string, format: date, description: Для исторических записей }
       responses:
         '201': { description: Событие создано }
         '400': { $ref: '#/components/responses/BadRequest' }
@@ -244,10 +380,17 @@ paths:
 components:
   securitySchemes:
     BearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+    ActorHeader: { type: apiKey, in: header, name: X-User-Id, description: Демо-идентификация; JWT будет добавлен отдельной задачей }
 
   parameters:
     LimitParam: { name: limit, in: query, schema: { type: integer, default: 20 } }
     OffsetParam: { name: offset, in: query, schema: { type: integer, default: 0 } }
+    ActorHeader:
+      name: X-User-Id
+      in: header
+      required: false
+      description: UUID пользователя; в демо по умолчанию оператор А. Роль администратора — X-Role admin.
+      schema: { type: string, format: uuid }
 
   responses:
     Unauthorized:
@@ -261,6 +404,9 @@ components:
       content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
     Conflict:
       description: Конфликт (например, клиент уже взят)
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
+    Unprocessable:
+      description: Данные не прошли доменную валидацию
       content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
 
   schemas:
@@ -299,6 +445,48 @@ components:
             column: "inn"
             issue: "Некорректный формат ИНН"
 
+    Period:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        code: { type: string, example: "2026Q3" }
+        label: { type: string, example: "2026Q3" }
+        year: { type: integer }
+        quarter: { type: integer, minimum: 0, maximum: 4 }
+
+    ImportResult:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            import_id: { type: string, format: uuid }
+            kind: { type: string, enum: [clients, snapshot] }
+            status: { type: string, enum: [completed, partial, failed] }
+            counters:
+              type: object
+              properties:
+                rows_total: { type: integer }
+                rows_ok: { type: integer }
+                rows_errors: { type: integer }
+                created: { type: integer }
+                updated: { type: integer }
+            period_scope:
+              type: array
+              items: { type: string }
+            errors:
+              type: array
+              items:
+                type: object
+                properties:
+                  scope: { type: string }
+                  row: { type: integer, nullable: true }
+                  column: { type: string }
+                  code: { type: string }
+                  message: { type: string }
+                  external_id: { type: string }
+                  period_code: { type: string }
+
     Slice:
       type: object
       properties:
@@ -312,13 +500,44 @@ components:
       type: object
       properties:
         id: { type: string, format: uuid, description: Внутренний UUID }
-        external_id: { type: string, description: Внешний ID (код КЦР), уникальный }
-        inn: { type: string, description: ИНН не уникален }
+        external_id: { type: string, description: "Внешний ID (код КЦР), уникальный" }
+        inn: { type: string, description: ИНН не уникален; может быть пустым }
+        kpp: { type: string }
         name: { type: string }
-        current_stage: { type: string }
-        assigned_to_id: { type: string, format: uuid, nullable: true }
-        last_slice_not_sent: { type: integer }
-        last_slice_share_not_sent: { type: number }
+        stage: { type: string }
+        assigned_to: { type: string, format: uuid, nullable: true }
+        assigned_name: { type: string }
+        excluded: { type: boolean }
+        inactive: { type: boolean }
+        tags:
+          type: array
+          items: { type: string }
+        promised_at: { type: string, format: date, nullable: true }
+        last_contact_at: { type: string, format: date, nullable: true }
+        latest: { $ref: '#/components/schemas/SliceRecord' }
+        previous: { $ref: '#/components/schemas/SliceRecord' }
+        missing: { type: boolean, description: Клиента нет в последнем срезе }
+
+    SliceRecord:
+      type: object
+      properties:
+        period_code: { type: string }
+        slice_date: { type: string, format: date }
+        total_docs: { type: integer, nullable: true }
+        not_sent_docs: { type: integer }
+        share: { type: number, nullable: true }
+        inherited: { type: boolean }
+
+    ClientEvent:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        event_type: { type: string, enum: [call, email, comment, system, claim, slice] }
+        event_date: { type: string, format: date }
+        result: { type: string }
+        promised_at: { type: string, format: date, nullable: true }
+        comment: { type: string }
+        author_name: { type: string }
 
     ClientDetails:
       allOf:
