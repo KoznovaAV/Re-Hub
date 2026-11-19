@@ -195,8 +195,8 @@ func (s *Server) callList(w http.ResponseWriter, r *http.Request) {
 		Excluded:  &excluded,
 		Inactive:  &inactive,
 		Assigned:  "free",
-		Limit:     limit,
-		Offset:    offset,
+		Limit:     5000,
+		Offset:    0,
 		Sort:      "share",
 		Desc:      true,
 	}
@@ -206,21 +206,34 @@ func (s *Server) callList(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "DB_ERROR", "Could not build call list")
 		return
 	}
-	if latest, err := s.store.LatestPeriod(r.Context()); err == nil {
-		filtered := clients[:0]
-		for i := range clients {
-			s.store.MarkMissing(&clients[i], latest)
-			if clients[i].Missing || clients[i].Stage == "Закрыт" || clients[i].Latest == nil || clients[i].Latest.NotSentDocs == 0 {
-				continue
-			}
-			filtered = append(filtered, clients[i])
-		}
-		clients = filtered
+	latest, err := s.store.LatestPeriod(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "DB_ERROR", "Could not resolve latest period")
+		return
 	}
+	filtered := clients[:0]
+	for i := range clients {
+		s.store.MarkMissing(&clients[i], latest)
+		if clients[i].Missing || clients[i].Stage == "Закрыт" || clients[i].Latest == nil || clients[i].Latest.NotSentDocs == 0 {
+			continue
+		}
+		filtered = append(filtered, clients[i])
+	}
+	clients = filtered
+	total := len(clients)
+	start := offset
+	if start > total {
+		start = total
+	}
+	end := start + limit
+	if end > total {
+		end = total
+	}
+	page := clients[start:end]
 	writeJSON(w, http.StatusOK, map[string]any{
-		"data": clients,
+		"data": page,
 		"meta": map[string]any{
-			"total": len(clients), "returned": len(clients), "limit": limit, "offset": offset,
+			"total": total, "returned": len(page), "limit": limit, "offset": offset,
 			"filters": map[string]any{
 				"min_share": filters.MinShare, "tag": filters.Tag, "contacted": filters.Contacted,
 				"stage": filters.Stage, "excluded": false, "inactive": false, "assigned": "free",

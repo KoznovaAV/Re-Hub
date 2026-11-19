@@ -57,7 +57,7 @@ func (s *Store) LatestPeriod(ctx context.Context) (string, error) {
 		SELECT rp.label
 		FROM slices s
 		JOIN report_periods rp ON rp.id = s.period_id
-		ORDER BY s.slice_date DESC, s.id DESC
+		ORDER BY rp.year DESC, rp.quarter DESC, s.slice_date DESC, s.id DESC
 		LIMIT 1`).Scan(&code)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return "", nil
@@ -66,7 +66,7 @@ func (s *Store) LatestPeriod(ctx context.Context) (string, error) {
 }
 
 func (s *Store) ListClients(ctx context.Context, f ListFilters) ([]Client, int, error) {
-	if f.Limit <= 0 || f.Limit > 1000 {
+	if f.Limit <= 0 || f.Limit > 5000 {
 		f.Limit = 200
 	}
 	args := make([]any, 0, 8)
@@ -154,7 +154,7 @@ func (s *Store) ListClients(ctx context.Context, f ListFilters) ([]Client, int, 
 			JOIN slices s ON s.id = sr.slice_id
 			JOIN report_periods rp ON rp.id = s.period_id
 			WHERE sr.client_id = c.id
-			ORDER BY s.slice_date DESC, s.id DESC
+			ORDER BY rp.year DESC, rp.quarter DESC, s.slice_date DESC, s.id DESC
 			LIMIT 1
 		) latest ON TRUE
 		LEFT JOIN LATERAL (
@@ -163,7 +163,7 @@ func (s *Store) ListClients(ctx context.Context, f ListFilters) ([]Client, int, 
 			JOIN slices s ON s.id = sr.slice_id
 			JOIN report_periods rp ON rp.id = s.period_id
 			WHERE sr.client_id = c.id
-			ORDER BY s.slice_date DESC, s.id DESC
+			ORDER BY rp.year DESC, rp.quarter DESC, s.slice_date DESC, s.id DESC
 			OFFSET 1 LIMIT 1
 		) prev ON TRUE
 		WHERE %s
@@ -292,7 +292,7 @@ func (s *Store) History(ctx context.Context, clientID string) ([]Record, error) 
 		JOIN slices s ON s.id = sr.slice_id
 		JOIN report_periods rp ON rp.id = s.period_id
 		WHERE sr.client_id = $1::uuid
-		ORDER BY s.slice_date, s.id`, clientID)
+		ORDER BY rp.year, rp.quarter, s.slice_date, s.id`, clientID)
 	if err != nil {
 		return nil, err
 	}
