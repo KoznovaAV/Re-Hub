@@ -1,0 +1,73 @@
+{
+  "contract_version": "1.0",
+  "file_kind": "snapshot",
+  "key_mode": "anonymous",
+  "nonempty_row_count": 5,
+  "rows": [
+    {
+      "source": {
+        "sheet": "весь 2025 год",
+        "row": 3
+      },
+      "data": {
+        "external_id": "AAA00001",
+        "period_code": "Y2025",
+        "total_docs": 10,
+        "unsent_docs": 1
+      }
+    },
+    {
+      "source": {
+        "sheet": "весь 2025 год",
+        "row": 4
+      },
+      "data": {
+        "external_id": "AAA00001",
+        "period_code": "Y2025",
+        "total_docs": 10,
+        "unsent_docs": 1
+      }
+    },
+    {
+      "source": {
+        "sheet": "весь 2025 год",
+        "row": 5
+      },
+      "data": {
+        "external_id": "AAA00001",
+        "period_code": "Y2025",
+        "total_docs": 11,
+        "unsent_docs": 1
+      }
+    },
+    {
+      "source": {
+        "sheet": "1 кв 2026",
+        "row": 3
+      },
+      "data": {
+        "external_id": "AAA00001",
+        "period_code": "2026Q1",
+        "total_docs": 5,
+        "unsent_docs": 0
+      }
+    }
+  ],
+  "errors": [
+    {
+      "scope": "row",
+      "code": "INTEGER_REQUIRED",
+      "message": "Invalid field at column E",
+      "source": {
+        "sheet": "весь 2025 год",
+        "row": 6,
+        "column": "E"
+      },
+      "raw_value": null,
+      "key_hint": {
+        "external_id": "AAA00001",
+        "period_code": "Y2025"
+      }
+    }
+  ]
+}

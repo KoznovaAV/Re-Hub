@@ -1,0 +1,77 @@
+{
+  "list_version": "1.0",
+  "metric_version": "v0-synthetic",
+  "key_fields": [
+    "external_id",
+    "period_code"
+  ],
+  "counts": {
+    "reference_items": 5,
+    "reference_required": 4,
+    "reference_excluded": 1,
+    "actual_items": 5,
+    "actual_included": 4,
+    "actual_excluded": 1,
+    "true_positive": 2,
+    "false_positive_extra": 2,
+    "false_negative_missing": 2
+  },
+  "precision": 0.5,
+  "recall": 0.5,
+  "f1": 0.5,
+  "extra": [
+    {
+      "external_id": "AAA00004",
+      "period_code": "2026Q1"
+    },
+    {
+      "external_id": "AAA00006",
+      "period_code": "2026Q3"
+    }
+  ],
+  "missing": [
+    {
+      "external_id": "AAA00002",
+      "period_code": "Y2025"
+    },
+    {
+      "external_id": "AAA00005",
+      "period_code": "2026Q2"
+    }
+  ],
+  "exceptions": {
+    "reference_excluded": [
+      {
+        "external_id": "AAA00004",
+        "period_code": "2026Q1",
+        "reason": "synthetic exclusion"
+      }
+    ],
+    "actual_excluded": [
+      {
+        "external_id": "AAA00005",
+        "period_code": "2026Q2",
+        "reason": "operator marked as exception"
+      }
+    ],
+    "included_despite_exclusion": [
+      {
+        "external_id": "AAA00004",
+        "period_code": "2026Q1",
+        "reason": "synthetic exclusion"
+      }
+    ],
+    "required_but_marked_excluded": [
+      {
+        "external_id": "AAA00005",
+        "period_code": "2026Q2",
+        "reason": "operator marked as exception"
+      }
+    ]
+  },
+  "notes": [
+    "Synthetic V-02 skeleton; M-01 ground truth is not used yet.",
+    "precision = TP / (TP + extra); recall = TP / (TP + missing).",
+    "Reference-excluded items do not enter the recall denominator."
+  ]
+}

@@ -13,6 +13,8 @@
 
 Парсер сохраняет исходные вкладку, строку и колонку, отклоняет формулы в числах и оставляет дубли для проверки в Go. Для ошибок с читаемым ID выдаёт `key_hint`. Проверка покрытия справочником отделена от парсинга. Реальный импорт по коду КЦР и транзакционная запись относятся к другим задачам.
 
+Срез можно разобрать напрямую или через `POST /parse` (multipart `file` + JSON `context`). Ответ — строго `ParserResult` v1; транспортные лимиты и ошибки контекста описаны в [README ai-service](../../ai-service/README.md). Golden-фикстуры четырёх кейсов лежат в `ai-service/tests/fixtures/snapshot/`.
+
 ```sh
 python -m pip install -r ai-service/requirements-import.txt
 python ai-service/app/customer_xlsx.py /path/to/snapshot.xlsx contracts/examples/customer-october-context.json --summary

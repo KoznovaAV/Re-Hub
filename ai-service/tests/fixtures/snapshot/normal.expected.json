@@ -1,0 +1,81 @@
+{
+  "contract_version": "1.0",
+  "file_kind": "snapshot",
+  "key_mode": "anonymous",
+  "nonempty_row_count": 6,
+  "rows": [
+    {
+      "source": {
+        "sheet": "весь 2025 год",
+        "row": 3
+      },
+      "data": {
+        "external_id": "AAA00001",
+        "period_code": "Y2025",
+        "total_docs": 1245,
+        "unsent_docs": 2
+      }
+    },
+    {
+      "source": {
+        "sheet": "весь 2025 год",
+        "row": 4
+      },
+      "data": {
+        "external_id": "AAA00002",
+        "period_code": "Y2025",
+        "total_docs": 0,
+        "unsent_docs": 0
+      }
+    },
+    {
+      "source": {
+        "sheet": "1 кв 2026",
+        "row": 3
+      },
+      "data": {
+        "external_id": "AAA00001",
+        "period_code": "2026Q1",
+        "total_docs": 100,
+        "unsent_docs": 40
+      }
+    },
+    {
+      "source": {
+        "sheet": "1 кв 2026",
+        "row": 4
+      },
+      "data": {
+        "external_id": "AAA00002",
+        "period_code": "2026Q1",
+        "total_docs": 50,
+        "unsent_docs": 5
+      }
+    },
+    {
+      "source": {
+        "sheet": "2 кв 2026",
+        "row": 3
+      },
+      "data": {
+        "external_id": "AAA00002",
+        "period_code": "2026Q2",
+        "total_docs": 7,
+        "unsent_docs": 0
+      }
+    },
+    {
+      "source": {
+        "sheet": "3 кв 2026",
+        "row": 3
+      },
+      "data": {
+        "external_id": "AAA00003",
+        "period_code": "2026Q3",
+        "total_docs": 12,
+        "unsent_docs": 12
+      }
+    }
+  ],
+  "errors": []
+}
