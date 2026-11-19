@@ -1,12 +1,12 @@
-"""Adapter for the explicitly named tabs in the October customer snapshot.
+"""Адаптер для явно названных вкладок октябрьского среза КЦР.
 
-The parser is a pure function: it reads cells, validates lexical forms and
-returns ParserResult v1.  It never writes to a database, resolves duplicate
-keys for import or changes the source workbook.
+Парсер — чистая функция: он читает ячейки, проверяет лексическую форму и
+возвращает ParserResult v1. Он не пишет в БД, не разрешает дубли ключей
+для импорта и не изменяет исходную книгу.
 
-Duplicate pairs are intentionally kept in ``rows`` (and in ``key_hint`` of
-rejected rows).  The domain component in Go owns the file-level duplicate
-decision described by T-02 IM-01.
+Пары-дубли намеренно остаются в ``rows`` (а также в ``key_hint`` отклонённых
+строк). Решение на уровне файла о дублях по T-02 IM-01 принимает доменный
+компонент на Go.
 """
 
 import argparse
@@ -38,7 +38,7 @@ def normalized(value):
 
 
 def cell_raw_value(cell):
-    """Return only a JSON primitive that the ParserResult error may carry."""
+    """Вернуть только JSON-примитив, который может попасть в ошибку ParserResult."""
     raw = cell.value
     if type(raw) in (str, int, bool) or type(raw) is float and math.isfinite(raw):
         return raw
@@ -46,7 +46,7 @@ def cell_raw_value(cell):
 
 
 def key_from(cell, pattern):
-    """Return a valid text key or None (used by read-only diagnostic tools)."""
+    """Вернуть корректный текстовый ключ или None (для read-only диагностики)."""
     value = cell.value
     if cell.data_type in {"f", "e"} or not isinstance(value, str):
         return None
@@ -55,7 +55,7 @@ def key_from(cell, pattern):
 
 
 def key_error_from(cell, pattern):
-    """Return ``(external_id, error_code)`` for a required text key column."""
+    """Вернуть ``(external_id, error_code)`` для обязательной текстовой колонки ключа."""
     value = cell.value
     if cell.data_type == "f":
         return None, "FORMULA_NOT_ALLOWED"
@@ -64,7 +64,7 @@ def key_error_from(cell, pattern):
     if value is None or isinstance(value, str) and not value.strip():
         return None, "INVALID_EXTERNAL_ID"
     if not isinstance(value, str):
-        # AC-13: a numeric Excel key is not repaired by guessing leading zeroes.
+        # AC-13: числовой ключ Excel не восстанавливается догадкой о ведущих нулях.
         return None, "KEY_MUST_BE_TEXT"
     value = value.strip()
     if not pattern.fullmatch(value):
@@ -73,7 +73,7 @@ def key_error_from(cell, pattern):
 
 
 def number_from(cell, allow_missing):
-    """Normalise an integer cell without evaluating formulas or error cells."""
+    """Нормализовать целочисленную ячейку, не вычисляя формулы и ячейки ошибок."""
     value = cell.value
     if cell.data_type == "f":
         return None, "FORMULA_NOT_ALLOWED"
@@ -126,12 +126,12 @@ def validate_context(context):
 
 
 def parse_file(file_path, context, max_rows=None):
-    """Return ParserResult v1. The caller owns duplicate checks and any write.
+    """Вернуть ParserResult v1. Проверка дублей и запись — за вызывающей стороной.
 
-    ``max_rows`` is an optional transport guard.  When it is exceeded the
-    result keeps the already parsed rows and adds a file-level
-    ``ROW_LIMIT_EXCEEDED`` error so an HTTP layer can return a readable error
-    without pretending that the workbook was parsed completely.
+    ``max_rows`` — необязательный транспортный предохранитель. При превышении
+    результат сохраняет уже разобранные строки и добавляет file-ошибку
+    ``ROW_LIMIT_EXCEEDED``, чтобы HTTP-слой вернул понятную ошибку и не выдавал
+    книгу за полностью разобранную.
     """
     validate_context(context)
     mode = context["key_mode"]
@@ -206,11 +206,11 @@ def parse_file(file_path, context, max_rows=None):
 
 
 def find_duplicates(result):
-    """Return duplicate ``(external_id, period_code)`` groups for diagnostics.
+    """Вернуть группы дублей ``(external_id, period_code)`` для диагностики.
 
-    Both accepted rows and rejected rows with a readable ``key_hint`` are
-    considered, as required by T-02 IM-01.  The function is deliberately not
-    part of ParserResult v1: rejecting the whole file remains a domain decision.
+    Учитываются и принятые строки, и отклонённые строки с читаемым ``key_hint``,
+    как требует T-02 IM-01. Функция намеренно не входит в ParserResult v1:
+    отклонение всего файла остаётся решением доменного слоя.
     """
     observations = defaultdict(list)
     for row in result["rows"]:

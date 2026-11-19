@@ -1,16 +1,16 @@
-"""T-05: measure the snapshot parser on the full-size workload.
+"""T-05: замер парсера среза на полном объёме.
 
-By default the script generates a synthetic four-tab workbook with the public
-aggregate dimensions of the October snapshot (12 772 non-empty rows and 4 205
-unique anonymous IDs), because the customer file is not stored in the
-repository.  A real file can be measured without changing the code:
+По умолчанию скрипт генерирует синтетическую книгу с четырьмя вкладками и
+публичными агрегатами октябрьского среза (12 772 непустые строки и 4 205
+уникальных обезличенных ID), потому что файл заказчика не хранится в
+репозитории. Реальный файл можно замерить без изменения кода:
 
     py -3 ai-service/benchmarks/measure_snapshot_parse.py \
         --input /path/to/snapshot.xlsx \
         --context contracts/examples/customer-october-context.json
 
-The report deliberately separates wall-clock timing from tracemalloc peak and
-from the OS process peak where the platform exposes it.
+Отчёт намеренно разделяет wall-clock время, пик tracemalloc и пик процесса ОС,
+если платформа его предоставляет.
 """
 
 import argparse
@@ -85,7 +85,7 @@ def build_synthetic(path):
 
 
 def peak_rss_bytes():
-    """Return OS peak working set / max RSS when the platform exposes it."""
+    """Вернуть пик рабочего набора ОС / max RSS, если платформа его предоставляет."""
     try:
         if os.name == "nt":
             import ctypes

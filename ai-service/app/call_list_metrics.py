@@ -1,16 +1,16 @@
-"""V-02 skeleton: compare a reference call list with an actual call list.
+"""Каркас V-02: сравнение эталонного и фактического списков обзвона.
 
-No M-01 ground truth and no production parser are involved yet.  The module
-accepts small JSON list exports, so it can be exercised on synthetic fixtures
-and later fed by the approved M-01 data without changing the metric shape.
+M-01 и production-парсер пока не участвуют. Модуль принимает небольшие
+JSON-выгрузки списков, поэтому его можно прогнать на синтетических фикстурах,
+а позже подключить к утверждённым данным M-01 без изменения формы метрик.
 
-Input item::
+Элемент входа::
 
     {"external_id": "AAA00001", "period_code": "Y2025",
      "excluded": false, "exclusion_reason": null}
 
-A top-level list or an object with an ``items`` list is accepted.  Duplicate
-keys are rejected: without a single key per list precision/recall is ambiguous.
+Принимается список верхнего уровня или объект с массивом ``items``. Дубли
+ключей отклоняются: без одного ключа на список precision/recall неоднозначны.
 """
 
 import argparse

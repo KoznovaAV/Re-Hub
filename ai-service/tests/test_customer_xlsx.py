@@ -8,7 +8,7 @@ from app.customer_xlsx import PERIODS, find_duplicates, parse_file, summary
 
 
 class ExcelError(str):
-    """Marker that is written as a real Excel error cell (``#N/A``)."""
+    """Маркер, который записывается как настоящая ячейка ошибки Excel (``#N/A``)."""
 
 
 class CustomerSnapshotTest(unittest.TestCase):
@@ -116,7 +116,7 @@ class CustomerSnapshotTest(unittest.TestCase):
                           for item in groups[0]["observations"]],
                          [(3, "row"), (4, "row"), (5, "error")])
         self.assertEqual(summary(result)["duplicate_observations"], 2)
-        # Same external_id in another period is a normal history row, not a duplicate.
+        # Тот же external_id в другом периоде — обычная строка истории, а не дубль.
         self.assertEqual(sum(1 for row in result["rows"]
                              if row["data"]["period_code"] == "2026Q1"), 1)
 

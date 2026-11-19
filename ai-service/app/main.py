@@ -1,13 +1,13 @@
-"""Small HTTP contour for the Python parser.
+"""Небольшой HTTP-контур для Python-парсера.
 
-Two endpoints are intentionally kept on the standard library:
+Два эндпоинта намеренно оставлены на стандартной библиотеке:
 
-* ``GET /health`` and ``POST /probe`` — the existing Go/Python smoke probe.
-* ``POST /parse`` — multipart upload (``file`` + JSON ``context``) that returns
-  ParserResult v1 for ``file_kind=snapshot``.
+* ``GET /health`` и ``POST /probe`` — существующий smoke-проброс Go/Python.
+* ``POST /parse`` — multipart-загрузка (``file`` + JSON ``context``),
+  возвращающая ParserResult v1 для ``file_kind=snapshot``.
 
-The clients parser belongs to a separate task; until it exists this endpoint
-answers ``501`` for ``file_kind=clients`` instead of pretending to parse it.
+Парсер клиентов относится к отдельной задаче; пока его нет, эндпоинт
+отвечает ``501`` для ``file_kind=clients``, а не делает вид, что разбирает файл.
 """
 
 from email.message import Message
@@ -19,9 +19,9 @@ import sys
 import tempfile
 import traceback
 
-try:  # package import in tests / ``python -m app.main``
+try:  # импорт пакета в тестах и при ``python -m app.main``
     from .customer_xlsx import parse_file
-except ImportError:  # direct ``python main.py`` in the container
+except ImportError:  # прямой запуск ``python main.py`` в контейнере
     from customer_xlsx import parse_file
 
 
@@ -54,11 +54,11 @@ def multipart_boundary(content_type):
 
 
 def parse_multipart(content_type, body):
-    """Return form fields as ``{name: bytes}`` without third-party packages.
+    """Вернуть поля формы как ``{name: bytes}`` без сторонних пакетов.
 
-    A manual split is used instead of ``cgi`` (removed from newer Python) and
-    instead of ``email`` payload decoding, because an XLSX part contains binary
-    bytes that must survive unchanged.
+    Ручное разбиение используется вместо ``cgi`` (удалён из новых версий Python)
+    и вместо декодирования payload через ``email``, потому что часть XLSX содержит
+    двоичные байты, которые должны дойти без изменений.
     """
     boundary = multipart_boundary(content_type)
     delimiter = b"--" + boundary
@@ -95,7 +95,7 @@ def parse_multipart(content_type, body):
 
 
 class FieldTooLarge(ValueError):
-    """A multipart text field exceeded its transport limit."""
+    """Текстовое поле multipart превысило транспортный лимит."""
 
 
 def field_text(fields, name, limit):
