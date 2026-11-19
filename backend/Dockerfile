@@ -7,7 +7,7 @@ COPY internal ./internal
 COPY migrations ./migrations
 RUN CGO_ENABLED=0 go build -trimpath -o /rehub-api ./cmd/api
 
-FROM alpine:3.23
+FROM alpine:3.24
 COPY --from=build /rehub-api /usr/local/bin/rehub-api
 USER 65534:65534
 EXPOSE 8080
