@@ -1,0 +1,6 @@
+{
+  "contract_version": "1.0",
+  "file_kind": "clients",
+  "key_mode": "anonymous",
+  "mapping_profile": "customer_kcr_directory_v1"
+}
