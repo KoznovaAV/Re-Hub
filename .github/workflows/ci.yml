@@ -206,12 +206,32 @@ jobs:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
           push: ${{ env.PUSH_IMAGES == 'true' }}
+          load: ${{ github.event_name == 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ matrix.image }}
           cache-to: type=gha,mode=max,scope=${{ matrix.image }}
           provenance: ${{ env.PUSH_IMAGES == 'true' }}
           sbom: ${{ env.PUSH_IMAGES == 'true' }}
+
+      - name: Verify packaged assistant resources
+        if: github.event_name == 'pull_request' && matrix.image == 'rehub-ai-service'
+        env:
+          IMAGE_TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          image="${IMAGE_TAGS%%$'\n'*}"
+          docker run --rm -i --entrypoint python "$image" - <<'PYTHON'
+          import sys
+          sys.path.insert(0, "ai-service/app")
+          from ml_intent import load_periods, load_prompt
+          from ai_query import answer, fixture
+          from doc_qa import index
+          assert load_periods() and load_prompt()
+          assert fixture()["synthetic"] is True
+          assert index()
+          assert answer("привет", None)["status"] == "clarify"
+          print("Assistant resources and greeting OK; Ollama was not called")
+          PYTHON
 
   release:
     name: GitHub release
