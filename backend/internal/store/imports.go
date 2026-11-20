@@ -41,7 +41,7 @@ func (s *Store) SaveSnapshot(ctx context.Context, fileName string, scope []strin
 			continue
 		}
 		if seen[key] {
-			importErrors = append(importErrors, rowError(row, "DUPLICATE_KEY", fmt.Sprintf("duplicate external_id + period_code: %s", key)))
+			importErrors = append(importErrors, rowError(row, "DUPLICATE_KEY", fmt.Sprintf("duplicate external_id + period_code: %s/%s", row.ExternalID, row.PeriodCode)))
 			continue
 		}
 		seen[key] = true
