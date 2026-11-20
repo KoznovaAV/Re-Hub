@@ -507,6 +507,7 @@ components:
         inn: { type: string, description: ИНН не уникален; может быть пустым }
         kpp: { type: string }
         name: { type: string }
+        contact_details: { type: string, description: Исходная контактная строка из справочника }
         stage: { type: string }
         assigned_to: { type: string, format: uuid, nullable: true }
         assigned_name: { type: string }

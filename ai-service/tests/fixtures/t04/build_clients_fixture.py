@@ -36,7 +36,7 @@ def tags_cell(tags: list[str]) -> str | None:
 def expected_data(client: dict) -> dict:
     data = {"external_id": client["external_id"]}
     if client.get("contacts"):
-        data["name"] = client["contacts"]
+        data["contact_details"] = client["contacts"]
     if client.get("tags"):
         data["tags"] = list(client["tags"])
     data["excluded"] = bool(client["excluded"])

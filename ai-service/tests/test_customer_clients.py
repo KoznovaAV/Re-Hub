@@ -52,7 +52,7 @@ class CustomerClientsTest(unittest.TestCase):
         self.assertEqual(summary(result)["parsed_rows"], 3)
         self.assertEqual(result["rows"][0]["data"], {
             "external_id": "AAA00001",
-            "name": "Иванов +7000",
+            "contact_details": "Иванов +7000",
             "tags": ["vip", "mpp"],
             "excluded": True,
             "active": True,
@@ -64,7 +64,7 @@ class CustomerClientsTest(unittest.TestCase):
         })
         self.assertEqual(result["rows"][2]["data"], {
             "external_id": "AAA00003",
-            "name": "Петров",
+            "contact_details": "Петров",
             "tags": [],
         })
 
@@ -105,3 +105,17 @@ class CustomerClientsTest(unittest.TestCase):
         result = parse_file(self.file, {**self.context, "key_mode": "kcr"})
         self.assertEqual(result["rows"][0]["data"]["external_id"], "1234567")
         self.assertEqual(result["rows"][0]["data"]["tags"], ["newcomer"])
+
+    def test_name_and_contacts_are_independent(self):
+        self.make_fixture([["AAA00001", None, "vip", "нет", "нет", "Контакт +7000", "Компания"]],
+                          headers=HEADERS + ["Название"])
+        data = parse_file(self.file, self.context)["rows"][0]["data"]
+        self.assertEqual(data["name"], "Компания")
+        self.assertEqual(data["contact_details"], "Контакт +7000")
+
+    def test_header_alias_cannot_silently_override_key(self):
+        self.make_fixture([["AAA00001", None, None, None, None, None, "AAA00002"]],
+                          headers=HEADERS + ["Уникальный обезличенный идентификатор"])
+        result = parse_file(self.file, self.context)
+        self.assertEqual(result["rows"], [])
+        self.assertEqual(result["errors"][0]["code"], "DUPLICATE_HEADER")

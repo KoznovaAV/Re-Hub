@@ -34,6 +34,7 @@ type Client struct {
 	Tags           []string   `json:"tags"`
 	PromisedAt     *time.Time `json:"promised_at,omitempty"`
 	LastContactAt  *time.Time `json:"last_contact_at,omitempty"`
+	ContactDetails string     `json:"contact_details,omitempty"`
 	ContactName    string     `json:"contact_name,omitempty"`
 	ContactPhone   string     `json:"contact_phone,omitempty"`
 	ContactEmail   string     `json:"contact_email,omitempty"`
@@ -74,12 +75,13 @@ type ListFilters struct {
 }
 
 type NewClientData struct {
-	ExternalID string
-	Name       string
-	Tags       []string
-	Excluded   bool
-	Active     *bool
-	SourceRow  int
+	ContactDetails *string
+	ExternalID     string
+	Name           string
+	Tags           []string
+	Excluded       bool
+	Active         *bool
+	SourceRow      int
 }
 
 type ParsedRow struct {

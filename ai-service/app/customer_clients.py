@@ -8,6 +8,12 @@ import math
 from pathlib import Path
 import re
 from zipfile import BadZipFile
+from xml.etree.ElementTree import ParseError
+
+try:
+    from .xlsx_limits import check_archive, WorkbookLimitError
+except ImportError:
+    from xlsx_limits import check_archive, WorkbookLimitError
 
 from openpyxl import load_workbook
 from openpyxl.utils.exceptions import InvalidFileException
@@ -30,8 +36,9 @@ HEADER_FIELDS = {
     "теги": "tags",
     "не нужно работать": "excluded",
     "недействующий": "inactive",
-    # Schema v1 has no contacts field; contact line is stored in name until C4 extends the DTO.
-    "контакты": "name",
+    # Сохраняем контактную строку целиком, не выдавая ее за название клиента.
+    "контакты": "contact_details",
+    "название": "name",
 }
 
 
@@ -165,8 +172,11 @@ def parse_file(file_path, context):
         })
 
     try:
+        check_archive(file_path)
         book = load_workbook(file_path, read_only=True, data_only=False, keep_links=False)
-    except (OSError, BadZipFile, InvalidFileException, ValueError, KeyError):
+    except WorkbookLimitError:
+        return file_error("XLSX_LIMIT_EXCEEDED", "Workbook archive exceeds parsing limits")
+    except (OSError, BadZipFile, InvalidFileException, ValueError, KeyError, ParseError):
         return file_error("INVALID_XLSX", "The XLSX package could not be opened")
 
     try:
@@ -204,11 +214,14 @@ def parse_file(file_path, context):
                     {"sheet": SHEET_NAME, "row": HEADER_ROW, "column": column_letter(cell.column - 1)},
                     cell.value,
                 )
+            if field in columns:
+                return file_error("DUPLICATE_HEADER", "Two headers map to the same field",
+                                  {"sheet": SHEET_NAME, "row": HEADER_ROW, "column": column_letter(cell.column - 1)})
             columns[field] = cell.column - 1
 
         required = {"anonymous_id", "kcr_code"} if mode == "anonymous" else {"kcr_code"}
         # Always require the T-01 flag/contact columns when present in the profile.
-        required |= {"tags", "excluded", "inactive", "name"}
+        required |= {"tags", "excluded", "inactive", "contact_details"}
         missing = sorted(required - columns.keys())
         if missing:
             return file_error(
@@ -238,7 +251,9 @@ def parse_file(file_path, context):
             take("tags", tags_from)
             take("excluded", bool_from)
             take("inactive", bool_from)
-            take("name", text_from)
+            take("contact_details", text_from)
+            if "name" in columns:
+                take("name", text_from)
 
             anonymous_id = None
             kcr_code = None
@@ -297,8 +312,9 @@ def parse_file(file_path, context):
                 continue
 
             data = {"external_id": external_id}
-            if values.get("name") is not None:
-                data["name"] = values["name"]
+            for field in ("name", "contact_details"):
+                if values.get(field) is not None:
+                    data[field] = values[field]
             if values.get("tags") is not None:
                 data["tags"] = values["tags"]
             if values.get("excluded") is not None:
@@ -307,6 +323,9 @@ def parse_file(file_path, context):
                 data["active"] = not values["inactive"]
             result["rows"].append({"source": source_base, "data": data})
         return result
+    except (ParseError, BadZipFile, KeyError, ValueError):
+        result["rows"] = []
+        return file_error("INVALID_XLSX", "The XLSX package is malformed")
     finally:
         book.close()
 
@@ -320,7 +339,7 @@ def summary(result):
         if row["data"].get("excluded")
         or row["data"].get("active") is False
         or row["data"].get("tags")
-        or row["data"].get("name")
+        or row["data"].get("contact_details")
     )
     return {
         "source_rows": result["nonempty_row_count"],
