@@ -60,12 +60,13 @@ func (s *Server) importClients(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		rows = append(rows, store.NewClientData{
-			ExternalID: data.ExternalID,
-			Name:       data.Name,
-			Tags:       data.Tags,
-			Excluded:   data.Excluded != nil && *data.Excluded,
-			Active:     data.Active,
-			SourceRow:  row.Source.Row,
+			ExternalID:     data.ExternalID,
+			Name:           data.Name,
+			ContactDetails: data.ContactDetails,
+			Tags:           data.Tags,
+			Excluded:       data.Excluded != nil && *data.Excluded,
+			Active:         data.Active,
+			SourceRow:      row.Source.Row,
 		})
 	}
 	errorsList := convertParserErrors(result.Errors)

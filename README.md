@@ -136,3 +136,5 @@ Smoke измеряет доступность и корректность кон
 - [Контракт Go/Python — T-26](https://github.com/KoznovaAV/Re-Hub/issues/54)
 - [Правила импорта и периодов — T-02](https://github.com/KoznovaAV/Re-Hub/issues/48)
 - [Сравнение маршрутизаторов — H-02](https://github.com/KoznovaAV/Re-Hub/issues/70)
+
+Парсеры клиентов и срезов, контактные поля, ограничения `/parse`, сквозной тест и замер производительности: [инструкция T-01 - T-05](docs/data/clients-parser.md).

@@ -7,6 +7,9 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 
+MAX_PARSE_BYTES = 25 * 1024 * 1024
+
+
 class Handler(BaseHTTPRequestHandler):
     def setup(self):
         self.timeout = 3
@@ -54,11 +57,18 @@ class Handler(BaseHTTPRequestHandler):
             length = int(self.headers.get("Content-Length", "0"))
         except ValueError:
             length = 0
-        if not 0 < length <= 25 * 1024 * 1024:
+        if not 0 < length <= MAX_PARSE_BYTES:
             self.send_json(413, {"error": "file_too_large"})
             return
 
-        raw = self.rfile.read(length)
+        try:
+            raw = self.rfile.read(length)
+        except TimeoutError:
+            self.send_json(400, {"error": "incomplete_upload"})
+            return
+        if len(raw) != length:
+            self.send_json(400, {"error": "incomplete_upload"})
+            return
         message = BytesParser(policy=email_policy).parsebytes(
             b"Content-Type: " + self.headers.get("Content-Type", "").encode("latin-1")
             + b"\r\nMIME-Version: 1.0\r\n\r\n" + raw

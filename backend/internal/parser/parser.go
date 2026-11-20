@@ -54,11 +54,12 @@ type SnapshotData struct {
 }
 
 type ClientData struct {
-	ExternalID string   `json:"external_id"`
-	Name       string   `json:"name"`
-	Tags       []string `json:"tags"`
-	Excluded   *bool    `json:"excluded"`
-	Active     *bool    `json:"active"`
+	ExternalID     string   `json:"external_id"`
+	Name           string   `json:"name"`
+	ContactDetails *string  `json:"contact_details"`
+	Tags           []string `json:"tags"`
+	Excluded       *bool    `json:"excluded"`
+	Active         *bool    `json:"active"`
 }
 
 type Client struct {

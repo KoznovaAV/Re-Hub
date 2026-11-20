@@ -11,12 +11,12 @@
       },
       "data": {
         "external_id": "AAA00001",
-        "name": "Админ S1 +70001",
         "tags": [
           "vip"
         ],
         "excluded": false,
-        "active": true
+        "active": true,
+        "contact_details": "Админ S1 +70001"
       }
     },
     {
@@ -26,9 +26,9 @@
       },
       "data": {
         "external_id": "AAA00002",
-        "name": "Админ S2 +70002",
         "excluded": false,
-        "active": true
+        "active": true,
+        "contact_details": "Админ S2 +70002"
       }
     },
     {
@@ -38,12 +38,12 @@
       },
       "data": {
         "external_id": "AAA00003",
-        "name": "Админ S3 +70003",
         "tags": [
           "mpp"
         ],
         "excluded": false,
-        "active": true
+        "active": true,
+        "contact_details": "Админ S3 +70003"
       }
     },
     {
@@ -53,9 +53,9 @@
       },
       "data": {
         "external_id": "AAA00004",
-        "name": "Админ S4 +70004",
         "excluded": false,
-        "active": true
+        "active": true,
+        "contact_details": "Админ S4 +70004"
       }
     },
     {
@@ -65,12 +65,12 @@
       },
       "data": {
         "external_id": "AAA00005",
-        "name": "Админ S5 +70005",
         "tags": [
           "integrator"
         ],
         "excluded": false,
-        "active": true
+        "active": true,
+        "contact_details": "Админ S5 +70005"
       }
     },
     {
@@ -80,9 +80,9 @@
       },
       "data": {
         "external_id": "AAA00006",
-        "name": "Админ S6 ordinary",
         "excluded": false,
-        "active": true
+        "active": true,
+        "contact_details": "Админ S6 ordinary"
       }
     },
     {
@@ -92,12 +92,12 @@
       },
       "data": {
         "external_id": "AAA00007",
-        "name": "Админ S6 newbie",
         "tags": [
           "newcomer"
         ],
         "excluded": false,
-        "active": true
+        "active": true,
+        "contact_details": "Админ S6 newbie"
       }
     },
     {
@@ -107,9 +107,9 @@
       },
       "data": {
         "external_id": "AAA00008",
-        "name": "Админ S7 +70008",
         "excluded": false,
-        "active": true
+        "active": true,
+        "contact_details": "Админ S7 +70008"
       }
     },
     {
@@ -119,12 +119,12 @@
       },
       "data": {
         "external_id": "AAA00009",
-        "name": "Админ S8 +70009",
         "tags": [
           "tech_partner"
         ],
         "excluded": false,
-        "active": true
+        "active": true,
+        "contact_details": "Админ S8 +70009"
       }
     },
     {
@@ -134,9 +134,9 @@
       },
       "data": {
         "external_id": "AAA00010",
-        "name": "Исключён 10",
         "excluded": true,
-        "active": true
+        "active": true,
+        "contact_details": "Исключён 10"
       }
     },
     {
@@ -146,12 +146,12 @@
       },
       "data": {
         "external_id": "AAA00011",
-        "name": "Исключён VIP",
         "tags": [
           "vip"
         ],
         "excluded": true,
-        "active": true
+        "active": true,
+        "contact_details": "Исключён VIP"
       }
     },
     {
@@ -161,9 +161,9 @@
       },
       "data": {
         "external_id": "AAA00012",
-        "name": "Исключён и недействующий",
         "excluded": true,
-        "active": false
+        "active": false,
+        "contact_details": "Исключён и недействующий"
       }
     },
     {
@@ -173,9 +173,9 @@
       },
       "data": {
         "external_id": "AAA00013",
-        "name": "Недействующий 13",
         "excluded": false,
-        "active": false
+        "active": false,
+        "contact_details": "Недействующий 13"
       }
     },
     {
@@ -199,9 +199,9 @@
       },
       "data": {
         "external_id": "AAA00015",
-        "name": "Недействующий 15",
         "excluded": false,
-        "active": false
+        "active": false,
+        "contact_details": "Недействующий 15"
       }
     },
     {
@@ -211,13 +211,13 @@
       },
       "data": {
         "external_id": "AAA00016",
-        "name": "Мульти-тег 16",
         "tags": [
           "vip",
           "integrator"
         ],
         "excluded": false,
-        "active": true
+        "active": true,
+        "contact_details": "Мульти-тег 16"
       }
     },
     {
@@ -241,12 +241,12 @@
       },
       "data": {
         "external_id": "AAA00018",
-        "name": "Контакт 18",
         "tags": [
           "mpp"
         ],
         "excluded": false,
-        "active": true
+        "active": true,
+        "contact_details": "Контакт 18"
       }
     },
     {
@@ -256,12 +256,12 @@
       },
       "data": {
         "external_id": "AAA00019",
-        "name": "Новичок 19",
         "tags": [
           "newcomer"
         ],
         "excluded": false,
-        "active": true
+        "active": true,
+        "contact_details": "Новичок 19"
       }
     },
     {
@@ -271,12 +271,12 @@
       },
       "data": {
         "external_id": "AAA00020",
-        "name": "VIP 20",
         "tags": [
           "vip"
         ],
         "excluded": false,
-        "active": true
+        "active": true,
+        "contact_details": "VIP 20"
       }
     },
     {
@@ -286,9 +286,9 @@
       },
       "data": {
         "external_id": "AAA00021",
-        "name": "Обычный 21",
         "excluded": false,
-        "active": true
+        "active": true,
+        "contact_details": "Обычный 21"
       }
     },
     {
@@ -298,9 +298,9 @@
       },
       "data": {
         "external_id": "AAA00022",
-        "name": "Обычный 22",
         "excluded": false,
-        "active": true
+        "active": true,
+        "contact_details": "Обычный 22"
       }
     },
     {
@@ -321,9 +321,9 @@
       },
       "data": {
         "external_id": "AAA00024",
-        "name": "Обычный 24",
         "excluded": false,
-        "active": true
+        "active": true,
+        "contact_details": "Обычный 24"
       }
     },
     {
@@ -333,9 +333,9 @@
       },
       "data": {
         "external_id": "AAA00025",
-        "name": "Обычный 25",
         "excluded": false,
-        "active": true
+        "active": true,
+        "contact_details": "Обычный 25"
       }
     },
     {
@@ -356,12 +356,12 @@
       },
       "data": {
         "external_id": "AAA00027",
-        "name": "Интегратор 27",
         "tags": [
           "integrator"
         ],
         "excluded": false,
-        "active": true
+        "active": true,
+        "contact_details": "Интегратор 27"
       }
     },
     {
@@ -371,9 +371,9 @@
       },
       "data": {
         "external_id": "AAA00028",
-        "name": "Обычный 28",
         "excluded": false,
-        "active": true
+        "active": true,
+        "contact_details": "Обычный 28"
       }
     },
     {
@@ -383,9 +383,9 @@
       },
       "data": {
         "external_id": "AAA00029",
-        "name": "Обычный 29",
         "excluded": false,
-        "active": true
+        "active": true,
+        "contact_details": "Обычный 29"
       }
     },
     {
@@ -395,12 +395,12 @@
       },
       "data": {
         "external_id": "AAA00030",
-        "name": "Новичок 30",
         "tags": [
           "newcomer"
         ],
         "excluded": false,
-        "active": true
+        "active": true,
+        "contact_details": "Новичок 30"
       }
     }
   ],

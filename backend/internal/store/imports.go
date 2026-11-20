@@ -41,7 +41,7 @@ func (s *Store) SaveSnapshot(ctx context.Context, fileName string, scope []strin
 			continue
 		}
 		if seen[key] {
-			importErrors = append(importErrors, rowError(row, "DUPLICATE_KEY", fmt.Sprintf("duplicate external_id + period_code: %s", key)))
+			importErrors = append(importErrors, rowError(row, "DUPLICATE_KEY", fmt.Sprintf("duplicate external_id + period_code: %s/%s", row.ExternalID, row.PeriodCode)))
 			continue
 		}
 		seen[key] = true
@@ -156,15 +156,16 @@ func (s *Store) SaveClients(ctx context.Context, fileName, userID, sourceKeyMode
 		var clientID string
 		var inserted bool
 		if err := tx.QueryRow(ctx, `
-			INSERT INTO clients (external_id, name, excluded, inactive, stage, source_key_mode, updated_at)
-			VALUES ($1, $2, $3, $4, 'Не в работе', $5, NOW())
+			INSERT INTO clients (external_id, name, excluded, inactive, stage, source_key_mode, contact_details, updated_at)
+			VALUES ($1, $2, $3, $4, 'Не в работе', $5, $6, NOW())
 			ON CONFLICT (external_id) DO UPDATE
-			SET name = EXCLUDED.name,
+			SET name = CASE WHEN $7 THEN EXCLUDED.name ELSE clients.name END,
+				contact_details = COALESCE(EXCLUDED.contact_details, clients.contact_details),
 				excluded = EXCLUDED.excluded,
 				inactive = EXCLUDED.inactive,
 				updated_at = NOW()
 			RETURNING id::text, (xmax = 0) AS inserted`,
-			row.ExternalID, name, row.Excluded, inactive, sourceKeyMode).Scan(&clientID, &inserted); err != nil {
+			row.ExternalID, name, row.Excluded, inactive, sourceKeyMode, row.ContactDetails, row.Name != "").Scan(&clientID, &inserted); err != nil {
 			return nil, fmt.Errorf("upsert client %s: %w", row.ExternalID, err)
 		}
 		if inserted {

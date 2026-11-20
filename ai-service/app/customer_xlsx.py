@@ -8,6 +8,12 @@ import math
 from pathlib import Path
 import re
 from zipfile import BadZipFile
+from xml.etree.ElementTree import ParseError
+
+try:
+    from .xlsx_limits import check_archive, WorkbookLimitError
+except ImportError:
+    from xlsx_limits import check_archive, WorkbookLimitError
 
 from openpyxl import load_workbook
 from openpyxl.utils.exceptions import InvalidFileException
@@ -83,8 +89,11 @@ def parse_file(file_path, context):
         return result
 
     try:
+        check_archive(file_path)
         book = load_workbook(file_path, read_only=True, data_only=False, keep_links=False)
-    except (OSError, BadZipFile, InvalidFileException, ValueError, KeyError):
+    except WorkbookLimitError:
+        return file_error("XLSX_LIMIT_EXCEEDED", "Workbook archive exceeds parsing limits")
+    except (OSError, BadZipFile, InvalidFileException, ValueError, KeyError, ParseError):
         return file_error("INVALID_XLSX", "The XLSX package could not be opened")
     try:
         actual = [PERIODS.get(sheet) for sheet in book.sheetnames]
@@ -130,6 +139,9 @@ def parse_file(file_path, context):
                     result["rows"].append({"source": source, "data": {"external_id": external_id,
                         "period_code": period, "total_docs": total, "unsent_docs": unsent}})
         return result
+    except (ParseError, BadZipFile, KeyError, ValueError):
+        result["rows"] = []
+        return file_error("INVALID_XLSX", "The XLSX package is malformed")
     finally:
         book.close()
 

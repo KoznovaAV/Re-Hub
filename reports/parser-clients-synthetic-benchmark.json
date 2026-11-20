@@ -1,0 +1,84 @@
+{
+  "python": "3.12.14",
+  "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+  "openpyxl": "3.1.5",
+  "input_sha256": "85be7177743c485721a8591acc788bb91e9dcda067e460b2ad88fcc40b765fb3",
+  "context_sha256": "22e0f9a500b8f9f5c0361e577e024de6f1a38f1d8239661731df23e401ccd3ac",
+  "repeat": 5,
+  "runs": [
+    {
+      "elapsed_seconds": 0.235938,
+      "peak_rss_mib": 38.75,
+      "summary": {
+        "source_rows": 4141,
+        "parsed_rows": 4141,
+        "rejected_rows": 0,
+        "duplicates_in_parsed_rows": 0,
+        "rows_with_flags_or_contacts": 3829,
+        "errors_by_code": {}
+      },
+      "unique_clients": 4141,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.209191,
+      "peak_rss_mib": 38.75,
+      "summary": {
+        "source_rows": 4141,
+        "parsed_rows": 4141,
+        "rejected_rows": 0,
+        "duplicates_in_parsed_rows": 0,
+        "rows_with_flags_or_contacts": 3829,
+        "errors_by_code": {}
+      },
+      "unique_clients": 4141,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.2483,
+      "peak_rss_mib": 38.75,
+      "summary": {
+        "source_rows": 4141,
+        "parsed_rows": 4141,
+        "rejected_rows": 0,
+        "duplicates_in_parsed_rows": 0,
+        "rows_with_flags_or_contacts": 3829,
+        "errors_by_code": {}
+      },
+      "unique_clients": 4141,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.241075,
+      "peak_rss_mib": 38.75,
+      "summary": {
+        "source_rows": 4141,
+        "parsed_rows": 4141,
+        "rejected_rows": 0,
+        "duplicates_in_parsed_rows": 0,
+        "rows_with_flags_or_contacts": 3829,
+        "errors_by_code": {}
+      },
+      "unique_clients": 4141,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.246419,
+      "peak_rss_mib": 38.75,
+      "summary": {
+        "source_rows": 4141,
+        "parsed_rows": 4141,
+        "rejected_rows": 0,
+        "duplicates_in_parsed_rows": 0,
+        "rows_with_flags_or_contacts": 3829,
+        "errors_by_code": {}
+      },
+      "unique_clients": 4141,
+      "file_errors": 0
+    }
+  ],
+  "median_seconds": 0.241075,
+  "maximum_peak_rss_mib": 38.75,
+  "data_kind": "synthetic_directory_4141",
+  "baseline_commit": "971cf78291112430035728c3fc926ec12db38889"
+}

@@ -278,6 +278,13 @@
             "string",
             "null"
           ]
+        },
+        "contact_details": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Исходная контактная строка. Не является названием организации."
         }
       },
       "required": [

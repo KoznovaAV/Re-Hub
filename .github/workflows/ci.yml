@@ -113,6 +113,8 @@ jobs:
         run: docker compose config --quiet
       - name: Start and run smoke tests
         run: make up smoke smoke-recovery
+      - name: Verify parser imports through Go and PostgreSQL
+        run: docker compose exec -T ai-service python - < scripts/smoke-parser.py
       - name: Show service logs
         if: failure()
         run: docker compose logs --tail=150
