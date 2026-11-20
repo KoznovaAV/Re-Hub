@@ -67,8 +67,38 @@ with TemporaryDirectory() as temp:
         result = upload("/api/v1/slices", root / f"{name}.xlsx", (root / f"{name}.context.json").read_text())
         assert result["counters"]["rows_errors"] == 0
         assert result["counters"]["rows_ok"] > 0
+    # Проверяем независимость названия и контактов, затем отсутствие обновления.
+    path = root / "clients.xlsx"
+    book = load_workbook(path)
+    book.active.cell(2, 7, "Название")
+    book.active.cell(3, 7, "Тестовая организация")
+    book.save(path)
+    book.close()
+    upload("/api/v1/clients/import", path, ctx)
+    book = load_workbook(path)
+    book.active.delete_cols(7)
+    book.active.cell(3, 6).value = None
+    book.save(path)
+    book.close()
+    upload("/api/v1/clients/import", path, ctx)
+    client = request("/api/v1/clients/SMK00001")["data"]
+    assert client["name"] == "Тестовая организация"
+    assert client["contact_details"] == "Контакт 1"
     # Повторная загрузка среза не создает новые наблюдения в истории.
     before = request("/api/v1/clients/SMK00001")["history"]
     upload("/api/v1/slices", root / "snapshot_2.xlsx", (root / "snapshot_2.context.json").read_text())
     assert request("/api/v1/clients/SMK00001")["history"] == before
+    # Частичная загрузка: дубли, неизвестные ключи и #N/A видны в отчете.
+    path = root / "snapshot_2.xlsx"
+    book = load_workbook(path)
+    sheet = book.worksheets[0]
+    sheet.append(["SMK00001", None, None, 10, 2])
+    sheet.append(["ZZZ99999", None, None, 10, 2])
+    sheet.append(["#N/A", None, None, 10, 2])
+    book.save(path)
+    book.close()
+    result = upload("/api/v1/slices", path, (root / "snapshot_2.context.json").read_text())
+    assert result["status"] == "partial"
+    assert {e["code"] for e in result["errors"]} == {"DUPLICATE_KEY", "CLIENT_UNKNOWN", "INVALID_EXTERNAL_ID"}
+    assert result["counters"]["rows_errors"] == 3
     print("Parser smoke OK: contacts, flags, 30 clients, two snapshots, repeated imports")
