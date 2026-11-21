@@ -1,11 +1,16 @@
+import { callSummary, eligibleForCall } from "./call-list.mjs";
 import { computed, ref } from "vue";
-import { archiveCount, clientMetrics } from "../mock/data.js";
+import { archiveCount, clientMetrics, store } from "../mock/data.js";
 
 export function useClientFilters(clients, archiveGroup) {
   const search = ref("");
   const stage = ref("all");
   const tag = ref("all");
   const minShare = ref("0");
+  const minUnsent = ref(0);
+  const callFilter = ref("all");
+  const callListOnly = ref(false);
+  const period = computed({ get: () => store.reportPeriod, set: value => { store.reportPeriod = value; } });
   const owner = ref("all");
   const includeMissing = ref(true);
   const sortKey = ref("name");
@@ -17,8 +22,13 @@ export function useClientFilters(clients, archiveGroup) {
   const filtered = computed(() => {
     const query = search.value.trim().toLowerCase();
     return clients.value
-      .map((client) => ({ client, metrics: clientMetrics(client) }))
+      .map((client) => ({ client, metrics: clientMetrics(client, period.value), calls: callSummary(client, period.value) }))
       .filter(({ client, metrics }) => {
+        if (callListOnly.value && !eligibleForCall(client, period.value)) return false;
+        if (Number(minUnsent.value) > 0 && (metrics.missing || metrics.unsent < Number(minUnsent.value))) return false;
+        const calls = callSummary(client, period.value);
+        if (callFilter.value === "none" && calls.count) return false;
+        if (callFilter.value === "called" && !calls.count) return false;
         if (query) {
           const haystack = `${client.name} ${client.inn} ${client.externalId}`.toLowerCase();
           if (!haystack.includes(query)) return false;
@@ -61,11 +71,14 @@ export function useClientFilters(clients, archiveGroup) {
     stage.value = "all";
     tag.value = "all";
     minShare.value = "0";
+    minUnsent.value = 0;
+    callFilter.value = "all";
+    callListOnly.value = false;
     owner.value = "all";
     includeMissing.value = true;
     sortKey.value = "name";
     sortDir.value = "asc";
   }
 
-  return { search, stage, tag, minShare, owner, includeMissing, sortKey, sortDir, stages, tags, filtered, sortBy, reset };
+  return { period, minUnsent, callFilter, callListOnly, search, stage, tag, minShare, owner, includeMissing, sortKey, sortDir, stages, tags, filtered, sortBy, reset };
 }

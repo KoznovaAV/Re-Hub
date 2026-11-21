@@ -19,7 +19,7 @@
 ## Проверки
 
 ```bash
-cd ai-service
+cd parser-service
 python -m pip install -r requirements-import.txt
 python -m unittest discover -s tests -v
 ```
@@ -29,7 +29,7 @@ python -m unittest discover -s tests -v
 Сквозной тест запускается в Compose в CI после основных smoke-проверок:
 
 ```bash
-docker compose exec -T ai-service python - < scripts/smoke-parser.py
+docker compose exec -T parser-service python - < scripts/smoke-parser.py
 ```
 
 Тест пишет синтетические записи `SMK...` в тестовую БД, проверяет контакты, теги, исключение/неактивность, два среза и повторные импорты. Его следует запускать только на тестовом стенде.
@@ -39,7 +39,7 @@ docker compose exec -T ai-service python - < scripts/smoke-parser.py
 Замер требует Linux/macOS для `resource.ru_maxrss`. Каждый прогон идет в новом процессе. Время измеряет разбор, без запуска интерпретатора; RSS включает весь процесс. Windows может использовать Linux-контейнер.
 
 ```bash
-cd ai-service
+cd parser-service
 python -m app.parser_benchmark /path/to/snapshot.xlsx ../contracts/examples/customer-october-context.json --repeat 5 --out /tmp/parser-report.json
 python -m app.parser_benchmark /path/to/clients.xlsx ../contracts/examples/customer-clients-context.json --repeat 5 --out /tmp/clients-report.json
 ```

@@ -23,7 +23,8 @@ export default defineComponent({
     const dragOver = ref(false);
     const fileInput = ref(null);
     const isAdmin = computed(() => props.actor === "admin");
-    const canConfirm = computed(() => step.value === "preview" && result.value && !result.value.fatal);
+    const acceptPartial = ref(false);
+    const canConfirm = computed(() => (!result.value?.errors.length || acceptPartial.value) && step.value === "preview" && result.value && !result.value.fatal);
 
     const tabs = [
       { value: "clients", label: "Клиенты" },
@@ -34,7 +35,7 @@ export default defineComponent({
       tab.value === "clients"
         ? [
             { kind: "success", title: "Клиенты без ошибок", text: "3 новых, 2 обновления, 0 ошибок" },
-            { kind: "duplicate", title: "Дубль кода КЦР", text: "Загрузка остановится с причиной" },
+            { kind: "duplicate", title: "Дубль кода КЦР", text: "Корректные строки можно принять отдельно" },
           ]
         : [
             { kind: "success", title: "Срез без ошибок", text: "4 строки приняты" },
@@ -52,6 +53,7 @@ export default defineComponent({
     async function run(kind) {
       step.value = "loading";
       result.value = null;
+      acceptPartial.value = false;
       doneSummary.value = null;
       const data = tab.value === "clients" ? await importClients(kind) : await importSlice(kind);
       result.value = data;
@@ -83,6 +85,7 @@ export default defineComponent({
     }
 
     async function confirm() {
+      if (!canConfirm.value) return;
       loading.value = true;
       const response =
         tab.value === "clients" ? await confirmClients(result.value) : await confirmSlice(result.value);
@@ -103,6 +106,7 @@ export default defineComponent({
     function reset() {
       step.value = "idle";
       result.value = null;
+      acceptPartial.value = false;
       doneSummary.value = null;
       if (fileInput.value) fileInput.value.value = "";
     }
@@ -137,7 +141,7 @@ export default defineComponent({
       dragOver,
       fileInput,
       isAdmin,
-      canConfirm,
+      canConfirm, acceptPartial,
       tabs,
       demos,
       switchTab,
@@ -191,7 +195,7 @@ export default defineComponent({
                 <div class="dropzone__text">Файл не отправляется на сервер: это демо на mock-данных. Для сценария ошибки выберите демо-файл ниже.</div>
                 <div class="row dropzone__actions">
                   <UiButton variant="primary" @click="pickFile">Выбрать файл</UiButton>
-                  <input ref="fileInput" class="sr-only" type="file" accept=".xlsx,.xls" @change="onFile($event.target.files[0])" />
+                  <input ref="fileInput" class="sr-only" type="file" accept=".xlsx" @change="onFile($event.target.files[0])" />
                 </div>
               </div>
             </UiCard>
@@ -278,6 +282,7 @@ export default defineComponent({
                 </table>
               </div>
 
+              <label v-if="result.errors.length" class="row section"><input v-model="acceptPartial" type="checkbox" /> Принимаю только корректные строки; ошибочные будут пропущены</label>
               <div v-if="result.errors.length" class="section">
                 <div class="section__header">
                   <div class="section__title"><h2>Ошибки</h2><span class="section__count">{{ result.errors.length }}</span></div>

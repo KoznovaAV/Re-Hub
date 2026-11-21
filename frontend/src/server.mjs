@@ -5,7 +5,6 @@ import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL(".", import.meta.url));
 const backend = process.env.BACKEND_URL ?? "http://127.0.0.1:8080";
-const aiDemo = process.env.REHUB_AI_DEMO === "1";
 const routes = { "/api/health": "/health", "/api/probe": "/api/probe" };
 const staticPrefixes = ["/main.js", "/App.js", "/components/", "/views/", "/composables/", "/mock/", "/styles/", "/vendor/"];
 const mime = {
@@ -46,43 +45,6 @@ async function sendFile(response, path) {
 createServer(async (request, response) => {
   const url = new URL(request.url ?? "/", "http://localhost");
   const pathname = url.pathname;
-
-  if (aiDemo && pathname === "/api/ai/query" && request.method === "POST") {
-    if (request.headers["content-type"]?.split(";")[0].trim().toLowerCase() !== "application/json") {
-      return json(response, 415, { error: "expected_json" });
-    }
-    try {
-      const chunks = [];
-      let size = 0;
-      for await (const chunk of request.iterator({ destroyOnReturn: false })) {
-        size += chunk.length;
-        if (size > 32768) {
-          request.resume();
-          return json(response, 413, { error: "body_too_large" });
-        }
-        chunks.push(chunk);
-      }
-      const upstream = await fetch(new URL("/ai/query", backend), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: Buffer.concat(chunks),
-        // Keep the proxy open beyond the Go response deadline.
-        signal: AbortSignal.timeout(105_000),
-        redirect: "error",
-      });
-      return json(response, upstream.status, await upstream.json());
-    } catch {
-      return json(response, 502, { error: "backend_unavailable" });
-    }
-  }
-  if (aiDemo && request.method === "GET" && pathname === "/ai-demo") {
-    return sendFile(response, resolve(root, "ai-demo.html"));
-  }
-
-  if (request.method === "GET" && pathname === "/demo-config.js") {
-    response.writeHead(200, { "Content-Type": "text/javascript; charset=utf-8", "Cache-Control": "no-store" });
-    return response.end(`export const aiDemo = ${aiDemo};`);
-  }
 
   if (request.method === "GET" && pathname === "/health") {
     return json(response, 200, { status: "ok", service: "frontend" });

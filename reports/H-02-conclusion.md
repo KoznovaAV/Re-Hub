@@ -29,7 +29,7 @@
 Из корня репозитория запустите Python в одном терминале и замер во втором:
 
 ```bash
-python3 ai-service/app/main.py
+python3 parser-service/app/main.py
 ```
 
 ```bash

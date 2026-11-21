@@ -1,3 +1,4 @@
+import { callSummary } from "../composables/call-list.mjs";
 import { computed, defineComponent, reactive, ref } from "vue";
 import { clientMetrics, formatDate } from "../mock/data.js";
 import { takeClient, takeOverClient } from "../mock/api.js";
@@ -17,17 +18,18 @@ export default defineComponent({
   },
   emits: ["open-client"],
   setup(props) {
-    const tab = ref("work");
+    const tab = ref(props.actor === "admin" ? "work" : "mine");
     const loading = reactive({});
     const isAdmin = computed(() => props.actor === "admin");
     const tabs = [
+      {value:"mine",label:"Мои клиенты"},
       { value: "work", label: "В работе" },
       { value: "free", label: "Свободные" },
     ];
 
     const rows = computed(() => props.clients.map((client) => ({ client, metrics: clientMetrics(client) })));
-    const workRows = computed(() => rows.value.filter(({ client }) => Boolean(client.owner)));
-    const freeRows = computed(() => rows.value.filter(({ metrics }) => metrics.free));
+    const workRows = computed(() => rows.value.filter(({ client }) => Boolean(client.owner) && (tab.value !== "mine" || client.owner === props.actor)));
+    const freeRows = computed(() => rows.value.filter(({ client, metrics }) => metrics.free && client.pool));
     const current = computed(() => (tab.value === "work" ? workRows.value : freeRows.value));
 
     function lastInteraction(client) {
@@ -35,8 +37,8 @@ export default defineComponent({
     }
 
     function lastCall(client) {
-      const call = client.events.find((event) => event.type === "call");
-      return call ? call.result || call.title : "—";
+      const c=callSummary(client);
+      return `${c.status}; звонков: ${c.count}; недозвонов: ${c.missed}`;
     }
 
     async function take(row) {
@@ -67,7 +69,7 @@ export default defineComponent({
       lastCall,
       take,
       takeOver,
-      formatDate,
+      formatDate, callSummary,
     };
   },
   template: `
@@ -80,7 +82,7 @@ export default defineComponent({
         <UiTabs v-model="tab" :tabs="tabs" />
       </div>
 
-      <div v-if="tab === 'work'" class="card">
+      <div v-if="tab !== 'free'" class="card">
         <div class="table-wrap">
           <table class="table table--wide table--compact">
             <thead>
@@ -105,7 +107,7 @@ export default defineComponent({
                 <td>{{ lastCall(row.client) }}</td>
                 <td class="table__num">
                   {{ row.client.promise ? formatDate(row.client.promise) : '—' }}
-                  <div v-if="row.metrics.overdue" class="table__secondary change--bad">просрочено {{ row.metrics.overdueDays }} дн.</div>
+                  <div v-if="callSummary(row.client).callbackOn">Перезвонить: {{ formatDate(callSummary(row.client).callbackOn) }}</div>
                 </td>
                 <td><UiBadge :tone="row.client.stage === 'В работе' ? 'accent' : 'warning'">{{ row.client.stage }}</UiBadge></td>
                 <td class="text-right">

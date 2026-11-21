@@ -2,8 +2,8 @@ export const periods = ["2026Q2", "2026Q3"];
 
 export function sample(group) {
   if (!["A", "B"].includes(group)) throw new RangeError("Unknown pilot group");
-  const offset = group === "A" ? 0 : 30;
-  return Array.from({length: 30}, (_, index) => {
+  const offset = group === "A" ? 0 : 15;
+  return Array.from({length: 15}, (_, index) => {
     const number = offset + index + 1;
     const client = `PILOT-${String(number).padStart(2, "0")}`;
     return {

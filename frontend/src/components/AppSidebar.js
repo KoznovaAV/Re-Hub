@@ -1,5 +1,4 @@
 import { computed, defineComponent } from "vue";
-import { aiDemo } from "/demo-config.js";
 import { users } from "../mock/data.js";
 
 export default defineComponent({
@@ -19,8 +18,8 @@ export default defineComponent({
       { id: "work", label: "Работа с клиентами", icon: "☎", count: props.actionCount },
       ...(isAdmin.value ? [{ id: "import", label: "Импорт данных", icon: "⇪", count: 0 }] : []),
       { id: "history", label: "История и аналитика", icon: "◔", count: 0 },
-    ]);
-    return { items, users, aiDemo };
+    ].filter(item => isAdmin.value || item.id === "work"));
+    return { items, users };
   },
   template: `
     <aside class="sidebar">
@@ -45,7 +44,6 @@ export default defineComponent({
           <span>{{ item.label }}</span>
           <span v-if="item.count" class="nav-item__count">{{ item.count }}</span>
         </button>
-        <a v-if="aiDemo" class="nav-item" href="/ai-demo">Тест помощника</a>
       </nav>
 
       <div class="sidebar__footer">

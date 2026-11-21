@@ -12,7 +12,7 @@ __pycache__/
 *.py[cod]
 venv/
 .env
-ai-service/generated/
+parser-service/generated/
 
 # Node
 node_modules/

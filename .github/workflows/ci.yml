@@ -31,20 +31,19 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
-          cache-dependency-path: ai-service/requirements-import.txt
+          cache-dependency-path: parser-service/requirements-import.txt
       - name: Install dependencies
-        run: python -m pip install --disable-pip-version-check -r ai-service/requirements-import.txt
+        run: python -m pip install --disable-pip-version-check -r parser-service/requirements-import.txt
       - name: Compile
-        working-directory: ai-service
+        working-directory: parser-service
         run: python -m compileall -q app tests
       - name: Unit tests
-        working-directory: ai-service
+        working-directory: parser-service
         run: python -m unittest discover -s tests -v
+      - name: Pilot evaluation tests
+        run: python -m unittest discover -s scripts/tests -v
       - name: Deployment script regression tests
         run: python -m unittest discover -s deploy/tests -v
-      - name: Validate evaluation fixtures
-        working-directory: ai-service
-        run: python -m app.ml_intent_eval ../contracts/eval/intent-*.jsonl --check-fixtures
 
   go:
     name: Go tests
@@ -96,8 +95,11 @@ jobs:
           find src -type f \( -name "*.js" -o -name "*.mjs" \) -not -path "*/vendor/*" -print0 \
             | xargs -0 -n1 node --check
         working-directory: frontend
+      - name: Install test dependencies
+        run: npm ci
+        working-directory: frontend
       - name: Frontend tests
-        run: node --test src/pilot-data.test.mjs
+        run: node --test src/*.test.mjs
         working-directory: frontend
 
   compose:
@@ -114,7 +116,7 @@ jobs:
       - name: Start and run smoke tests
         run: make up smoke smoke-recovery
       - name: Verify parser imports through Go and PostgreSQL
-        run: docker compose exec -T ai-service python - < scripts/smoke-parser.py
+        run: docker compose exec -T parser-service python - < scripts/smoke-parser.py
       - name: Show service logs
         if: failure()
         run: docker compose logs --tail=150
@@ -172,9 +174,9 @@ jobs:
           - image: rehub-backend
             context: ./backend
             dockerfile: ./backend/Dockerfile
-          - image: rehub-ai-service
-            context: .
-            dockerfile: ./ai-service/Dockerfile.demo
+          - image: rehub-parser-service
+            context: ./parser-service
+            dockerfile: ./parser-service/Dockerfile
           - image: rehub-frontend
             context: ./frontend
             dockerfile: ./frontend/Dockerfile
@@ -216,24 +218,6 @@ jobs:
           provenance: ${{ env.PUSH_IMAGES == 'true' }}
           sbom: ${{ env.PUSH_IMAGES == 'true' }}
 
-      - name: Verify packaged assistant resources
-        if: github.event_name == 'pull_request' && matrix.image == 'rehub-ai-service'
-        env:
-          IMAGE_TAGS: ${{ steps.meta.outputs.tags }}
-        run: |
-          image="${IMAGE_TAGS%%$'\n'*}"
-          docker run --rm -i --entrypoint python "$image" - <<'PYTHON'
-          import sys
-          sys.path.insert(0, "ai-service/app")
-          from ml_intent import load_periods, load_prompt
-          from ai_query import answer, fixture
-          from doc_qa import index
-          assert load_periods() and load_prompt()
-          assert fixture()["synthetic"] is True
-          assert index()
-          assert answer("привет", None)["status"] == "clarify"
-          print("Assistant resources and greeting OK; Ollama was not called")
-          PYTHON
 
   release:
     name: GitHub release

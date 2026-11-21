@@ -29,22 +29,24 @@ func (s *Store) SaveSnapshot(ctx context.Context, fileName string, scope []strin
 		return nil, err
 	}
 
-	seen := make(map[string]bool)
+	counts := make(map[string]int)
 	sliceIDs := make(map[string]string)
 	rowsOK := 0
 	importErrors := append([]ParsedError{}, parserErrors...)
 
+	for _, row := range rows {
+		counts[row.ExternalID+"\x00"+row.PeriodCode]++
+	}
 	for _, row := range rows {
 		key := row.ExternalID + "\x00" + row.PeriodCode
 		if row.ExternalID == "" || row.PeriodCode == "" {
 			importErrors = append(importErrors, rowError(row, "MISSING_KEY", "external_id and period_code are required"))
 			continue
 		}
-		if seen[key] {
+		if counts[key] > 1 {
 			importErrors = append(importErrors, rowError(row, "DUPLICATE_KEY", fmt.Sprintf("duplicate external_id + period_code: %s/%s", row.ExternalID, row.PeriodCode)))
 			continue
 		}
-		seen[key] = true
 
 		clientID, ok := clientIDs[row.ExternalID]
 		if !ok {
@@ -128,20 +130,22 @@ func (s *Store) SaveClients(ctx context.Context, fileName, userID, sourceKeyMode
 		sourceKeyMode = "anonymous"
 	}
 
-	seen := make(map[string]bool)
+	counts := make(map[string]int)
 	created, updated, rowsOK := 0, 0, 0
 	importErrors := append([]ParsedError{}, parserErrors...)
 
+	for _, row := range rows {
+		counts[row.ExternalID]++
+	}
 	for _, row := range rows {
 		if row.ExternalID == "" {
 			importErrors = append(importErrors, ParsedError{Scope: "row", Code: "MISSING_KEY", Message: "external_id is required"})
 			continue
 		}
-		if seen[row.ExternalID] {
+		if counts[row.ExternalID] > 1 {
 			importErrors = append(importErrors, ParsedError{Scope: "row", Code: "DUPLICATE_KEY", Message: "duplicate external_id: " + row.ExternalID})
 			continue
 		}
-		seen[row.ExternalID] = true
 
 		active := true
 		if row.Active != nil {

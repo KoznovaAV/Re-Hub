@@ -9,3 +9,6 @@
 | Готовность и следующие проверки | [Свидетельства спринта](../reports/sprint-evidence.md), [GitHub Project](https://github.com/users/KoznovaAV/projects/5/views/1) |
 
 При расхождении документов используйте [журнал решений](decisions/change-log.md). Материалы с рабочими строками заказчика остаются в закрытом контуре команды.
+
+- [Требования ревью](scenarios/customer-review.md)
+- [Проверка H-00](../reports/H-00-status.md)
