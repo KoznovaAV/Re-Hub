@@ -11,7 +11,7 @@
     "test": "node --test src/*.test.mjs"
   },
   "devDependencies": {
-    "jsdom": "26.1.0",
+    "jsdom": "31.0.1",
     "vue": "3.5.45"
   }
 }
