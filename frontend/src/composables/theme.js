@@ -2,7 +2,7 @@ const root = document.documentElement;
 const key = "rehub-theme";
 
 try {
-  const saved = localStorage.getItem(key) ?? localStorage.getItem("rehub-assistant-theme");
+  const saved = localStorage.getItem(key);
   if (saved === "dark" || saved === "light") root.dataset.theme = saved;
 } catch {
   // Страница остаётся доступной, если хранилище браузера отключено.

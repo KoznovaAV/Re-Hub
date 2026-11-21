@@ -20,16 +20,11 @@ services:
     logging:
       options: { max-size: "10m", max-file: "3" }
 
-  ai-service:
-    image: ghcr.io/${IMAGE_OWNER:?IMAGE_OWNER is required}/rehub-ai-service:${IMAGE_TAG:?IMAGE_TAG is required}
+  parser-service:
+    image: ghcr.io/${IMAGE_OWNER:?IMAGE_OWNER is required}/rehub-parser-service:${IMAGE_TAG:?IMAGE_TAG is required}
     restart: unless-stopped
     environment:
       PYTHON_HOST: 0.0.0.0
-      REHUB_AI_DEMO: "1"
-      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
-      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3:4b}
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     healthcheck:
       test: ["CMD", "python", "-c", "from urllib.request import urlopen; urlopen('http://127.0.0.1:8001/health', timeout=2).close()"]
       interval: 5s
@@ -45,13 +40,12 @@ services:
     restart: unless-stopped
     environment:
       BACKEND_ADDR: 0.0.0.0:8080
-      PYTHON_SERVICE_URL: http://ai-service:8001
-      REHUB_AI_DEMO: "1"
+      PYTHON_SERVICE_URL: http://parser-service:8001
       DATABASE_URL: postgres://${POSTGRES_USER:-rehub}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-rehub}?sslmode=disable
     depends_on:
       db:
         condition: service_healthy
-      ai-service:
+      parser-service:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/health"]
@@ -69,7 +63,6 @@ services:
     environment:
       WEB_HOST: 0.0.0.0
       BACKEND_URL: http://backend:8080
-      REHUB_AI_DEMO: "1"
     ports:
       - "127.0.0.1:${WEB_PORT:-3000}:3000"
     depends_on:

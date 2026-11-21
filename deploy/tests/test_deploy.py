@@ -22,7 +22,7 @@ if command == "up" and (scenario == "rollback_failed" or (scenario == "startup" 
 if command == "exec":
     if "db" in args and scenario == "backup": sys.exit(1)
     if "backend" in args and scenario == "backend" and tag == "sha-new": sys.exit(1)
-    if "ai-service" in args and scenario == "python" and tag == "sha-new": sys.exit(1)
+    if "parser-service" in args and scenario == "python" and tag == "sha-new": sys.exit(1)
 '''
 
 

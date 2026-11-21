@@ -1,6 +1,6 @@
 """Сквозная проверка Go -> Python /parse -> PostgreSQL на синтетике.
 
-Запуск внутри ai-service: docker compose exec -T ai-service python - < scripts/smoke-parser.py
+Запуск внутри parser-service: docker compose exec -T parser-service python - < scripts/smoke-parser.py
 """
 import json
 import os
@@ -10,7 +10,7 @@ from tempfile import TemporaryDirectory
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
-sys.path.insert(0, str(Path.cwd() / "ai-service"))
+sys.path.insert(0, str(Path.cwd() / "parser-service"))
 from app.generate_test_data import generate
 from openpyxl import load_workbook
 
@@ -100,5 +100,5 @@ with TemporaryDirectory() as temp:
     result = upload("/api/v1/slices", path, (root / "snapshot_2.context.json").read_text())
     assert result["status"] == "partial"
     assert {e["code"] for e in result["errors"]} == {"DUPLICATE_KEY", "CLIENT_UNKNOWN", "INVALID_EXTERNAL_ID"}
-    assert result["counters"]["rows_errors"] == 3
+    assert result["counters"]["rows_errors"] == 4
     print("Parser smoke OK: contacts, flags, 30 clients, two snapshots, repeated imports")

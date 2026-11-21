@@ -10,7 +10,7 @@ updates:
         patterns: ["*"]
 
   - package-ecosystem: pip
-    directory: /ai-service
+    directory: /parser-service
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
@@ -28,7 +28,7 @@ updates:
     open-pull-requests-limit: 3
 
   - package-ecosystem: docker
-    directory: /ai-service
+    directory: /parser-service
     schedule:
       interval: weekly
     open-pull-requests-limit: 3

@@ -14,9 +14,9 @@
 Парсер сохраняет исходные вкладку, строку и колонку, отклоняет формулы в числах и оставляет дубли для проверки в Go. Для ошибок с читаемым ID выдаёт `key_hint`. Проверка покрытия справочником отделена от парсинга. Реальный импорт по коду КЦР и транзакционная запись относятся к другим задачам.
 
 ```sh
-python -m pip install -r ai-service/requirements-import.txt
-python ai-service/app/customer_xlsx.py /path/to/snapshot.xlsx contracts/examples/customer-october-context.json --summary
-cd ai-service
+python -m pip install -r parser-service/requirements-import.txt
+python parser-service/app/customer_xlsx.py /path/to/snapshot.xlsx contracts/examples/customer-october-context.json --summary
+cd parser-service
 python -m unittest discover -s tests -v
 python -m app.customer_period_check /path/to/snapshot.xlsx ../contracts/examples/customer-october-context.json
 python -m app.customer_coverage /path/to/snapshot.xlsx /path/to/directory.xlsx ../contracts/examples/customer-october-context.json

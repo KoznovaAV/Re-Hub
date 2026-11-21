@@ -42,11 +42,11 @@ export function daysBetween(from, to) {
   return Math.max(0, Math.round((a - b) / 86400000));
 }
 
-export function clientMetrics(client) {
-  const history = [...client.history].sort((a, b) => periodIndex(a.period) - periodIndex(b.period));
+export function clientMetrics(client, selectedPeriod = LATEST_PERIOD) {
+  const history = client.history.filter(item => periodIndex(item.period) <= periodIndex(selectedPeriod)).sort((a, b) => periodIndex(a.period) - periodIndex(b.period));
   const last = history[history.length - 1] ?? null;
   const previous = history[history.length - 2] ?? null;
-  const hasLatest = history.some((item) => item.period === LATEST_PERIOD);
+  const hasLatest = history.some((item) => item.period === selectedPeriod);
   const missing = client.active !== false && !hasLatest;
   const inherited = Boolean(last && last.total == null && previous?.total != null);
   const total = last?.total ?? (inherited ? previous.total : null);
@@ -114,6 +114,7 @@ export function chartBucket(value, max) {
 }
 
 export const store = reactive({
+  reportPeriod: LATEST_PERIOD,
   clients: [
     {
       id: "c1",

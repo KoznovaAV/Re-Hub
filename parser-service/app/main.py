@@ -23,32 +23,6 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def handle_query(self, payload):
-        # Обычный образ для /probe не содержит модулей демо.
-        from ai_query import answer
-        from ml_intent import InvalidProviderResponse, IntentError, ProviderError, ProviderTimeout, QuestionError
-
-        if (not isinstance(payload, dict) or set(payload) - {"query", "client_external_id"}
-                or not isinstance(payload.get("client_external_id", ""), str)):
-            self.send_json(422, {"error": "invalid_query"})
-            return
-        try:
-            result = answer(payload.get("query"), payload.get("client_external_id"))
-        except QuestionError:
-            self.send_json(422, {"error": "invalid_query"})
-        except (IntentError, ProviderError) as exc:
-            # В логи идут типы ошибок, без вопроса и сырого ответа модели.
-            cause = type(exc.__cause__).__name__ if exc.__cause__ else "none"
-            self.log_error("AI query failed: %s: %s (cause: %s)", type(exc).__name__, exc, cause)
-            if isinstance(exc, ProviderTimeout):
-                self.send_json(504, {"error": "ollama_timeout"})
-            elif isinstance(exc, (IntentError, InvalidProviderResponse)):
-                self.send_json(502, {"error": "ollama_invalid_response"})
-            else:
-                self.send_json(502, {"error": "ollama_unavailable"})
-        else:
-            self.send_json(200, result)
-
     def handle_parse(self):
         if self.headers.get_content_type() != "multipart/form-data":
             self.send_json(415, {"error": "expected_multipart"})
@@ -136,8 +110,7 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == "/parse":
             self.handle_parse()
             return
-        is_query = self.path == "/ai/query" and os.environ.get("REHUB_AI_DEMO") == "1"
-        if self.path != "/probe" and not is_query:
+        if self.path != "/probe":
             self.send_json(404, {"error": "not_found"})
             return
         if self.headers.get_content_type() != "application/json":
@@ -145,14 +118,11 @@ class Handler(BaseHTTPRequestHandler):
             return
         try:
             length = int(self.headers.get("Content-Length", "0"))
-            if not 0 < length <= (32768 if is_query else 4096):
+            if not 0 < length <= 4096:
                 raise ValueError
             payload = json.loads(self.rfile.read(length))
         except (ValueError, TimeoutError):
             self.send_json(400, {"error": "invalid_json"})
-            return
-        if is_query:
-            self.handle_query(payload)
             return
         if (
             not isinstance(payload, dict)

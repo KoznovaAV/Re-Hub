@@ -61,6 +61,8 @@ export default defineComponent({
 
     function setActor(value) {
       actor.value = value;
+      view.value = value === "admin" ? "dashboard" : "work";
+      selectedId.value = "";
       if (value !== "admin" && view.value === "import") view.value = "dashboard";
       pushToast("Пользователь переключён", `Текущая роль: ${users[value].name}.`, "info");
     }
@@ -116,6 +118,7 @@ export default defineComponent({
         />
         <WorkView
           v-else-if="view === 'work'"
+          :key="actor"
           :clients="store.clients"
           :actor="actor"
           @open-client="openClient"

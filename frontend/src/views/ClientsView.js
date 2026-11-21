@@ -1,8 +1,9 @@
-import { computed, defineComponent, reactive, ref } from "vue";
+import { visibleSelection, csvCell } from "../composables/call-list.mjs";
+import { computed, defineComponent, reactive, ref, watch } from "vue";
 import { useClientFilters } from "../composables/useClientFilters.js";
 import { addToPool, takeClient } from "../mock/api.js";
 import { pushToast } from "../composables/useToast.js";
-import { archiveGroups, formatDate, meterClass } from "../mock/data.js";
+import { archiveGroups, formatDate, meterClass, periods } from "../mock/data.js";
 import UiCard from "../components/UiCard.js";
 import UiBadge from "../components/UiBadge.js";
 import UiButton from "../components/UiButton.js";
@@ -34,15 +35,23 @@ export default defineComponent({
     }
     const selected = ref([]);
     const loading = reactive({});
+    watch(filters.filtered, rows => { selected.value = visibleSelection(selected.value, rows); });
+    const periodOptions = periods.map(p => ({value:p.code,label:p.label}));
+    const callOptions = [{value:"all",label:"Все звонки"},{value:"none",label:"Не звонили в периоде"},{value:"called",label:"Звонили в периоде"}];
+    function exportList() {
+      const rows = [["Код КЦР","Клиент","Период","Не передано","Звонков"],...filters.filtered.value.map(({client,metrics,calls}) => [client.externalId,client.name,filters.period.value,metrics.missing ? "Нет среза" : metrics.unsent,calls.count])];
+      const url = URL.createObjectURL(new Blob(["\ufeff"+rows.map(r=>r.map(csvCell).join(";")).join("\r\n")],{type:"text/csv;charset=utf-8"}));
+      const a=document.createElement("a");a.href=url;a.download="call-list.csv";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    }
     const isAdmin = computed(() => props.actor === "admin");
 
     const stageOptions = computed(() => [
       { value: "all", label: "Все этапы" },
-      ...filters.stages.value.filter((item) => item !== "all").map((item) => ({ value: item, label: item })),
+      ...filters.stages.value.filter((item) => item !== "all").map((item) => ({ value: item, label: item === "Ключевой" ? "VIP / Ключевой" : item })),
     ]);
     const tagOptions = computed(() => [
       { value: "all", label: "Все типы" },
-      ...filters.tags.value.filter((item) => item !== "all").map((item) => ({ value: item, label: item })),
+      ...filters.tags.value.filter((item) => item !== "all").map((item) => ({ value: item, label: item === "Ключевой" ? "VIP / Ключевой" : item })),
     ]);
     const shareOptions = [
       { value: "0", label: "Любая доля" },
@@ -95,6 +104,7 @@ export default defineComponent({
 
     return {
       ...filters,
+      periodOptions, callOptions, exportList,
       archiveGroup,
       archiveOptions,
       resetFilters,
@@ -130,13 +140,16 @@ export default defineComponent({
 
       <UiCard class="section">
         <div class="grid grid--4">
+          <UiSelect v-model="period" :options="periodOptions" label="Период документов" />
+          <label class="field"><span class="field__label">Не передано документов от</span><input v-model="minUnsent" class="input" type="number" min="0" step="1" /></label>
+          <UiSelect v-model="callFilter" :options="callOptions" label="История обзвона" />
           <div class="search">
             <span class="search__icon">⌕</span>
             <UiInput v-model="search" label="Поиск" placeholder="Название, ИНН или код КЦР" />
           </div>
           <UiSelect v-model="minShare" :options="shareOptions" label="Доля долга" />
-          <UiSelect v-model="stage" :options="stageOptions" label="Этап" />
-          <UiSelect v-model="tag" :options="tagOptions" label="Тип" />
+          <UiSelect v-model="stage" :options="stageOptions" label="Этап обзвона" />
+          <UiSelect v-model="tag" :options="tagOptions" label="Тип клиента" />
         </div>
         <div class="row row--wrap row--between filters-actions">
           <div class="row row--wrap">
@@ -148,6 +161,8 @@ export default defineComponent({
             </label>
           </div>
           <div class="row">
+            <label><input v-model="callListOnly" type="checkbox" /> Только кандидаты на обзвон</label>
+            <UiButton size="sm" variant="secondary" :disabled="!filtered.length" @click="exportList">Выгрузить список CSV</UiButton>
             <span class="small muted">Найдено: {{ filtered.length }}</span>
             <UiButton size="sm" variant="secondary" :disabled="!selected.length" @click="pool">Добавить в пул ({{ selected.length }})</UiButton>
           </div>
@@ -183,12 +198,7 @@ export default defineComponent({
                 <th>
                   <button type="button" class="table__sort" @click="sortBy('stage')">Статус <span v-if="sortKey === 'stage'">{{ sortDir === 'asc' ? '↑' : '↓' }}</span></button>
                 </th>
-                <th>
-                  <button type="button" class="table__sort" @click="sortBy('owner')">Оператор <span v-if="sortKey === 'owner'">{{ sortDir === 'asc' ? '↑' : '↓' }}</span></button>
-                </th>
-                <th>
-                  <button type="button" class="table__sort" @click="sortBy('promise')">Обещанный срок <span v-if="sortKey === 'promise'">{{ sortDir === 'asc' ? '↑' : '↓' }}</span></button>
-                </th>
+                <th>Звонки в выбранном периоде</th>
                 <th></th>
               </tr>
             </thead>
@@ -219,11 +229,7 @@ export default defineComponent({
                   <UiBadge :tone="badgeTone(row)">{{ row.metrics.dynamics }}</UiBadge>
                 </td>
                 <td><UiBadge :tone="row.client.stage === 'В работе' ? 'accent' : row.client.stage === 'Закрыт' ? 'neutral' : 'warning'">{{ row.client.stage }}</UiBadge></td>
-                <td>
-                  <div class="table__primary">{{ row.metrics.ownerName }}</div>
-                  <div v-if="row.metrics.overdue" class="table__secondary change--bad">обещание просрочено</div>
-                </td>
-                <td class="table__num">{{ row.client.promise ? formatDate(row.client.promise) : '—' }}</td>
+                <td>{{ row.calls.status }}; звонков: {{ row.calls.count }}; недозвонов: {{ row.calls.missed }}</td>
                 <td class="text-right">
                   <UiButton v-if="isAdmin" size="sm" variant="secondary" @click.stop="$emit('open-client', row.client.id)">Открыть</UiButton>
                   <UiButton
@@ -237,7 +243,7 @@ export default defineComponent({
                 </td>
               </tr>
               <tr v-if="!filtered.length">
-                <td colspan="11">
+                <td colspan="10">
                   <UiEmpty icon="⌕" title="Клиенты не найдены" text="Измените запрос или сбросьте фильтры.">
                     <UiButton size="sm" variant="secondary" @click="reset">Сбросить фильтры</UiButton>
                   </UiEmpty>

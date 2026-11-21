@@ -1,3 +1,4 @@
+import { eligibleForCall } from "../composables/call-list.mjs";
 import { store, users, TODAY, LATEST_PERIOD } from "./data.js";
 
 const wait = (ms = 650) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -97,6 +98,8 @@ export async function addEvent(clientId, payload, actorId) {
     author,
     result: payload.result || null,
     promise: payload.promise || null,
+    callbackOn: payload.callbackOn || null,
+    period: store.reportPeriod,
   };
   client.events.unshift(event);
   if (payload.stage) client.stage = payload.stage;
@@ -114,7 +117,7 @@ export async function addToPool(ids) {
   let changed = 0;
   for (const id of ids) {
     const client = store.clients.find((item) => item.id === id);
-    if (client && !client.owner) {
+    if (client && !client.owner && eligibleForCall(client,store.reportPeriod)) {
       client.pool = true;
       changed += 1;
     }
@@ -127,18 +130,19 @@ export async function importClients(kind) {
   if (kind === "duplicate") {
     return {
       kind: "clients",
-      fatal: true,
+      fatal: false,
       fileName: "clients_duplicate.xlsx",
-      counters: { created: 0, updated: 0, errors: 1, total: 6 },
+      counters: { created: 1, updated: 0, errors: 2, total: 3 },
       rows: [
         { row: 3, externalId: "1045001", name: "ООО «Альфа»", inn: "7701111111", action: "create" },
-        { row: 4, externalId: "1045009", name: "ООО «Прайд»", inn: "7702222222", action: "create" },
-        { row: 7, externalId: "1045009", name: "ООО «Прайд» (дубль)", inn: "7702222222", action: "create" },
+        { row: 4, externalId: "1045009", name: "ООО «Прайд»", inn: "7702222222", action: "error", status: "error" },
+        { row: 7, externalId: "1045009", name: "ООО «Прайд» (дубль)", inn: "7702222222", action: "error", status: "error" },
       ],
       errors: [
+        { row: 4, column: "A", code: "DUPLICATE_KCR", message: "Неоднозначный код КЦР: строки 4 и 7.", value: "1045009" },
         { row: 7, column: "A", code: "DUPLICATE_KCR", message: "Код КЦР 1045009 уже встречается в строке 4.", value: "1045009" },
       ],
-      notes: ["Загрузка остановлена: сначала исправьте дубль кода КЦР в файле."],
+      notes: ["Строки с дублями отклонены. Корректные строки можно принять отдельно."],
     };
   }
   return {
@@ -163,7 +167,7 @@ export async function confirmClients(result) {
   if (result.fatal) return { ok: false, message: "Импорт остановлен." };
   let created = 0;
   let updated = 0;
-  for (const row of result.rows) {
+  for (const row of result.rows.filter(row=>row.status !== "error")) {
     const existing = store.clients.find((item) => item.externalId === row.externalId);
     if (existing) {
       existing.name = row.name;

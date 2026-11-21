@@ -11,7 +11,7 @@
 ## Образы
 
 - `ghcr.io/<owner>/rehub-backend:<tag>`
-- `ghcr.io/<owner>/rehub-ai-service:<tag>`
+- `ghcr.io/<owner>/rehub-parser-service:<tag>`
 - `ghcr.io/<owner>/rehub-frontend:<tag>`
 
 Для отката используйте `sha-<short>` конкретного проверенного коммита. GHCR технически позволяет перезаписать тег; защита неизменяемости этим workflow не настраивается.
@@ -79,8 +79,8 @@ docker compose -f docker-compose.prod.yml config --quiet
 
 ## Границы проверки
 
-CI проверяет Python, Go с PostgreSQL, frontend, фикстуры, запуск Compose и восстановление Python. Только после Compose smoke публикуются образы. Проверки не запускают настоящую Qwen и не подтверждают качество ее ответов: для этого нужен отдельный `scripts/smoke-ai-query.py` на стенде с Ollama.
+CI проверяет Python, Go с PostgreSQL, frontend, фикстуры, запуск Compose и восстановление Python. Только после Compose smoke публикуются образы.
 
-Основной Vue-интерфейс пока использует `frontend/src/mock/api.js`. Добавленный Go API с PostgreSQL не означает, что интерфейс уже переведен на него. `/health` проверяет доступность сервисов, но не готовность модели Ollama. Перед показом помощника проверьте `/ai-demo` через frontend.
+Основной Vue-интерфейс пока использует `frontend/src/mock/api.js`. Добавленный Go API с PostgreSQL не означает, что интерфейс уже переведен на него. `/health` проверяет доступность сервисов.
 
 Production-конфиг включает демонстрационные маршруты и не содержит полноценной аутентификации. Используйте закрытый тестовый стенд. Секреты сервера, правила защиты main и reviewers окружения настраиваются отдельно в GitHub; наличие YAML не подтверждает их настройку.

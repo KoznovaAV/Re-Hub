@@ -23,7 +23,7 @@ compose() {
 
 health() {
   compose exec -T backend wget -q -O /dev/null http://127.0.0.1:8080/health || return 1
-  compose exec -T ai-service python -c "from urllib.request import urlopen; urlopen('http://127.0.0.1:8001/health', timeout=2).close()" || return 1
+  compose exec -T parser-service python -c "from urllib.request import urlopen; urlopen('http://127.0.0.1:8001/health', timeout=2).close()" || return 1
   compose exec -T frontend wget -q -O /dev/null http://127.0.0.1:3000/health
 }
 

@@ -47,9 +47,6 @@ func main() {
 	mux := http.NewServeMux()
 	mux.Handle("GET /api/probe", probe.NewHandler(pythonURL))
 	writeTimeout := 120 * time.Second
-	if os.Getenv("REHUB_AI_DEMO") == "1" {
-		mux.HandleFunc("POST /ai/query", aiQuery(pythonURL))
-	}
 	api.New(pool, data, pythonURL).Register(mux)
 
 	server := &http.Server{
