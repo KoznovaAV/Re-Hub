@@ -15,3 +15,9 @@ test('call counts and callback are separate from assignment and document promise
 });
 test('hidden clients leave selection',()=>assert.deepEqual(visibleSelection(['a','b'],[{client:{id:'b'}}]),['b']));
 test('export prevents formulas and quotes values',()=>{assert.equal(csvCell('=1+1'),'"\'=1+1"');assert.equal(csvCell('A"B'),'"A""B"');});
+
+test('undated legacy calls are not evidence that no call occurred in a period',()=>{
+ const c={...client(),events:[{type:'call',result:'Недозвон',date:'2026-11-01'}]};
+ assert.equal(callSummary(c,'2026Q2').unknownPeriod,true);
+ assert.notEqual(callSummary(c,'2026Q2').status,'Не звонили');
+});
