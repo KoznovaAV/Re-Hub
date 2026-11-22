@@ -23,7 +23,7 @@ func (s *Server) workspace(w http.ResponseWriter, r *http.Request) {
 	}
 	sections := map[string]map[string]json.RawMessage{}
 	queries := map[string]string{
-		"history": `SELECT sr.client_id::text,jsonb_agg(jsonb_build_object('period_code',p.label,'slice_date',s.slice_date,'total_docs',sr.total_docs,'not_sent_docs',sr.not_sent_docs) ORDER BY p.year,p.quarter,s.slice_date,s.id) FROM slice_records sr JOIN slices s ON s.id=sr.slice_id JOIN report_periods p ON p.id=s.period_id WHERE sr.client_id=ANY($1::uuid[]) GROUP BY sr.client_id`,
+		"history": `SELECT sr.client_id::text,jsonb_agg(jsonb_build_object('period_code',p.label,'slice_date',s.slice_date,'total_docs',sr.total_docs,'not_sent_docs',sr.not_sent_docs,'inherited',sr.total_source_record_id IS NOT NULL) ORDER BY p.year,p.quarter,s.slice_date,s.id) FROM slice_records sr JOIN slices s ON s.id=sr.slice_id JOIN report_periods p ON p.id=s.period_id WHERE sr.client_id=ANY($1::uuid[]) GROUP BY sr.client_id`,
 		"events":  `SELECT e.client_id::text,jsonb_agg(jsonb_build_object('id',e.id,'event_type',e.event_type,'event_date',e.event_date,'result',e.result,'promised_at',e.promised_at,'promise_label',e.promise_label,'callback_on',e.callback_on,'period_code',e.period_code,'comment',e.comment,'author_name',u.username,'created_at',e.created_at) ORDER BY e.event_date DESC,e.created_at DESC) FROM client_events e LEFT JOIN users u ON u.id=e.author_id WHERE e.client_id=ANY($1::uuid[]) GROUP BY e.client_id`,
 		"actions": `SELECT client_id::text,jsonb_agg(jsonb_build_object('id',id,'kind',kind,'number',letter_number,'date',letter_date,'status',status,'comment',comment) ORDER BY letter_date DESC,created_at DESC) FROM client_actions WHERE client_id=ANY($1::uuid[]) GROUP BY client_id`,
 	}

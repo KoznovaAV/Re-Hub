@@ -40,7 +40,9 @@ def evaluate(payload):
             raise ValueError('Повторные или неизвестные ID')
         hits = len(ids & expected)
         scores.append({**run,'precision':hits/len(ids) if ids else 0,'recall':hits/len(expected),
-                       'excluded_errors':len(ids & set(item['excluded']))})
+                       'excluded_errors':len(ids & set(item['excluded'])),
+                       'false_positive_ids':sorted(ids-expected), 'missed_ids':sorted(expected-ids),
+                       'false_exclusions':len(expected-ids)})
     times = {tool:median(s['seconds'] for s in scores if s['tool']==tool) for tool in ('excel','rehub')}
     quality = all(s['precision'] >= .8 and s['recall'] >= .9 and not s['excluded_errors'] for s in scores if s['tool']=='rehub')
     speedup = times['excel']/times['rehub']

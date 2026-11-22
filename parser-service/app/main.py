@@ -5,6 +5,11 @@ from email.policy import default as email_policy
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+from jsonschema.exceptions import ValidationError
+try:
+    from .contract import validate_result
+except ImportError:
+    from contract import validate_result
 
 
 MAX_PARSE_BYTES = 25 * 1024 * 1024
@@ -47,6 +52,9 @@ class Handler(BaseHTTPRequestHandler):
             b"Content-Type: " + self.headers.get("Content-Type", "").encode("latin-1")
             + b"\r\nMIME-Version: 1.0\r\n\r\n" + raw
         )
+        if not message.is_multipart():
+            self.send_json(400, {"error": "invalid_multipart"})
+            return
         file_data = None
         file_name = ""
         context_text = None
@@ -54,6 +62,12 @@ class Handler(BaseHTTPRequestHandler):
             name = part.get_param("name", header="content-disposition")
             payload = part.get_payload(decode=True)
             if name == "file" and payload is not None:
+                if file_data is not None:
+                    self.send_json(400, {"error": "duplicate_file"})
+                    return
+                if part.get_content_type() not in {"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/octet-stream"}:
+                    self.send_json(415, {"error": "unsupported_file_mime"})
+                    return
                 file_name = part.get_filename() or ""
                 file_data = payload
             elif name == "context" and payload is not None:
@@ -89,10 +103,14 @@ class Handler(BaseHTTPRequestHandler):
             else:
                 self.send_json(422, {"error": "unsupported_file_kind"})
                 return
-            result = parse_file(temp_name, context)
+            result = validate_result(parse_file(temp_name, context))
             self.send_json(200, result)
+        except ValidationError:
+            self.send_json(502, {"error": "parser_contract_violation"})
         except ValueError as exc:
             self.send_json(422, {"error": "invalid_context", "message": str(exc)})
+        except Exception:
+            self.send_json(500, {"error": "parser_failure"})
         finally:
             if temp_name:
                 try:

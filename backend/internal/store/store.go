@@ -182,14 +182,14 @@ func (s *Store) ListClients(ctx context.Context, f ListFilters) ([]Client, int, 
 			c.promised_at, c.last_contact_at, c.in_pool, c.joined_on,
 			COALESCE(c.contact_details, ''), COALESCE(c.contact_name, ''), COALESCE(c.contact_phone, ''), COALESCE(c.contact_email, ''),
 			COALESCE((SELECT array_agg(ct.tag ORDER BY ct.tag) FROM client_tags ct WHERE ct.client_id = c.id), '{}'),
-			latest.period_code, latest.slice_date, latest.total_docs, latest.not_sent_docs,
-			prev.period_code, prev.slice_date, prev.total_docs, prev.not_sent_docs,
+			latest.period_code, latest.slice_date, latest.total_docs, latest.not_sent_docs, COALESCE(latest.inherited,false),
+			prev.period_code, prev.slice_date, prev.total_docs, prev.not_sent_docs, COALESCE(prev.inherited,false),
 			latest.slice_date IS DISTINCT FROM (SELECT max(sd.slice_date) FROM slices sd JOIN report_periods pd ON pd.id=sd.period_id WHERE pd.label=latest.period_code),
  COUNT(*) OVER() AS total
 		FROM clients c
 		LEFT JOIN users u ON u.id = c.assigned_to
 		LEFT JOIN LATERAL (
-			SELECT rp.label AS period_code, s.id AS slice_id, s.slice_date, COALESCE(sr.total_docs,(SELECT r2.total_docs FROM slice_records r2 JOIN slices s2 ON s2.id=r2.slice_id WHERE r2.client_id=c.id AND s2.period_id=s.period_id AND s2.slice_date<=s.slice_date AND r2.total_docs IS NOT NULL ORDER BY s2.slice_date DESC,s2.id DESC LIMIT 1)) AS total_docs, sr.not_sent_docs
+			SELECT rp.label AS period_code, s.id AS slice_id, s.slice_date, COALESCE(sr.total_docs,(SELECT r2.total_docs FROM slice_records r2 JOIN slices s2 ON s2.id=r2.slice_id WHERE r2.client_id=c.id AND s2.period_id=s.period_id AND s2.slice_date<=s.slice_date AND r2.total_docs IS NOT NULL ORDER BY s2.slice_date DESC,s2.id DESC LIMIT 1)) AS total_docs, sr.not_sent_docs, (sr.total_source_record_id IS NOT NULL OR sr.total_docs IS NULL) AS inherited
             FROM slice_records sr
 			JOIN slices s ON s.id = sr.slice_id
 			JOIN report_periods rp ON rp.id = s.period_id
@@ -198,7 +198,7 @@ func (s *Store) ListClients(ctx context.Context, f ListFilters) ([]Client, int, 
 			LIMIT 1
 		) latest ON TRUE
 		LEFT JOIN LATERAL (
-			SELECT rp.label AS period_code, s.id AS slice_id, s.slice_date, COALESCE(sr.total_docs,(SELECT r2.total_docs FROM slice_records r2 JOIN slices s2 ON s2.id=r2.slice_id WHERE r2.client_id=c.id AND s2.period_id=s.period_id AND s2.slice_date<=s.slice_date AND r2.total_docs IS NOT NULL ORDER BY s2.slice_date DESC,s2.id DESC LIMIT 1)) AS total_docs, sr.not_sent_docs
+			SELECT rp.label AS period_code, s.id AS slice_id, s.slice_date, COALESCE(sr.total_docs,(SELECT r2.total_docs FROM slice_records r2 JOIN slices s2 ON s2.id=r2.slice_id WHERE r2.client_id=c.id AND s2.period_id=s.period_id AND s2.slice_date<=s.slice_date AND r2.total_docs IS NOT NULL ORDER BY s2.slice_date DESC,s2.id DESC LIMIT 1)) AS total_docs, sr.not_sent_docs, (sr.total_source_record_id IS NOT NULL OR sr.total_docs IS NULL) AS inherited
             FROM slice_records sr
 			JOIN slices s ON s.id = sr.slice_id
 			JOIN report_periods rp ON rp.id = s.period_id
@@ -235,14 +235,15 @@ func (s *Store) ListClients(ctx context.Context, f ListFilters) ([]Client, int, 
 
 func scanClient(row pgx.Row) (Client, int, error) {
 	var (
-		joined                   pgtype.Date
-		client                   Client
-		promised, lastContact    pgtype.Date
-		latestPeriod, prevPeriod pgtype.Text
-		latestDate, prevDate     pgtype.Date
-		latestTotal, prevTotal   pgtype.Int4
-		latestUnsent, prevUnsent pgtype.Int4
-		total                    int64
+		joined                         pgtype.Date
+		client                         Client
+		promised, lastContact          pgtype.Date
+		latestPeriod, prevPeriod       pgtype.Text
+		latestDate, prevDate           pgtype.Date
+		latestTotal, prevTotal         pgtype.Int4
+		latestUnsent, prevUnsent       pgtype.Int4
+		total                          int64
+		latestInherited, prevInherited bool
 	)
 	err := row.Scan(
 		&client.ID, &client.ExternalID, &client.Name, &client.INN, &client.KPP,
@@ -251,8 +252,8 @@ func scanClient(row pgx.Row) (Client, int, error) {
 		&promised, &lastContact, &client.InPool, &joined,
 		&client.ContactDetails, &client.ContactName, &client.ContactPhone, &client.ContactEmail,
 		&client.Tags,
-		&latestPeriod, &latestDate, &latestTotal, &latestUnsent,
-		&prevPeriod, &prevDate, &prevTotal, &prevUnsent, &client.Missing,
+		&latestPeriod, &latestDate, &latestTotal, &latestUnsent, &latestInherited,
+		&prevPeriod, &prevDate, &prevTotal, &prevUnsent, &prevInherited, &client.Missing,
 		&total,
 	)
 	if err != nil {
@@ -268,6 +269,7 @@ func scanClient(row pgx.Row) (Client, int, error) {
 			SliceDate:   dateValue(latestDate),
 			TotalDocs:   intPtr(latestTotal),
 			NotSentDocs: intValue(latestUnsent),
+			Inherited:   latestInherited,
 		}
 		client.Latest.Share = share(client.Latest.TotalDocs, client.Latest.NotSentDocs)
 	}
@@ -277,6 +279,7 @@ func scanClient(row pgx.Row) (Client, int, error) {
 			SliceDate:   dateValue(prevDate),
 			TotalDocs:   intPtr(prevTotal),
 			NotSentDocs: intValue(prevUnsent),
+			Inherited:   prevInherited,
 		}
 		client.Previous.Share = share(client.Previous.TotalDocs, client.Previous.NotSentDocs)
 	}
@@ -330,7 +333,7 @@ func (s *Store) GetClient(ctx context.Context, externalID string) (*Client, erro
 
 func (s *Store) History(ctx context.Context, clientID string) ([]Record, error) {
 	rows, err := s.pool.Query(ctx, `
-		SELECT rp.label, s.slice_date, sr.total_docs, sr.not_sent_docs
+		SELECT rp.label, s.slice_date, sr.total_docs, sr.not_sent_docs, sr.total_source_record_id IS NOT NULL
 		FROM slice_records sr
 		JOIN slices s ON s.id = sr.slice_id
 		JOIN report_periods rp ON rp.id = s.period_id
@@ -347,7 +350,7 @@ func (s *Store) History(ctx context.Context, clientID string) ([]Record, error) 
 			record Record
 			total  pgtype.Int4
 		)
-		if err := rows.Scan(&record.PeriodCode, &record.SliceDate, &total, &record.NotSentDocs); err != nil {
+		if err := rows.Scan(&record.PeriodCode, &record.SliceDate, &total, &record.NotSentDocs, &record.Inherited); err != nil {
 			return nil, err
 		}
 		record.TotalDocs = intPtr(total)

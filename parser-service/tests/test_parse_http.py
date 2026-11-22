@@ -49,13 +49,13 @@ class ParseHTTPTest(unittest.TestCase):
         finally:
             conn.close()
 
-    def upload(self, name="clients", context=None, data=None, filename=None):
+    def upload(self, name="clients", context=None, data=None, filename=None, mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"):
         context = context if context is not None else (self.root / f"{name}.context.json").read_text()
         data = data if data is not None else (self.root / f"{name}.xlsx").read_bytes()
         filename = filename or f"{name}.xlsx"
         body = (f'--rehub-test\r\nContent-Disposition: form-data; name="context"\r\n\r\n{context}\r\n'
                 f'--rehub-test\r\nContent-Disposition: form-data; name="file"; filename="{filename}"\r\n'
-                'Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\r\n\r\n').encode() + data + b"\r\n--rehub-test--\r\n"
+                f'Content-Type: {mime}\r\n\r\n').encode() + data + b"\r\n--rehub-test--\r\n"
         return self.request(body)
 
     def test_clients_and_snapshots_return_common_contract(self):
@@ -90,3 +90,49 @@ class ParseHTTPTest(unittest.TestCase):
             status, result = self.upload()
             self.assertEqual(status, 200)
             self.assertEqual(result["errors"][0]["code"], "XLSX_LIMIT_EXCEEDED")
+
+    def test_file_mime_and_missing_boundary(self):
+        self.assertEqual(self.upload(mime="text/html")[0],415)
+        self.assertEqual(self.upload(mime="application/octet-stream")[0],200)
+        self.assertEqual(self.request(b"broken", "multipart/form-data")[0],400)
+
+    def test_temp_cleanup_after_success_failure_and_unknown_kind(self):
+        from tempfile import NamedTemporaryFile
+        paths=[]
+        def create(*a,**kw):
+            result=NamedTemporaryFile(*a,**kw);paths.append(Path(result.name));return result
+        with patch("app.main.NamedTemporaryFile",side_effect=create):
+            self.assertEqual(self.upload()[0],200)
+            self.assertEqual(self.upload(context='{"file_kind":"unknown"}')[0],422)
+            with patch("customer_clients.parse_file",side_effect=RuntimeError("test")):
+                self.assertEqual(self.upload()[0],500)
+            self.assertEqual(self.upload()[0],200)
+        self.assertEqual(len(paths),4)
+        self.assertTrue(all(not p.exists() for p in paths))
+
+    def test_bad_parser_contract_is_rejected_and_service_recovers(self):
+        with patch("customer_clients.parse_file",return_value={"unexpected":1}):
+            self.assertEqual(self.upload()[0],502)
+        self.assertEqual(self.upload()[0],200)
+
+    def test_zip_entry_limit_and_recovery(self):
+        with patch("xlsx_limits.MAX_ZIP_ENTRIES",1):
+            status,result=self.upload()
+            self.assertEqual(status,200)
+            self.assertEqual(result["errors"][0]["code"],"XLSX_LIMIT_EXCEEDED")
+        self.assertEqual(self.upload()[0],200)
+
+    def test_incomplete_upload(self):
+        conn=HTTPConnection(*self.server.server_address,timeout=6)
+        try:
+            conn.putrequest("POST","/parse")
+            conn.putheader("Content-Type","multipart/form-data; boundary=x")
+            conn.putheader("Content-Length","100")
+            conn.endheaders();conn.send(b"partial")
+            import socket
+            conn.sock.shutdown(socket.SHUT_WR)
+            response=conn.getresponse()
+            self.assertEqual(response.status,400)
+            self.assertEqual(json.loads(response.read())["error"],"incomplete_upload")
+        finally:conn.close()
+        self.assertEqual(self.upload()[0],200)

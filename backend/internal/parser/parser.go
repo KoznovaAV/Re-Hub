@@ -54,12 +54,19 @@ type SnapshotData struct {
 }
 
 type ClientData struct {
-	ExternalID     string   `json:"external_id"`
-	Name           string   `json:"name"`
-	ContactDetails *string  `json:"contact_details"`
-	Tags           []string `json:"tags"`
-	Excluded       *bool    `json:"excluded"`
-	Active         *bool    `json:"active"`
+	INN             *string  `json:"inn"`
+	KPP             *string  `json:"kpp"`
+	JoinedOn        *string  `json:"joined_on"`
+	Blocked         *bool    `json:"blocked"`
+	ExcludedReason  *string  `json:"excluded_reason"`
+	EKBOffsetHours  *int     `json:"ekb_offset_hours"`
+	SourceStatusRaw *string  `json:"source_status_raw"`
+	ExternalID      string   `json:"external_id"`
+	Name            string   `json:"name"`
+	ContactDetails  *string  `json:"contact_details"`
+	Tags            []string `json:"tags"`
+	Excluded        *bool    `json:"excluded"`
+	Active          *bool    `json:"active"`
 }
 
 type Client struct {
@@ -125,11 +132,34 @@ func (c *Client) Parse(ctx context.Context, filePath string, parseContext map[st
 		return nil, fmt.Errorf("parser returned %d: %s", resp.StatusCode, strings.TrimSpace(string(payload)))
 	}
 	var result Result
-	if err := json.Unmarshal(payload, &result); err != nil {
+	decoder := json.NewDecoder(bytes.NewReader(payload))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&result); err != nil {
 		return nil, fmt.Errorf("decode parser result: %w", err)
 	}
 	if result.ContractVersion != "1.0" || len(result.Rows)+len(result.Errors) == 0 && result.NonemptyRowCount == 0 {
 		return nil, fmt.Errorf("parser returned an unsupported result")
+	}
+	if decoder.Decode(new(any)) != io.EOF {
+		return nil, fmt.Errorf("trailing parser data")
+	}
+	if result.FileKind != parseContext["file_kind"] || result.KeyMode != parseContext["key_mode"] {
+		return nil, fmt.Errorf("parser context mismatch")
+	}
+	for _, row := range result.Rows {
+		d := json.NewDecoder(bytes.NewReader(row.Data))
+		d.DisallowUnknownFields()
+		var err error
+		if result.FileKind == "clients" {
+			var data ClientData
+			err = d.Decode(&data)
+		} else {
+			var data SnapshotData
+			err = d.Decode(&data)
+		}
+		if err != nil {
+			return nil, fmt.Errorf("invalid row contract: %w", err)
+		}
 	}
 	return &result, nil
 }

@@ -30,3 +30,12 @@ class PilotTest(unittest.TestCase):
     def test_unknown_data_kind_is_rejected(self):
         d=self.data();d['data_kind']='assumed_real'
         with self.assertRaises(ValueError):evaluation.evaluate(d)
+
+    def test_missed_candidates_are_reported(self):
+        d=self.data()
+        run=next(r for r in d['runs'] if r['tool']=='rehub')
+        missed=run['ids'].pop()
+        result=evaluation.evaluate(d)
+        score=next(r for r in result['runs'] if r['tool']=='rehub' and r['participant']==run['participant'])
+        self.assertIn(missed,score['missed_ids'])
+        self.assertEqual(score['false_exclusions'],1)

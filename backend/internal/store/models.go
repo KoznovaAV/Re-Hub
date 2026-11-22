@@ -96,15 +96,17 @@ type NewClientData struct {
 }
 
 type ParsedRow struct {
-	ExternalID string
-	PeriodCode string
-	TotalDocs  *int
-	NotSent    int
-	Sheet      string
-	Row        int
+	TotalSourceID string
+	ExternalID    string
+	PeriodCode    string
+	TotalDocs     *int
+	NotSent       int
+	Sheet         string
+	Row           int
 }
 
 type ParsedError struct {
+	Sheet      string `json:"sheet,omitempty"`
 	Scope      string `json:"scope"`
 	Row        *int   `json:"row,omitempty"`
 	Column     string `json:"column,omitempty"`

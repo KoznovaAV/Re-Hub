@@ -150,3 +150,5 @@ Smoke измеряет доступность и корректность кон
 Проверки требований и ограничений H-00: [отчёт](reports/customer-requirements.md). Браузерная проверка после загрузки фикстуры: `python3 scripts/tests/live_workflow.py --url http://127.0.0.1:3000 --chromium /path/to/chromium`.
 
 Показ проверки H-00 за 5–7 минут: [пошаговый сценарий](docs/scenarios/h00-demonstration.md). [Учебные смоделированные замеры](reports/h00/simulated-pilot.md) не считаются результатами работы реальных пользователей.
+
+Приёмка задач Алины P-01–P-08: [реализация, проверки и ограничения](reports/p-tasks/README.md). [Нагрузочный отчёт с p95](reports/p-tasks/performance.md), [качество исходных данных](reports/p-tasks/data-quality.md).

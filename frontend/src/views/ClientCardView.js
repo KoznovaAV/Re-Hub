@@ -56,7 +56,7 @@ export default defineComponent({
         if(index===0||metrics.value.history[index-1].period!==item.period)previousTotal=null;
  const total = item.total ?? previousTotal;
         const share = total > 0 ? Math.round((item.unsent / total) * 100) : null;
-        const row = { ...item, total, share, inherited: item.total == null && previousTotal != null, current: index === metrics.value.history.length - 1 };
+        const row = { ...item, total, share, inherited: item.inherited || item.total == null && previousTotal != null, current: index === metrics.value.history.length - 1 };
         previousTotal = total;
         return row;
       });

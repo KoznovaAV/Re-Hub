@@ -175,7 +175,7 @@ jobs:
             context: ./backend
             dockerfile: ./backend/Dockerfile
           - image: rehub-parser-service
-            context: ./parser-service
+            context: .
             dockerfile: ./parser-service/Dockerfile
           - image: rehub-frontend
             context: ./frontend

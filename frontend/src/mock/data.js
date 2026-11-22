@@ -51,7 +51,7 @@ export function clientMetrics(client, selectedPeriod = LATEST_PERIOD) {
   const previous=observations.filter(item=>item!==last&&item.observed!==false).at(-1)??null;
   const missing=!observations.length||last?.observed===false||Boolean(store.periodDates?.[selectedPeriod]&&last?.date<store.periodDates[selectedPeriod]);
   const priorTotal=observations.filter(item=>item!==last&&item.observed!==false&&item.total!=null).at(-1)?.total;
-  const inherited=Boolean(last&&last.total==null&&priorTotal!=null);
+  const inherited=Boolean(last&&(last.inherited || last.total==null&&priorTotal!=null));
   const total=last?.total??priorTotal??null;
   const unsent=last?.unsent??0;
   const transferred=total!=null?Math.max(0,total-unsent):null;

@@ -31,13 +31,14 @@ def request(path, body=None, content_type=None, expected=200):
     return data
 
 
-def upload(path, workbook, context):
+def upload(path, workbook, context, accept_partial=False, expected=201):
     # Полный путь и клиентские строки в отчет не выводятся.
     body = (f'--parser-smoke\r\nContent-Disposition: form-data; name="context"\r\n\r\n{context}\r\n'
             '--parser-smoke\r\nContent-Disposition: form-data; name="file"; filename="synthetic.xlsx"\r\n'
             'Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\r\n\r\n').encode()
-    body += workbook.read_bytes() + b"\r\n--parser-smoke--\r\n"
-    return request(path, body, "multipart/form-data; boundary=parser-smoke", 201)["data"]
+    body += workbook.read_bytes() + f"\r\n--parser-smoke\r\nContent-Disposition: form-data; name=\"accept_partial\"\r\n\r\n{str(accept_partial).lower()}\r\n--parser-smoke--\r\n".encode()
+    response = request(path, body, "multipart/form-data; boundary=parser-smoke", expected)
+    return response.get("data",response)
 
 
 with TemporaryDirectory() as temp:
@@ -95,10 +96,17 @@ with TemporaryDirectory() as temp:
     sheet.append(["SMK00001", None, None, 10, 2])
     sheet.append(["ZZZ99999", None, None, 10, 2])
     sheet.append(["#N/A", None, None, 10, 2])
+    sheet.cell(4,4,1)
+    sheet.cell(4,5,2)
     book.save(path)
     book.close()
-    result = upload("/api/v1/slices", path, (root / "snapshot_2.context.json").read_text())
+    context = (root / "snapshot_2.context.json").read_text()
+    preview = upload("/api/v1/slices?preview=true",path,context,expected=200)
+    assert {e["code"] for e in preview["errors"]} == {"DUPLICATE_KEY","CLIENT_UNKNOWN","INVALID_EXTERNAL_ID","UNSENT_GT_TOTAL"}, preview["errors"]
+    upload("/api/v1/slices",path,context,expected=422)
+    result = upload("/api/v1/slices",path,context,accept_partial=True)
+    assert result["counters"]["rows_ok"] == preview["counters"]["accepted"]
     assert result["status"] == "partial"
-    assert {e["code"] for e in result["errors"]} == {"DUPLICATE_KEY", "CLIENT_UNKNOWN", "INVALID_EXTERNAL_ID"}
-    assert result["counters"]["rows_errors"] == 4
+    assert {e["code"] for e in result["errors"]} == {"DUPLICATE_KEY", "CLIENT_UNKNOWN", "INVALID_EXTERNAL_ID", "UNSENT_GT_TOTAL"}
+    assert result["counters"]["rows_errors"] == 5
     print("Parser smoke OK: contacts, flags, 30 clients, two snapshots, repeated imports")

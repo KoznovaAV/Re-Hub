@@ -1,0 +1,1 @@
+Parser smoke OK: contacts, flags, 30 clients, two snapshots, repeated imports
