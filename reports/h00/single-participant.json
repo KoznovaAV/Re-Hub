@@ -1,0 +1,87 @@
+{
+  "kind": "single_participant_exploratory_observations",
+  "human_participants": 1,
+  "participant_aliases": {
+    "P01": "participant-1",
+    "P02": "participant-1"
+  },
+  "synthetic_client_data": true,
+  "formal_pilot_complete": false,
+  "hypothesis_confirmed": false,
+  "original_user_journal_attached": false,
+  "runs": [
+    {
+      "participant": "participant-1",
+      "tool": "excel",
+      "group": "B",
+      "seconds": 36.076,
+      "timing_source": "participant_reported_external_stopwatch",
+      "ids": [
+        "PILOT-19",
+        "PILOT-20",
+        "PILOT-27"
+      ],
+      "precision": 1,
+      "recall": 1,
+      "excluded_inclusions": 0
+    },
+    {
+      "participant": "participant-1",
+      "ui_alias": "P01",
+      "tool": "rehub",
+      "group": "B",
+      "seconds": 7.329,
+      "timing_source": "observed_browser_protocol_table",
+      "ids": [
+        "PILOT-19",
+        "PILOT-20",
+        "PILOT-27"
+      ],
+      "precision": 1,
+      "recall": 1,
+      "excluded_inclusions": 0
+    },
+    {
+      "participant": "participant-1",
+      "ui_alias": "P02",
+      "tool": "rehub",
+      "group": "A",
+      "seconds": 7.83,
+      "timing_source": "observed_browser_protocol_table",
+      "precision": 1,
+      "recall": 1,
+      "excluded_inclusions": 0
+    }
+  ],
+  "excluded_attempts": [
+    {
+      "tool": "excel",
+      "group": "A",
+      "seconds": 78.118,
+      "reason": "saved_without_ids"
+    },
+    {
+      "tool": "excel",
+      "group": "A",
+      "displayed_seconds": 54.6,
+      "reason": "interrupted_paste_failure_not_completion_time",
+      "ids_reported_later": [
+        "PILOT-04",
+        "PILOT-05",
+        "PILOT-12"
+      ]
+    }
+  ],
+  "paired_comparison": {
+    "group": "B",
+    "speed_ratio": 4.9223632146268255,
+    "time_reduction_percent": 79.68455482869497
+  },
+  "limitations": [
+    "one participant with repeated practice",
+    "different timing sources and endpoints",
+    "step-by-step instructions",
+    "no independently approved gold standard",
+    "participant administrator role not independently verified"
+  ]
+}
