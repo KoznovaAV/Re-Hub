@@ -20,6 +20,7 @@
   <label>Непереданных от <input id="threshold" type="number" min="0" max="99" value="8"></label>
   <p>В список попадают клиенты с наблюдением, без исключения и без звонка по выбранному периоду.</p>
   <p><output id="clients" aria-live="polite"></output></p>
+  <button id="save-list">Скачать список обзвона CSV</button>
 </section>
 <section>
   <h2>Карточка клиента</h2>
@@ -33,8 +34,9 @@
   const group = element("group");
   const selected = element("client");
   let rows = [];
+  let matches = [];
   function render() {
-    const matches = callList(rows, element("period").value, element("threshold").valueAsNumber);
+    matches = callList(rows, element("period").value, element("threshold").valueAsNumber);
     element("clients").textContent = matches.map(({client}) => client).join(", ") || "Список пуст";
     const client = rows.find(({client}) => client === selected.value);
     element("history").replaceChildren(...(client?.periods ?? []).map((item) => {
@@ -50,6 +52,12 @@
     render();
   }
   group.addEventListener("change", load);
+  element("save-list").addEventListener("click", () => {
+    const file = new Blob([["client", ...matches.map(item=>item.client)].join("\r\n")], {type:"text/csv"});
+    const url=URL.createObjectURL(file);
+    const link=document.createElement("a");link.href=url;link.download=`call-list-${group.value}.csv`;link.click();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  });
   for (const id of ["client", "period", "threshold"]) element(id).addEventListener("input", render);
   element("export").addEventListener("click", () => {
     const data = rows.flatMap(({client, excluded, periods}) => periods.map(item =>

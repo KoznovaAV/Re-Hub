@@ -1,0 +1,123 @@
+{
+  "data_kind": "simulated",
+  "title": "СМОДЕЛИРОВАННЫЙ КОНТРПРИМЕР: быстрый, но ошибочный отбор",
+  "human_participants": 0,
+  "source": "Assumed times and outputs for demonstrating the evaluation method",
+  "assumptions": [
+    "Два виртуальных участника, два набора по 15 синтетических клиентов",
+    "Секунды и ошибки придуманы. Это не наблюдения и не прогноз скорости сотрудников",
+    "Эталон получен из учебного набора /pilot; заказчик и эксперт его не утверждали",
+    "Эта упрощённая проверка фильтров не заменяет основной сценарий на реальных данных"
+  ],
+  "gold": {
+    "A": {
+      "all_ids": [
+        "PILOT-01",
+        "PILOT-02",
+        "PILOT-03",
+        "PILOT-04",
+        "PILOT-05",
+        "PILOT-06",
+        "PILOT-07",
+        "PILOT-08",
+        "PILOT-09",
+        "PILOT-10",
+        "PILOT-11",
+        "PILOT-12",
+        "PILOT-13",
+        "PILOT-14",
+        "PILOT-15"
+      ],
+      "expected": [
+        "PILOT-04",
+        "PILOT-05",
+        "PILOT-12"
+      ],
+      "excluded": [
+        "PILOT-01",
+        "PILOT-07",
+        "PILOT-13"
+      ],
+      "approved_by": null,
+      "expert_approved": false
+    },
+    "B": {
+      "all_ids": [
+        "PILOT-16",
+        "PILOT-17",
+        "PILOT-18",
+        "PILOT-19",
+        "PILOT-20",
+        "PILOT-21",
+        "PILOT-22",
+        "PILOT-23",
+        "PILOT-24",
+        "PILOT-25",
+        "PILOT-26",
+        "PILOT-27",
+        "PILOT-28",
+        "PILOT-29",
+        "PILOT-30"
+      ],
+      "expected": [
+        "PILOT-19",
+        "PILOT-20",
+        "PILOT-27"
+      ],
+      "excluded": [
+        "PILOT-16",
+        "PILOT-22",
+        "PILOT-28"
+      ],
+      "approved_by": null,
+      "expert_approved": false
+    }
+  },
+  "runs": [
+    {
+      "participant": "SIM-01",
+      "tool": "excel",
+      "group": "A",
+      "seconds": 110,
+      "ids": [
+        "PILOT-04",
+        "PILOT-05"
+      ]
+    },
+    {
+      "participant": "SIM-01",
+      "tool": "rehub",
+      "group": "B",
+      "seconds": 42,
+      "ids": [
+        "PILOT-19",
+        "PILOT-20",
+        "PILOT-27",
+        "PILOT-16"
+      ]
+    },
+    {
+      "participant": "SIM-02",
+      "tool": "rehub",
+      "group": "A",
+      "seconds": 35,
+      "ids": [
+        "PILOT-04",
+        "PILOT-05",
+        "PILOT-12"
+      ]
+    },
+    {
+      "participant": "SIM-02",
+      "tool": "excel",
+      "group": "B",
+      "seconds": 90,
+      "ids": [
+        "PILOT-19",
+        "PILOT-20",
+        "PILOT-27",
+        "PILOT-17"
+      ]
+    }
+  ]
+}

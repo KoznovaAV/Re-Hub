@@ -1,0 +1,72 @@
+{
+  "hypothesis": "H-00",
+  "data_kind": "simulated",
+  "human_participants": 0,
+  "speedup": 2.5974025974025974,
+  "median_seconds": {
+    "excel": 100,
+    "rehub": 38.5
+  },
+  "quality_passed": true,
+  "criteria_met": true,
+  "confirmed": false,
+  "conclusion": "Учебные смоделированные данные: не подтверждают работу реальных пользователей.",
+  "runs": [
+    {
+      "participant": "SIM-01",
+      "tool": "excel",
+      "group": "A",
+      "seconds": 110,
+      "ids": [
+        "PILOT-04",
+        "PILOT-05"
+      ],
+      "precision": 1,
+      "recall": 0.6666666666666666,
+      "excluded_errors": 0
+    },
+    {
+      "participant": "SIM-01",
+      "tool": "rehub",
+      "group": "B",
+      "seconds": 42,
+      "ids": [
+        "PILOT-19",
+        "PILOT-20",
+        "PILOT-27"
+      ],
+      "precision": 1,
+      "recall": 1,
+      "excluded_errors": 0
+    },
+    {
+      "participant": "SIM-02",
+      "tool": "rehub",
+      "group": "A",
+      "seconds": 35,
+      "ids": [
+        "PILOT-04",
+        "PILOT-05",
+        "PILOT-12"
+      ],
+      "precision": 1,
+      "recall": 1,
+      "excluded_errors": 0
+    },
+    {
+      "participant": "SIM-02",
+      "tool": "excel",
+      "group": "B",
+      "seconds": 90,
+      "ids": [
+        "PILOT-19",
+        "PILOT-20",
+        "PILOT-27",
+        "PILOT-17"
+      ],
+      "precision": 0.75,
+      "recall": 1,
+      "excluded_errors": 0
+    }
+  ]
+}
