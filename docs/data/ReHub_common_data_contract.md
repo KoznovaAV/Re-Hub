@@ -422,7 +422,7 @@ scope, code, message, source и raw_value обязательны. key_hint ст�
 ## 15. Связанные материалы
 
 - [T-02 — правила импорта и работы с периодами](T-02_import_and_period_rules.md).
-- [Исходный пакет схем, примеров и SQL v1](https://chatgpt.com/library?file_id=libfile_775f5df9cd7c819186fb3c3c2b69bd35&account_id=personal). Форматы в этом документе сохраняют имена и типы из него.
+- Схемы и примеры v1 хранятся в репозитории: [ImportContext](../../contracts/import-context.schema.json), [ParserResult](../../contracts/parser-result.schema.json), [примеры](../../contracts/examples). Форматы в этом документе сохраняют согласованные имена и типы.
 - Задачи репозитория: [T-02 #31](https://github.com/KoznovaAV/Re-Hub/issues/31), [T-08 #33](https://github.com/KoznovaAV/Re-Hub/issues/33), [T-26 #39](https://github.com/KoznovaAV/Re-Hub/issues/39).
 
 Описание и JSON-примеры не заменяют валидацию реальным JSON Schema движком и проверку кода. Запуск приложения/миграций и результаты гипотез этим файлом не заявлены.

@@ -1,0 +1,15 @@
+test_complete_pilot (test_h00.PilotTest.test_complete_pilot) ... ok
+test_missed_candidates_are_reported (test_h00.PilotTest.test_missed_candidates_are_reported) ... ok
+test_no_expert_no_conclusion (test_h00.PilotTest.test_no_expert_no_conclusion) ... ok
+test_observed_agent_run_never_confirms_human_speed (test_h00.PilotTest.test_observed_agent_run_never_confirms_human_speed) ... ok
+test_quality_without_speed_does_not_confirm (test_h00.PilotTest.test_quality_without_speed_does_not_confirm) ... ok
+test_simulation_cannot_confirm_a_user_pilot (test_h00.PilotTest.test_simulation_cannot_confirm_a_user_pilot) ... ok
+test_single_person_is_not_pilot (test_h00.PilotTest.test_single_person_is_not_pilot) ... ok
+test_speed_alone_does_not_confirm (test_h00.PilotTest.test_speed_alone_does_not_confirm) ... ok
+test_unknown_data_kind_is_rejected (test_h00.PilotTest.test_unknown_data_kind_is_rejected) ... ok
+test_no_ai_service_dependencies_or_route (test_no_ai_runtime.NoAIRuntimeTest.test_no_ai_service_dependencies_or_route) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.001s
+
+OK

@@ -1,6 +1,8 @@
+import { callSummary, eligibleForCall } from "../composables/call-list.mjs";
 import { reactive } from "vue";
 
-export const TODAY = "2026-11-18";
+export let TODAY = "2026-11-18";
+export function setToday(value){TODAY=value;}
 export const LATEST_PERIOD = "2026Q3";
 
 export const periods = [
@@ -43,30 +45,25 @@ export function daysBetween(from, to) {
 }
 
 export function clientMetrics(client, selectedPeriod = LATEST_PERIOD) {
-  const history = client.history.filter(item => periodIndex(item.period) <= periodIndex(selectedPeriod)).sort((a, b) => periodIndex(a.period) - periodIndex(b.period));
-  const last = history[history.length - 1] ?? null;
-  const previous = history[history.length - 2] ?? null;
-  const hasLatest = history.some((item) => item.period === selectedPeriod);
-  const missing = client.active !== false && !hasLatest;
-  const inherited = Boolean(last && last.total == null && previous?.total != null);
-  const total = last?.total ?? (inherited ? previous.total : null);
-  const unsent = last?.unsent ?? 0;
-  const transferred = total != null ? Math.max(0, total - unsent) : null;
-  const share = total > 0 ? Math.round((unsent / total) * 100) : null;
-  const transferredPercent = total > 0 ? Math.round((transferred / total) * 100) : null;
-  const delta = previous ? unsent - previous.unsent : null;
-  const overdue = Boolean(client.promise && client.promise < TODAY && unsent > 0);
-  const overdueDays = overdue ? daysBetween(TODAY, client.promise) : 0;
-
-  let dynamics = "Новый";
-  if (missing) dynamics = "Нет наблюдения";
-  else if (client.cycle === "repeat") dynamics = "Повторный";
-  else if (previous) {
-    if (delta < 0) dynamics = "Уменьшается";
-    else if (delta === 0) dynamics = "Не меняется";
-    else dynamics = "Растёт";
-  }
-
+  const history = client.history.filter(item => periodIndex(item.period) <= periodIndex(selectedPeriod)).sort((a,b)=>periodIndex(a.period)-periodIndex(b.period)||String(a.date).localeCompare(String(b.date)));
+  const observations=history.filter(item=>item.period===selectedPeriod);
+  const last=observations.at(-1)??history.at(-1)??null;
+  const previous=observations.filter(item=>item!==last&&item.observed!==false).at(-1)??null;
+  const missing=!observations.length||last?.observed===false||Boolean(store.periodDates?.[selectedPeriod]&&last?.date<store.periodDates[selectedPeriod]);
+  const priorTotal=observations.filter(item=>item!==last&&item.observed!==false&&item.total!=null).at(-1)?.total;
+  const inherited=Boolean(last&&(last.inherited || last.total==null&&priorTotal!=null));
+  const total=last?.total??priorTotal??null;
+  const unsent=last?.unsent??0;
+  const transferred=total!=null?Math.max(0,total-unsent):null;
+  const share=total>0?Math.round(unsent/total*100):null;
+  const transferredPercent=total>0?Math.round(transferred/total*100):null;
+  const delta=previous&&!missing?unsent-previous.unsent:null;
+  const callbackOn=callSummary(client).callbackOn;
+  const overdue=Boolean(callbackOn&&callbackOn<=TODAY);
+  const overdueDays=overdue?daysBetween(TODAY,callbackOn):0;
+  const beforeLast=history.filter(item=>item!==last&&item.observed!==false);
+  const repeated=unsent>0&&beforeLast.some((item,i)=>item.unsent===0&&beforeLast.slice(0,i).some(x=>x.unsent>0));
+  let dynamics=missing?'Нет наблюдения':unsent===0?'Все документы переданы':repeated?'Повторный':!previous?'Новый':delta<0?'Уменьшается':delta>0?'Растёт':'Не меняется';
   return {
     history,
     last,
@@ -82,16 +79,16 @@ export function clientMetrics(client, selectedPeriod = LATEST_PERIOD) {
     dynamics,
     overdue,
     overdueDays,
-    needsRepeat: overdue && dynamics !== "Новый",
+    needsRepeat: overdue,
     owner: client.owner ? users[client.owner] : null,
     ownerName: client.owner ? users[client.owner].name : "Свободен",
-    free: !client.owner && client.stage !== "Закрыт" && client.active !== false,
+    free: Boolean(client.pool) && !client.owner && client.stage !== "Закрыт" && client.active !== false && !client.excluded && !client.inactive && eligibleForCall(client,selectedPeriod,store.periodDates?.[selectedPeriod]),
   };
 }
 
 export const archiveGroups = [
   { key: "waiting", label: "Ожидаются" },
-  { key: "overdue", label: "Просрочены" },
+  { key: "overdue", label: "Перезвонить" },
   { key: "received", label: "Получены" },
 ];
 
@@ -114,7 +111,11 @@ export function chartBucket(value, max) {
 }
 
 export const store = reactive({
-  reportPeriod: LATEST_PERIOD,
+  live: false,
+ actor: "admin",
+ loading: false,
+ periodDates: {},
+ reportPeriod: LATEST_PERIOD,
   clients: [
     {
       id: "c1",
@@ -237,6 +238,7 @@ export const store = reactive({
       pool: false,
       history: [
         { period: "2026Q2", date: "2026-07-20", total: 100, unsent: 40, observed: true },
+        {period:"2026Q3",date:"2026-10-01",total:100,unsent:40,observed:true},
         { period: "2026Q3", date: "2026-10-20", total: null, unsent: 30, observed: true, note: "В файле только «Не передано»" },
       ],
       events: [

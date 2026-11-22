@@ -20,6 +20,8 @@ type Record struct {
 }
 
 type Client struct {
+	InPool         bool       `json:"in_pool"`
+	JoinedOn       *time.Time `json:"joined_on,omitempty"`
 	ID             string     `json:"id"`
 	ExternalID     string     `json:"external_id"`
 	Name           string     `json:"name"`
@@ -45,33 +47,42 @@ type Client struct {
 }
 
 type Event struct {
-	ID         string     `json:"id"`
-	ClientID   string     `json:"client_id"`
-	Type       string     `json:"event_type"`
-	Date       time.Time  `json:"event_date"`
-	Result     string     `json:"result,omitempty"`
-	PromisedAt *time.Time `json:"promised_at,omitempty"`
-	Comment    string     `json:"comment,omitempty"`
-	AuthorID   string     `json:"author_id,omitempty"`
-	AuthorName string     `json:"author_name,omitempty"`
-	CreatedAt  time.Time  `json:"created_at"`
+	PromiseLabel string     `json:"promise_label,omitempty"`
+	CallbackOn   *time.Time `json:"callback_on,omitempty"`
+	PeriodCode   string     `json:"period_code,omitempty"`
+	ID           string     `json:"id"`
+	ClientID     string     `json:"client_id"`
+	Type         string     `json:"event_type"`
+	Date         time.Time  `json:"event_date"`
+	Result       string     `json:"result,omitempty"`
+	PromisedAt   *time.Time `json:"promised_at,omitempty"`
+	Comment      string     `json:"comment,omitempty"`
+	AuthorID     string     `json:"author_id,omitempty"`
+	AuthorName   string     `json:"author_name,omitempty"`
+	CreatedAt    time.Time  `json:"created_at"`
 }
 
 type ListFilters struct {
-	ExternalID string
-	INN        string
-	Stage      string
-	Assigned   string
-	UserID     string
-	Tag        string
-	Contacted  string
-	MinShare   *float64
-	Excluded   *bool
-	Inactive   *bool
-	Limit      int
-	Offset     int
-	Sort       string
-	Desc       bool
+	ExternalIDs []string
+	WorkOnly    bool
+	PoolOnly    bool
+	PeriodCode  string
+	MinUnsent   int
+	CallList    bool
+	ExternalID  string
+	INN         string
+	Stage       string
+	Assigned    string
+	UserID      string
+	Tag         string
+	Contacted   string
+	MinShare    *float64
+	Excluded    *bool
+	Inactive    *bool
+	Limit       int
+	Offset      int
+	Sort        string
+	Desc        bool
 }
 
 type NewClientData struct {
@@ -85,15 +96,17 @@ type NewClientData struct {
 }
 
 type ParsedRow struct {
-	ExternalID string
-	PeriodCode string
-	TotalDocs  *int
-	NotSent    int
-	Sheet      string
-	Row        int
+	TotalSourceID string
+	ExternalID    string
+	PeriodCode    string
+	TotalDocs     *int
+	NotSent       int
+	Sheet         string
+	Row           int
 }
 
 type ParsedError struct {
+	Sheet      string `json:"sheet,omitempty"`
 	Scope      string `json:"scope"`
 	Row        *int   `json:"row,omitempty"`
 	Column     string `json:"column,omitempty"`

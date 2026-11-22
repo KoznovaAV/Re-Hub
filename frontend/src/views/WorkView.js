@@ -77,7 +77,7 @@ export default defineComponent({
       <div class="page__header">
         <div class="page__header-copy">
           <h1>Работа с клиентами</h1>
-          <p class="page__subtitle">Клиенты в работе, последние взаимодействия и обещанные сроки. Демо-данные.</p>
+          <p class="page__subtitle">Клиенты в работе, последние взаимодействия и обещанные сроки.</p>
         </div>
         <UiTabs v-model="tab" :tabs="tabs" />
       </div>

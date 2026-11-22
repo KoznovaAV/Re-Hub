@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -33,13 +34,18 @@ func New(pool *pgxpool.Pool, data *store.Store, parserURL string) *Server {
 
 func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("GET /health", s.health)
+	mux.HandleFunc("GET /api/v1/workspace", s.workspace)
 	mux.HandleFunc("GET /api/v1/periods", s.listPeriods)
 	mux.HandleFunc("GET /api/v1/slices", s.listSlices)
 	mux.HandleFunc("GET /api/v1/clients", s.listClients)
 	mux.HandleFunc("GET /api/v1/clients/{external_id}", s.getClient)
 	mux.HandleFunc("POST /api/v1/clients/{external_id}/take", s.takeClient)
-	mux.HandleFunc("POST /api/v1/clients/{external_id}/reassign", s.reassignClient)
+	mux.HandleFunc("POST /api/v1/clients/{external_id}/take-over", s.takeOverClient)
 	mux.HandleFunc("POST /api/v1/clients/{external_id}/events", s.addEvent)
+	mux.HandleFunc("POST /api/v1/clients/{external_id}/release", s.releaseClient)
+	mux.HandleFunc("POST /api/v1/clients/{external_id}/reassign", s.reassignClient)
+	mux.HandleFunc("POST /api/v1/clients/{external_id}/actions", s.addClientAction)
+	mux.HandleFunc("POST /api/v1/pool", s.addToPool)
 	mux.HandleFunc("POST /api/v1/clients/import", s.importClients)
 	mux.HandleFunc("GET /api/v1/call-list", s.callList)
 	mux.HandleFunc("GET /api/v1/today", s.today)
@@ -106,7 +112,7 @@ func parseShare(value string) *float64 {
 		return nil
 	}
 	parsed, err := strconv.ParseFloat(value, 64)
-	if err != nil || parsed < 0 || parsed > 100 {
+	if err != nil || parsed < 0 || parsed > 100 || math.IsNaN(parsed) || math.IsInf(parsed, 0) {
 		return nil
 	}
 	return &parsed
@@ -148,6 +154,9 @@ func (s *Server) listClients(w http.ResponseWriter, r *http.Request) {
 	limit, offset := parseLimit(r)
 	query := r.URL.Query()
 	filters := store.ListFilters{
+		WorkOnly:   !isAdmin(r),
+		PoolOnly:   query.Get("pool") == "true",
+		PeriodCode: query.Get("period"),
 		ExternalID: strings.TrimSpace(query.Get("external_id")),
 		INN:        strings.TrimSpace(query.Get("inn")),
 		Stage:      strings.TrimSpace(query.Get("stage")),
@@ -181,65 +190,68 @@ func (s *Server) listClients(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) callList(w http.ResponseWriter, r *http.Request) {
+	if !isAdmin(r) {
+		writeError(w, 403, "FORBIDDEN", "Only administrators prepare call lists")
+		return
+	}
 	if !s.ready(w) {
 		return
 	}
 	limit, offset := parseLimit(r)
-	query := r.URL.Query()
-	excluded, inactive := false, false
-	filters := store.ListFilters{
-		Stage:     strings.TrimSpace(query.Get("stage")),
-		Tag:       strings.TrimSpace(query.Get("tag")),
-		Contacted: strings.TrimSpace(query.Get("contacted")),
-		MinShare:  parseShare(query.Get("min_share")),
-		Excluded:  &excluded,
-		Inactive:  &inactive,
-		Assigned:  "free",
-		Limit:     5000,
-		Offset:    0,
-		Sort:      "share",
-		Desc:      true,
+	q := r.URL.Query()
+	period := strings.TrimSpace(q.Get("period"))
+	periods, err := s.store.ListPeriods(r.Context())
+	if err != nil {
+		writeError(w, 500, "DB_ERROR", "Could not load periods")
+		return
 	}
-	clients, _, err := s.store.ListClients(r.Context(), filters)
+	if period == "" {
+		period, err = s.store.LatestPeriod(r.Context())
+		if err != nil {
+			writeError(w, 500, "DB_ERROR", "Could not resolve period")
+			return
+		}
+	}
+	known := false
+	for _, p := range periods {
+		if p.Code == period {
+			known = true
+		}
+	}
+	if !known {
+		writeError(w, 422, "UNKNOWN_PERIOD", "Select an available period")
+		return
+	}
+	minimum := 0
+	if q.Get("min_unsent") != "" {
+		value, e := strconv.Atoi(q.Get("min_unsent"))
+		if e != nil || value < 0 {
+			writeError(w, 422, "INVALID_FILTER", "min_unsent must be a nonnegative integer")
+			return
+		}
+		minimum = value
+	}
+	if q.Get("min_share") != "" && parseShare(q.Get("min_share")) == nil {
+		writeError(w, 422, "INVALID_FILTER", "min_share must be between 0 and 100")
+		return
+	}
+	contacted := q.Get("contacted")
+	if contacted != "" && contacted != "yes" && contacted != "no" {
+		writeError(w, 422, "INVALID_FILTER", "contacted must be yes or no")
+		return
+	}
+	excluded, inactive := false, false
+	filters := store.ListFilters{PeriodCode: period, MinUnsent: minimum, CallList: true, Stage: q.Get("stage"), Tag: q.Get("tag"), Contacted: contacted, MinShare: parseShare(q.Get("min_share")), Excluded: &excluded, Inactive: &inactive, Assigned: "free", Limit: limit, Offset: offset, Sort: "external_id"}
+	clients, total, err := s.store.ListClients(r.Context(), filters)
 	if err != nil {
 		log.Printf("call list: %v", err)
-		writeError(w, http.StatusInternalServerError, "DB_ERROR", "Could not build call list")
+		writeError(w, 500, "DB_ERROR", "Could not build call list")
 		return
 	}
-	latest, err := s.store.LatestPeriod(r.Context())
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, "DB_ERROR", "Could not resolve latest period")
-		return
+	if clients == nil {
+		clients = []store.Client{}
 	}
-	filtered := clients[:0]
-	for i := range clients {
-		s.store.MarkMissing(&clients[i], latest)
-		if clients[i].Missing || clients[i].Stage == "Закрыт" || clients[i].Latest == nil || clients[i].Latest.NotSentDocs == 0 {
-			continue
-		}
-		filtered = append(filtered, clients[i])
-	}
-	clients = filtered
-	total := len(clients)
-	start := offset
-	if start > total {
-		start = total
-	}
-	end := start + limit
-	if end > total {
-		end = total
-	}
-	page := clients[start:end]
-	writeJSON(w, http.StatusOK, map[string]any{
-		"data": page,
-		"meta": map[string]any{
-			"total": total, "returned": len(page), "limit": limit, "offset": offset,
-			"filters": map[string]any{
-				"min_share": filters.MinShare, "tag": filters.Tag, "contacted": filters.Contacted,
-				"stage": filters.Stage, "excluded": false, "inactive": false, "assigned": "free",
-			},
-		},
-	})
+	writeJSON(w, 200, map[string]any{"data": clients, "meta": map[string]any{"total": total, "returned": len(clients), "limit": limit, "offset": offset, "filters": map[string]any{"period": period, "min_unsent": minimum, "min_share": filters.MinShare, "contacted": contacted, "excluded": false, "inactive": false, "assigned": "free"}}})
 }
 
 func (s *Server) getClient(w http.ResponseWriter, r *http.Request) {
@@ -256,6 +268,10 @@ func (s *Server) getClient(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "DB_ERROR", "Could not load client")
 		return
 	}
+	if !isAdmin(r) && !client.InPool && client.AssignedTo == "" {
+		writeError(w, 403, "FORBIDDEN", "Client is outside the work pool")
+		return
+	}
 	history, err := s.store.History(r.Context(), client.ID)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "DB_ERROR", "Could not load history")
@@ -266,7 +282,12 @@ func (s *Server) getClient(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "DB_ERROR", "Could not load events")
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"data": client, "history": history, "events": events})
+	actions, err := s.store.Actions(r.Context(), client.ID)
+	if err != nil {
+		writeError(w, 500, "DB_ERROR", "Could not load actions")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"data": client, "history": history, "events": events, "actions": actions})
 }
 
 func (s *Server) today(w http.ResponseWriter, r *http.Request) {
@@ -274,35 +295,36 @@ func (s *Server) today(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	limit, offset := parseLimit(r)
-	clients, _, err := s.store.ListClients(r.Context(), store.ListFilters{
-		Assigned: "assigned", Limit: limit, Offset: offset, Sort: "promised_at",
-	})
+	clients, _, err := s.store.ListClients(r.Context(), store.ListFilters{Assigned: "mine", UserID: actorID(r), Limit: limit, Offset: offset, Sort: "external_id"})
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "DB_ERROR", "Could not load tasks")
+		writeError(w, 500, "DB_ERROR", "Could not load callbacks")
 		return
 	}
 	now := time.Now().UTC().Truncate(24 * time.Hour)
 	tasks := make([]map[string]any, 0)
 	for _, client := range clients {
-		if client.PromisedAt == nil || !client.PromisedAt.Before(now) {
-			continue
+		events, e := s.store.Events(r.Context(), client.ID)
+		if e != nil {
+			writeError(w, 500, "DB_ERROR", "Could not load callbacks")
+			return
 		}
-		if client.Latest == nil || client.Latest.NotSentDocs == 0 {
-			continue
+		for _, event := range events {
+			if event.Type != "call" {
+				continue
+			}
+			if event.CallbackOn != nil && !event.CallbackOn.After(now) {
+				tasks = append(tasks, map[string]any{"client_external_id": client.ExternalID, "client_name": client.Name, "task_type": "callback_due", "due_date": event.CallbackOn.Format("2006-01-02")})
+			}
+			break
 		}
-		tasks = append(tasks, map[string]any{
-			"client_external_id": client.ExternalID,
-			"client_name":        client.Name,
-			"task_type":          "promise_overdue",
-			"due_date":           client.PromisedAt.Format("2006-01-02"),
-			"assigned_to":        client.AssignedName,
-			"unsent_docs":        client.Latest.NotSentDocs,
-		})
 	}
-	writeJSON(w, http.StatusOK, tasks)
+	writeJSON(w, 200, tasks)
 }
 
 func (s *Server) takeClient(w http.ResponseWriter, r *http.Request) {
+	if !operatorAction(w, r) {
+		return
+	}
 	if !s.ready(w) {
 		return
 	}
@@ -328,45 +350,59 @@ func (s *Server) takeClient(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"data": client})
 }
 
-func (s *Server) reassignClient(w http.ResponseWriter, r *http.Request) {
+func (s *Server) takeOverClient(w http.ResponseWriter, r *http.Request) {
+	if !operatorAction(w, r) {
+		return
+	}
 	if !s.ready(w) {
 		return
 	}
-	var payload struct {
-		UserID string `json:"user_id"`
+	if r.ContentLength != 0 {
+		var empty struct{}
+		decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096))
+		decoder.DisallowUnknownFields()
+		if err := decoder.Decode(&empty); err != nil {
+			writeError(w, 400, "INVALID_BODY", "Take-over accepts no target user")
+			return
+		}
 	}
-	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&payload); err != nil || payload.UserID == "" {
-		writeError(w, http.StatusBadRequest, "INVALID_BODY", "user_id is required")
-		return
-	}
-	if !isAdmin(r) && payload.UserID != actorID(r) {
-		writeError(w, http.StatusForbidden, "FORBIDDEN", "Only an administrator can assign another operator")
-		return
-	}
-	client, err := s.store.Reassign(r.Context(), r.PathValue("external_id"), payload.UserID, actorID(r))
+	client, err := s.store.TakeOver(r.Context(), r.PathValue("external_id"), actorID(r))
 	if errors.Is(err, store.ErrNotFound) {
-		writeError(w, http.StatusNotFound, "CLIENT_NOT_FOUND", "Client not found")
+		writeError(w, 404, "CLIENT_NOT_FOUND", "Assigned active client not found")
 		return
 	}
 	if err != nil {
-		log.Printf("reassign client: %v", err)
-		writeError(w, http.StatusInternalServerError, "DB_ERROR", "Could not reassign client")
+		writeError(w, 500, "DB_ERROR", "Could not take over client")
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"data": client})
+	writeJSON(w, 200, map[string]any{"data": client})
+}
+
+func operatorAction(w http.ResponseWriter, r *http.Request) bool {
+	if isAdmin(r) || actorID(r) == demoAdminID {
+		writeError(w, 403, "OPERATOR_REQUIRED", "Administrator prepares lists; operators take clients themselves")
+		return false
+	}
+	return true
 }
 
 func (s *Server) addEvent(w http.ResponseWriter, r *http.Request) {
+	if !operatorAction(w, r) {
+		return
+	}
 	if !s.ready(w) {
 		return
 	}
 	var payload struct {
-		EventType  string `json:"event_type"`
-		Result     string `json:"result"`
-		Comment    string `json:"comment"`
-		Stage      string `json:"stage"`
-		PromisedAt string `json:"promised_at"`
-		EventDate  string `json:"event_date"`
+		PromiseLabel string `json:"promise_label"`
+		EventType    string `json:"event_type"`
+		CallbackOn   string `json:"callback_on"`
+		PeriodCode   string `json:"period_code"`
+		Result       string `json:"result"`
+		Comment      string `json:"comment"`
+		Stage        string `json:"stage"`
+		PromisedAt   string `json:"promised_at"`
+		EventDate    string `json:"event_date"`
 	}
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 16<<10)).Decode(&payload); err != nil {
 		writeError(w, http.StatusBadRequest, "INVALID_BODY", "Invalid JSON body")
@@ -378,7 +414,15 @@ func (s *Server) addEvent(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusUnprocessableEntity, "INVALID_EVENT_TYPE", "event_type must be call, email or comment")
 		return
 	}
-	input := store.EventInput{Type: payload.EventType, Result: payload.Result, Comment: payload.Comment, Stage: payload.Stage}
+	input := store.EventInput{PromiseLabel: payload.PromiseLabel, Type: payload.EventType, Result: payload.Result, Comment: payload.Comment, Stage: payload.Stage, PeriodCode: payload.PeriodCode}
+	if payload.CallbackOn != "" {
+		value, err := time.Parse("2006-01-02", payload.CallbackOn)
+		if err != nil {
+			writeError(w, 422, "INVALID_CALLBACK_DATE", "callback_on must be YYYY-MM-DD")
+			return
+		}
+		input.CallbackOn = &value
+	}
 	if payload.PromisedAt != "" {
 		value, err := time.Parse("2006-01-02", payload.PromisedAt)
 		if err != nil {
@@ -395,9 +439,21 @@ func (s *Server) addEvent(w http.ResponseWriter, r *http.Request) {
 		}
 		input.Date = value
 	}
+	if err := store.ValidateEvent(input); err != nil {
+		writeError(w, 422, "INVALID_EVENT", err.Error())
+		return
+	}
 	event, err := s.store.AddEvent(r.Context(), r.PathValue("external_id"), actorID(r), input)
 	if errors.Is(err, store.ErrNotFound) {
-		writeError(w, http.StatusNotFound, "CLIENT_NOT_FOUND", "Client not found")
+		writeError(w, 404, "CLIENT_NOT_FOUND", "Client not found")
+		return
+	}
+	if errors.Is(err, store.ErrForbidden) {
+		writeError(w, 403, "FORBIDDEN", "Only the assigned operator can record interaction")
+		return
+	}
+	if errors.Is(err, store.ErrInvalidEvent) {
+		writeError(w, 422, "INVALID_EVENT", "Unknown period or invalid event")
 		return
 	}
 	if err != nil {

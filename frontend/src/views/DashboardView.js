@@ -11,7 +11,7 @@ export default defineComponent({
   const period=computed({get:()=>store.reportPeriod,set:v=>{store.reportPeriod=v;}});
   const options=periods.map(p=>({value:p.code,label:p.label}));
   const rows=computed(()=>props.clients.map(client=>clientMetrics(client,period.value)));
-  const candidates=computed(()=>props.clients.filter(c=>eligibleForCall(c,period.value)).length);
+  const candidates=computed(()=>props.clients.filter(c=>!c.owner&&eligibleForCall(c,period.value,store.periodDates[period.value])).length);
   const missing=computed(()=>rows.value.filter(m=>m.missing).length);
   const unsent=computed(()=>rows.value.filter(m=>!m.missing).reduce((sum,m)=>sum+m.unsent,0));
   return {period,options,candidates,missing,unsent,periodLabel};

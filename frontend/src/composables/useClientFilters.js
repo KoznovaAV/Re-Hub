@@ -1,3 +1,4 @@
+import {clientTypeCodes} from "./client-types.mjs";
 import { callSummary, eligibleForCall } from "./call-list.mjs";
 import { computed, ref } from "vue";
 import { archiveCount, clientMetrics, store } from "../mock/data.js";
@@ -24,7 +25,7 @@ export function useClientFilters(clients, archiveGroup) {
     return clients.value
       .map((client) => ({ client, metrics: clientMetrics(client, period.value), calls: callSummary(client, period.value) }))
       .filter(({ client, metrics }) => {
-        if (callListOnly.value && !eligibleForCall(client, period.value)) return false;
+        if (callListOnly.value && (client.owner || !eligibleForCall(client, period.value,store.periodDates?.[period.value]))) return false;
         if (Number(minUnsent.value) > 0 && (metrics.missing || metrics.unsent < Number(minUnsent.value))) return false;
         const calls = callSummary(client, period.value);
         if (callFilter.value === "none" && (calls.count || calls.unknownPeriod)) return false;
@@ -35,8 +36,8 @@ export function useClientFilters(clients, archiveGroup) {
         }
         if (archiveGroup.value !== "all" && !archiveCount(metrics, archiveGroup.value)) return false;
         if (stage.value !== "all" && client.stage !== stage.value) return false;
-        if (tag.value !== "all" && !client.tags.includes(tag.value)) return false;
-        if (minShare.value !== "0" && (metrics.missing || (metrics.share ?? 0) < Number(minShare.value))) return false;
+        if (tag.value !== "all" && !clientTypeCodes(client).includes(tag.value)) return false;
+        if (minShare.value !== "0" && (metrics.missing || (metrics.total > 0 ? metrics.unsent / metrics.total * 100 : 0) < Number(minShare.value))) return false;
         if (!includeMissing.value && metrics.missing) return false;
         if (owner.value === "free" && !metrics.free) return false;
         if (owner.value === "mine" && !client.owner) return false;

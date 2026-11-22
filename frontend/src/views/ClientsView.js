@@ -1,9 +1,10 @@
+import {clientTypeOptions,clientTypeText} from "../composables/client-types.mjs";
 import { visibleSelection, csvCell } from "../composables/call-list.mjs";
 import { computed, defineComponent, reactive, ref, watch } from "vue";
 import { useClientFilters } from "../composables/useClientFilters.js";
 import { addToPool, takeClient } from "../mock/api.js";
 import { pushToast } from "../composables/useToast.js";
-import { archiveGroups, formatDate, meterClass, periods } from "../mock/data.js";
+import { archiveGroups, formatDate, meterClass, periods,store,periodLabel } from "../mock/data.js";
 import UiCard from "../components/UiCard.js";
 import UiBadge from "../components/UiBadge.js";
 import UiButton from "../components/UiButton.js";
@@ -36,6 +37,7 @@ export default defineComponent({
     const selected = ref([]);
     const loading = reactive({});
     watch(filters.filtered, rows => { selected.value = visibleSelection(selected.value, rows); });
+    const sliceDate=computed(()=>store.periodDates[filters.period.value]??props.clients.flatMap(c=>c.history).filter(h=>h.period===filters.period.value).map(h=>h.date).filter(Boolean).sort().at(-1)??null);
     const periodOptions = periods.map(p => ({value:p.code,label:p.label}));
     const callOptions = [{value:"all",label:"Все звонки"},{value:"none",label:"Не звонили в периоде"},{value:"called",label:"Звонили в периоде"}];
     function exportList() {
@@ -47,13 +49,12 @@ export default defineComponent({
 
     const stageOptions = computed(() => [
       { value: "all", label: "Все этапы" },
-      ...filters.stages.value.filter((item) => item !== "all").map((item) => ({ value: item, label: item === "Ключевой" ? "VIP / Ключевой" : item })),
+      ...filters.stages.value.filter((item) => item !== "all").map((item) => ({ value: item, label: ({vip:"VIP",integrator:"Интегратор",tech_partner:"Техпартнёр",mpp:"МПП",newcomer:"Новичок",Ключевой:"VIP / Ключевой"})[item]??item })),
     ]);
-    const tagOptions = computed(() => [
-      { value: "all", label: "Все типы" },
-      ...filters.tags.value.filter((item) => item !== "all").map((item) => ({ value: item, label: item === "Ключевой" ? "VIP / Ключевой" : item })),
-    ]);
+    const tagOptions=[{value:"all",label:"Все типы"},...clientTypeOptions];
     const shareOptions = [
+ {value:"5",label:"от 5%"},
+ {value:"25",label:"от 25%"},
       { value: "0", label: "Любая доля" },
       { value: "10", label: "от 10%" },
       { value: "20", label: "от 20%" },
@@ -76,7 +77,7 @@ export default defineComponent({
 
     async function take(row) {
       if (isAdmin.value) {
-        pushToast("Действие недоступно", "Администратор не берёт клиентов в работу. Откройте карточку и назначьте оператора.", "warning");
+        pushToast("Действие недоступно", "Администратор не берёт клиентов в работу. Операторы распределяют клиентов самостоятельно.", "warning");
         return;
       }
       loading[row.client.id] = true;
@@ -87,11 +88,11 @@ export default defineComponent({
     }
 
     async function pool() {
-      const result = await addToPool(selected.value);
+      const result = await addToPool(selected.value,props.actor);
       if (result.ok) {
         pushToast("Добавлено в пул", `${result.changed} клиентов доступны для обзвона.`);
         selected.value = [];
-      }
+      }else pushToast("Не удалось добавить в пул",result.message,"error");
     }
 
     function badgeTone(row) {
@@ -104,7 +105,7 @@ export default defineComponent({
 
     return {
       ...filters,
-      periodOptions, callOptions, exportList,
+      periodOptions, callOptions, exportList,sliceDate,periodLabel,clientTypeText,
       archiveGroup,
       archiveOptions,
       resetFilters,
@@ -138,6 +139,7 @@ export default defineComponent({
         </div>
       </div>
 
+      <p class="section" aria-live="polite"><strong>Период: {{ periodLabel(period) }}. Срез: {{ sliceDate ? formatDate(sliceDate) : 'нет загруженных данных' }}.</strong></p>
       <UiCard class="section">
         <div class="grid grid--4">
           <UiSelect v-model="period" :options="periodOptions" label="Период документов" />
@@ -195,9 +197,7 @@ export default defineComponent({
                 <th>
                   <button type="button" class="table__sort" @click="sortBy('delta')">Изменение <span v-if="sortKey === 'delta'">{{ sortDir === 'asc' ? '↑' : '↓' }}</span></button>
                 </th>
-                <th>
-                  <button type="button" class="table__sort" @click="sortBy('stage')">Статус <span v-if="sortKey === 'stage'">{{ sortDir === 'asc' ? '↑' : '↓' }}</span></button>
-                </th>
+                <th>Тип клиента</th>
                 <th>Звонки в выбранном периоде</th>
                 <th></th>
               </tr>
@@ -228,7 +228,7 @@ export default defineComponent({
                   <div v-else class="muted">—</div>
                   <UiBadge :tone="badgeTone(row)">{{ row.metrics.dynamics }}</UiBadge>
                 </td>
-                <td><UiBadge :tone="row.client.stage === 'В работе' ? 'accent' : row.client.stage === 'Закрыт' ? 'neutral' : 'warning'">{{ row.client.stage }}</UiBadge></td>
+                <td>{{ clientTypeText(row.client) }}</td>
                 <td>{{ row.calls.status }}; звонков: {{ row.calls.count }}; недозвонов: {{ row.calls.missed }}</td>
                 <td class="text-right">
                   <UiButton v-if="isAdmin" size="sm" variant="secondary" @click.stop="$emit('open-client', row.client.id)">Открыть</UiButton>

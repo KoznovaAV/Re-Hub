@@ -20,3 +20,29 @@ class PilotTest(unittest.TestCase):
     def test_single_person_is_not_pilot(self):
         d=self.data();d['runs']=d['runs'][:2]
         with self.assertRaises(ValueError):evaluation.evaluate(d)
+    def test_simulation_cannot_confirm_a_user_pilot(self):
+        d=self.data();d['data_kind']='simulated'
+        for g in d['gold'].values():g['approved_by']=None
+        result=evaluation.evaluate(d)
+        self.assertTrue(result['criteria_met'])
+        self.assertFalse(result['confirmed'])
+        self.assertEqual(result['human_participants'],0)
+    def test_unknown_data_kind_is_rejected(self):
+        d=self.data();d['data_kind']='assumed_real'
+        with self.assertRaises(ValueError):evaluation.evaluate(d)
+
+    def test_missed_candidates_are_reported(self):
+        d=self.data()
+        run=next(r for r in d['runs'] if r['tool']=='rehub')
+        missed=run['ids'].pop()
+        result=evaluation.evaluate(d)
+        score=next(r for r in result['runs'] if r['tool']=='rehub' and r['participant']==run['participant'])
+        self.assertIn(missed,score['missed_ids'])
+        self.assertEqual(score['false_exclusions'],1)
+
+    def test_automated_run_never_confirms_human_speed(self):
+        d=self.data();d['data_kind']='automated'
+        result=evaluation.evaluate(d)
+        self.assertEqual(result['human_participants'],0)
+        self.assertFalse(result['confirmed'])
+        self.assertTrue(result['criteria_met'])

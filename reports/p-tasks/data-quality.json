@@ -1,0 +1,92 @@
+{
+  "directory_ids": 5873,
+  "snapshot_ids": 4205,
+  "matched_ids": 3962,
+  "unknown_ids": 243,
+  "unknown_percent": 5.78,
+  "unknown_rows_by_period": {
+    "2026Q3": 243
+  },
+  "unique_ids_by_period": {
+    "Y2025": 3417,
+    "2026Q1": 2926,
+    "2026Q2": 3020,
+    "2026Q3": 3403
+  },
+  "source_rows": 12772,
+  "parsed_rows": 12768,
+  "rejected_rows": 4,
+  "duplicates_in_parsed_rows": 2,
+  "errors_by_code": {
+    "INVALID_EXTERNAL_ID": 4
+  },
+  "input_sha256": {
+    "snapshot": "77f7c092d2693ebf673939e762bfa383c2dae4604e9df5a23cb9f0a73b973dc8",
+    "directory": "4b84d4533994d20d216688cce42b1da8861566e41613c0bff188f7103d136318",
+    "context": "7b9640d084f906c1ecbb86dfb5378313b656cda86f86d9ee48d7c38057ee62dd"
+  },
+  "empty_kcr_rows": {
+    "snapshot": 12772,
+    "directory": 5874
+  },
+  "invalid_nonempty_kcr_rows": {
+    "snapshot": 0,
+    "directory": 0
+  },
+  "historical_claim": {
+    "unknown_ids": 1572,
+    "snapshot_ids": 4205,
+    "verified": false,
+    "difference_from_current": 1329
+  },
+  "explanation": "Native XLSX independently matches two PDF extractors. Poppler produces an incomplete directory and an inflated unknown-ID count. Historical 1572 is unverified for these sources.",
+  "pdf_extraction_audit": {
+    "pdf_sha256": "e7c9de940ee4da454874bbc470a2f509b2d79c402b315725505f8b2e46d96c6c",
+    "pdf_pages": 10,
+    "layout_text_sha256": "662728b1d9c4bf54a5108169146f9895312eafdc4b8be33545e20c459423a073",
+    "layout_extracted_in_this_run": true,
+    "versions": {
+      "pypdf": "6.21.4",
+      "PyMuPDF": "1.26.6"
+    },
+    "poppler_version": "pdftotext version 25.03.0",
+    "methods": {
+      "pypdf": {
+        "directory_ids": 5873,
+        "matched_ids": 3962,
+        "unknown_ids": 243,
+        "unknown_percent": 5.78,
+        "equals_native": true,
+        "missing_native_ids": 0,
+        "extra_ids": 0,
+        "lost_matching_ids": 0,
+        "ids_sha256": "a7b79bb39aad7ed21a0b96692c3870196c6183c4b9c950a87729744210a2621f"
+      },
+      "pymupdf": {
+        "directory_ids": 5873,
+        "matched_ids": 3962,
+        "unknown_ids": 243,
+        "unknown_percent": 5.78,
+        "equals_native": true,
+        "missing_native_ids": 0,
+        "extra_ids": 0,
+        "lost_matching_ids": 0,
+        "ids_sha256": "a7b79bb39aad7ed21a0b96692c3870196c6183c4b9c950a87729744210a2621f"
+      },
+      "poppler_layout": {
+        "directory_ids": 4141,
+        "matched_ids": 2678,
+        "unknown_ids": 1527,
+        "unknown_percent": 36.31,
+        "equals_native": false,
+        "missing_native_ids": 1732,
+        "extra_ids": 0,
+        "lost_matching_ids": 1284,
+        "ids_sha256": "63d419b6796ea03909332bb92bba2bd812c30dc7ff50578c911df95965a88e84"
+      }
+    },
+    "independent_native_verification_passed": true,
+    "interpretation": "The PDF extractor changes the ID set. Use native XLSX, independently matched by two PDF engines. The historical 1572 claim is not reproduced; 1527 is reproduced by Poppler. A transposition of digits is possible but not proven."
+  },
+  "technical_audit_complete": true
+}

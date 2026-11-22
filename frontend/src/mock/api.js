@@ -1,3 +1,4 @@
+import {mutateClient,request,reloadWorkspace,actorIDs} from "../composables/live-api.js";
 import { eligibleForCall } from "../composables/call-list.mjs";
 import { store, users, TODAY, LATEST_PERIOD } from "./data.js";
 
@@ -8,12 +9,14 @@ function userOf(actorId) {
 }
 
 export async function takeClient(clientId, actorId) {
+ if(store.live)return mutateClient(clientId,"/take",{},actorId);
   await wait(420);
   const client = store.clients.find((item) => item.id === clientId);
   if (!client) return { ok: false, code: "NOT_FOUND", message: "Клиент не найден." };
   if (actorId === "admin") {
-    return { ok: false, code: "ADMIN_CANNOT_TAKE", message: "Администратор не берёт клиентов в работу. Используйте «Переназначить»." };
+    return { ok: false, code: "ADMIN_CANNOT_TAKE", message: "Администратор готовит список; оператор берёт клиента сам." };
   }
+  if (!client.pool || !eligibleForCall(client, store.reportPeriod,store.periodDates?.[store.reportPeriod])) return {ok:false,message:"Клиент недоступен в подготовленном пуле."};
   if (client.stage === "Закрыт") {
     return { ok: false, code: "CLOSED", message: "Цикл закрыт, взять клиента в работу нельзя." };
   }
@@ -40,13 +43,15 @@ export async function takeClient(clientId, actorId) {
 }
 
 export async function takeOverClient(clientId, actorId) {
+ if(store.live)return mutateClient(clientId,"/take-over",{},actorId);
   await wait(420);
   if (actorId === "admin") {
-    return { ok: false, code: "ADMIN_CANNOT_TAKE", message: "Администратор распределяет клиентов через переназначение." };
+    return { ok: false, code: "ADMIN_CANNOT_TAKE", message: "Администратор готовит список; оператор забирает клиента сам." };
   }
   const client = store.clients.find((item) => item.id === clientId);
   if (!client) return { ok: false, code: "NOT_FOUND", message: "Клиент не найден." };
   if (client.stage === "Закрыт") return { ok: false, code: "CLOSED", message: "Цикл закрыт." };
+  if (!client.owner || client.active === false || client.excluded) return {ok:false,message:"Для свободного клиента используйте взятие из пула."};
   if (client.owner === actorId) return { ok: true, client, ownerName: userOf(actorId).name };
   const previous = client.owner ? userOf(client.owner).name : "свободен";
   client.owner = actorId;
@@ -63,61 +68,43 @@ export async function takeOverClient(clientId, actorId) {
   return { ok: true, client, ownerName: userOf(actorId).name };
 }
 
-export async function reassignClient(clientId, actorId, targetId) {
-  await wait(420);
-  if (actorId !== "admin") {
-    return { ok: false, code: "FORBIDDEN", message: "Переназначить клиента может только администратор." };
-  }
-  const client = store.clients.find((item) => item.id === clientId);
-  if (!client) return { ok: false, code: "NOT_FOUND", message: "Клиент не найден." };
-  const previous = client.owner ? userOf(client.owner).name : "свободен";
-  client.owner = targetId;
-  client.stage = "В работе";
-  client.events.unshift({
-    id: `ev-${Date.now()}`,
-    type: "system",
-    date: TODAY,
-    title: "Переназначение",
-    text: `Было: ${previous}. Стало: ${userOf(targetId).name}.`,
-    author: userOf(actorId).name,
-  });
-  return { ok: true, client, ownerName: userOf(targetId).name };
-}
-
 export async function addEvent(clientId, payload, actorId) {
-  await wait(520);
-  const client = store.clients.find((item) => item.id === clientId);
-  if (!client) return { ok: false, message: "Клиент не найден." };
-  const author = userOf(actorId).name;
-  const event = {
-    id: `ev-${Date.now()}`,
-    type: payload.type,
-    date: TODAY,
-    title: payload.type === "call" ? "Звонок" : payload.type === "email" ? "Письмо" : "Комментарий",
-    text: payload.comment || payload.result || "Без комментария",
-    author,
-    result: payload.result || null,
-    promise: payload.promise || null,
-    callbackOn: payload.callbackOn || null,
-    period: store.reportPeriod,
-  };
+ if(store.live)return mutateClient(clientId,"/events",{event_type:payload.type,result:payload.result,comment:payload.comment,event_date:payload.date,period_code:payload.type==='call'?store.reportPeriod:undefined,promised_at:payload.promise,promise_label:payload.promiseLabel,callback_on:payload.callbackOn},actorId);
+
+  await wait(100);
+  const client=store.clients.find(c=>c.id===clientId);
+  if(!client)return {ok:false,message:"Клиент не найден."};
+  if(actorId==='admin'||client.owner!==actorId)return {ok:false,message:"Взаимодействие фиксирует назначенный оператор."};
+  if(payload.stage)return {ok:false,message:"Результат звонка не меняет этап работы автоматически."};
+  const call=payload.type==='call';
+  if(!['call','email','comment'].includes(payload.type))return {ok:false,message:"Неизвестный тип события."};
+  if(!call&&(payload.result||payload.promise||payload.callbackOn))return {ok:false,message:'Поля звонка не относятся к письму или комментарию.'};
+  if(call&&!['Дозвон','Недозвон','Перенос','Не тот контакт','Не тот администратор','Обещание','Отказ'].includes(payload.result))return {ok:false,message:"Укажите статус звонка."};
+  const validDate=value=>/^\d{4}-\d{2}-\d{2}$/.test(value||'')&&Number.isFinite(Date.parse(value))&&new Date(value).toISOString().slice(0,10)===value;
+  const eventDate=payload.date||TODAY;
+  if(!validDate(eventDate)||eventDate>TODAY)return {ok:false,message:'Укажите корректную дату события не позже сегодня.'};
+  if(call&&payload.result==='Перенос'&&(!validDate(payload.callbackOn)||payload.callbackOn<eventDate))return {ok:false,message:"Укажите дату повторного звонка не раньше сегодня."};
+  if(call&&payload.result==='Обещание'&&(!validDate(payload.promise)||payload.promise<eventDate))return {ok:false,message:"Укажите срок передачи документов."};
+  const event={id:crypto.randomUUID(),type:payload.type,date:eventDate,promiseLabel:payload.promiseLabel||null,
+    title:call?'Звонок':payload.type==='email'?'Письмо':'Комментарий',
+    text:payload.comment||(call?payload.result:'Без комментария'),author:userOf(actorId).name,
+    result:call?payload.result:null,promise:call&&payload.result==='Обещание'?payload.promise:null,
+    callbackOn:call&&payload.result==='Перенос'?payload.callbackOn:null,period:call?store.reportPeriod:null};
   client.events.unshift(event);
-  if (payload.stage) client.stage = payload.stage;
-  if (payload.result === "Обещание" && payload.promise) client.promise = payload.promise;
-  if (payload.result === "Отказ") {
-    client.stage = "Закрыт";
-    client.active = false;
-    client.promise = null;
-  }
-  return { ok: true, event };
+ client.events.sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+  if(event.promise&&!client.events.some(e=>e!==event&&e.promise&&e.date>event.date))client.promise=event.promise;
+  return {ok:true,event};
 }
 
-export async function addToPool(ids) {
+export async function addToPool(ids,actor=store.actor) {
+ if(actor!=='admin')return {ok:false,message:'Только администратор готовит пул'};
+ if(store.live){try{const result=await request('/pool',{method:'POST',body:{ids:ids.map(id=>store.clients.find(c=>c.id===id)?.externalId).filter(Boolean),period:store.reportPeriod},actor});await reloadWorkspace();return {ok:true,...result};}catch(e){return {ok:false,message:e.message};}}
+
   await wait(380);
   let changed = 0;
   for (const id of ids) {
     const client = store.clients.find((item) => item.id === id);
-    if (client && !client.owner && eligibleForCall(client,store.reportPeriod)) {
+    if (client && !client.owner && eligibleForCall(client,store.reportPeriod,store.periodDates?.[store.reportPeriod])) {
       client.pool = true;
       changed += 1;
     }
@@ -279,12 +266,13 @@ export async function confirmSlice(result) {
   for (const row of result.rows.filter((item) => item.status === "update")) {
     const client = store.clients.find((item) => item.externalId === row.externalId);
     if (!client) continue;
-    const last = client.history[client.history.length - 1];
-    if (last && last.period === LATEST_PERIOD) {
-      last.unsent = row.unsent;
-      last.total = row.total ?? last.total;
-    }
-    if (row.inheritedTotal && last) last.total = row.inheritedTotal;
+    const period=row.period||result.period||store.reportPeriod;
+    const date=result.sliceDate||TODAY;
+    const prior=client.history.filter(h=>h.period===period&&h.date<=date&&h.observed!==false).sort((a,b)=>a.date.localeCompare(b.date));
+    const total=row.total??prior.filter(h=>h.total!=null).at(-1)?.total??null;
+    const existing=client.history.find(h=>h.period===period&&h.date===date);
+    const observation={period,date,total,unsent:row.unsent,observed:true};
+    if(existing)Object.assign(existing,observation);else client.history.push(observation);
     client.events.unshift({
       id: `ev-${client.id}-${Date.now()}`,
       type: "slice",
@@ -317,4 +305,25 @@ export async function confirmSlice(result) {
   });
   store.lastImport = store.importLog[0];
   return { ok: true, accepted: result.counters.accepted, errors: result.counters.errors };
+}
+
+export async function reassignClient(clientId,actor,target){
+ if(store.live)return mutateClient(clientId,'/reassign',{user_id:actorIDs[target]},actor);
+ const c=store.clients.find(c=>c.id===clientId);
+ if(!c||actor==='admin'||c.owner!==actor||users[target]?.role!=='operator')return {ok:false,message:'Передачу выполняет ответственный оператор'};
+ const previous=c.owner;c.owner=target;c.events.unshift({id:crypto.randomUUID(),type:'system',date:TODAY,title:'Переназначение',text:previous+' -> '+target,author:users[actor].name});return {ok:true};
+}
+export async function releaseClient(clientId,actor){
+ if(store.live)return mutateClient(clientId,'/release',{},actor);
+ const c=store.clients.find(c=>c.id===clientId);
+ if(!c||actor==='admin'||c.owner!==actor)return {ok:false,message:'Освободить клиента может его ответственный оператор'};
+ c.owner=null;c.stage='Не в работе';c.pool=eligibleForCall(c,store.reportPeriod);c.events.unshift({id:crypto.randomUUID(),type:'system',date:TODAY,title:'Освобождение',text:'Клиент освобождён вручную',author:users[actor].name});return {ok:true};
+}
+export async function addClientAction(clientId,payload,actor){
+ if(store.live)return mutateClient(clientId,'/actions',payload,actor);
+ const c=store.clients.find(c=>c.id===clientId);
+ if(actor!=='admin'||!c||!['claim','sanction'].includes(payload.kind)||!payload.number?.trim()||!payload.date||!payload.status?.trim())return {ok:false,message:'Укажите вид, номер, дату письма и статус'};
+ const action={...payload,id:crypto.randomUUID(),reason:payload.comment};
+ const key=payload.kind==='claim'?'claims':'sanctions';(c[key]??=[]).unshift(action);
+ c.events.unshift({id:crypto.randomUUID(),type:'claim',date:payload.date,title:payload.kind==='claim'?'Претензия':'Санкция',text:payload.number+': '+payload.status,author:users[actor].name});return {ok:true};
 }

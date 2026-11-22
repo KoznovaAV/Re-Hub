@@ -1,0 +1,35 @@
+✔ call list excludes missing period, zero debt and excluded clients (0.95411ms)
+✔ call counts and callback are separate from assignment and document promise (0.308005ms)
+✔ hidden clients leave selection (0.624814ms)
+✔ export prevents formulas and quotes values (0.196207ms)
+✔ undated legacy calls are not evidence that no call occurred in a period (0.182366ms)
+✔ client type is separate from stage and document dynamics (1.390279ms)
+✔ VIP and customer type labels are stable across source formats (0.191719ms)
+✔ legacy contact result uses the customer wording without losing the call (0.203968ms)
+✔ S1: partial decrease is computed within a quarter and owner is retained (7.262736ms)
+✔ S2/S4: unchanged and partial values do not erase contacts or change owner (1403.277298ms)
+✔ S3: a positive value after a closed cycle is repeated, not a cross-quarter delta (0.858576ms)
+✔ S5: a client already owned is not duplicated in the pool (381.75754ms)
+✔ S6: 4% is excluded for an ordinary client and allowed for a newcomer; 5% is inclusive (0.770063ms)
+✔ S7: missing observation is distinct from zero and is not a candidate (0.665785ms)
+✔ S8: a missing total inherits within the same quarter, never from another quarter (702.319492ms)
+✔ zero documents produces a separate fully transferred state (0.926499ms)
+✔ operator transfers and releases explicitly; the former owner cannot write (101.40906ms)
+✔ historical dates and official letter details are retained (102.114595ms)
+✔ two separate sets of 15 clients; period observations stay separate (1.582229ms)
+✔ exclusion, missing observation and previous calls are respected (0.319232ms)
+✔ pilot exports exactly the displayed IDs for both synthetic groups (55.112711ms)
+✔ counterbalanced task journal records observed durations and quality without inventing people (2.666806ms)
+✔ human collection needs two distinct codes and an explicit reviewer (0.552334ms)
+✔ a wrong answer is retained and scored instead of silently repaired (0.206121ms)
+✔ CSV uses explicit observation markers, preserving missing versus zero (0.45669ms)
+Admin filters, callback, operator queues and partial import OK
+✔ frontend/src/ui.test.mjs (3547.634645ms)
+ℹ tests 26
+ℹ suites 0
+ℹ pass 26
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3564.433819

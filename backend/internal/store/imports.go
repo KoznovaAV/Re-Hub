@@ -15,6 +15,18 @@ func (s *Store) SaveSnapshot(ctx context.Context, fileName string, scope []strin
 	}
 	defer tx.Rollback(ctx)
 
+	// Serialize validation and writes across imports so inherited totals cannot race.
+	if _, err = tx.Exec(ctx, "SELECT pg_advisory_xact_lock(72634801)"); err != nil {
+		return nil, err
+	}
+	if snapshotDate.IsZero() {
+		snapshotDate = time.Now()
+	}
+	rows, domainErrors, err := validateSnapshot(ctx, tx, scope, snapshotDate, rows)
+	if err != nil {
+		return nil, err
+	}
+	parserErrors = append(parserErrors, domainErrors...)
 	importID, err := createImportJob(ctx, tx, "snapshot", fileName, scope, userID)
 	if err != nil {
 		return nil, err
@@ -79,15 +91,16 @@ func (s *Store) SaveSnapshot(ctx context.Context, fileName string, scope []strin
 		}
 
 		if _, err := tx.Exec(ctx, `
-			INSERT INTO slice_records (slice_id, client_id, total_docs, not_sent_docs, source_sheet, source_row, raw_external_id)
-			VALUES ($1::uuid, $2::uuid, $3, $4, NULLIF($5, ''), NULLIF($6, 0), $7)
+			INSERT INTO slice_records (slice_id, client_id, total_docs, not_sent_docs, source_sheet, source_row, raw_external_id, total_source_record_id)
+			VALUES ($1::uuid, $2::uuid, $3, $4, NULLIF($5, ''), NULLIF($6, 0), $7, NULLIF($8, '')::uuid)
 			ON CONFLICT (slice_id, client_id) DO UPDATE
 			SET total_docs = EXCLUDED.total_docs,
 				not_sent_docs = EXCLUDED.not_sent_docs,
 				source_sheet = EXCLUDED.source_sheet,
 				source_row = EXCLUDED.source_row,
-				raw_external_id = EXCLUDED.raw_external_id`,
-			sliceID, clientID, row.TotalDocs, row.NotSent, row.Sheet, row.Row, row.ExternalID); err != nil {
+				raw_external_id = EXCLUDED.raw_external_id,
+ total_source_record_id = EXCLUDED.total_source_record_id`,
+			sliceID, clientID, row.TotalDocs, row.NotSent, row.Sheet, row.Row, row.ExternalID, row.TotalSourceID); err != nil {
 			return nil, fmt.Errorf("upsert slice record %s/%s: %w", row.ExternalID, row.PeriodCode, err)
 		}
 		rowsOK++
@@ -265,9 +278,9 @@ func insertErrors(ctx context.Context, tx pgx.Tx, importID string, errorsList []
 			rowNumber = *item.Row
 		}
 		if _, err := tx.Exec(ctx, `
-			INSERT INTO import_errors (import_id, scope, row_number, column_name, code, message, raw_value, external_id, period_code)
-			VALUES ($1::uuid, $2, $3, NULLIF($4, ''), $5, $6, NULLIF($7, ''), NULLIF($8, ''), NULLIF($9, ''))`,
-			importID, item.Scope, rowNumber, item.Column, item.Code, item.Message, item.RawValue, item.ExternalID, item.PeriodCode); err != nil {
+			INSERT INTO import_errors (import_id, scope, row_number, column_name, code, message, raw_value, external_id, period_code, source_sheet)
+			VALUES ($1::uuid, $2, $3, NULLIF($4, ''), $5, $6, NULLIF($7, ''), NULLIF($8, ''), NULLIF($9, ''), NULLIF($10, ''))`,
+			importID, item.Scope, rowNumber, item.Column, item.Code, item.Message, item.RawValue, item.ExternalID, item.PeriodCode, item.Sheet); err != nil {
 			return err
 		}
 	}
@@ -277,7 +290,7 @@ func insertErrors(ctx context.Context, tx pgx.Tx, importID string, errorsList []
 func rowError(row ParsedRow, code, message string) ParsedError {
 	rowNumber := row.Row
 	return ParsedError{
-		Scope: "row", Row: &rowNumber, Code: code, Message: message,
+		Scope: "row", Row: &rowNumber, Sheet: row.Sheet, Code: code, Message: message,
 		ExternalID: row.ExternalID, PeriodCode: row.PeriodCode,
 	}
 }

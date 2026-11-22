@@ -1,0 +1,11 @@
+{
+  "browser_checks": [
+    "Admin creates pool from persisted clients",
+    "Contact, ownership and historical date survive full page reload",
+    "Operators transfer and release without administrator assignment",
+    "Official letter details survive full page reload",
+    "Real XLSX is parsed, previewed and committed through the UI"
+  ],
+  "passed": 5,
+  "page_errors": []
+}

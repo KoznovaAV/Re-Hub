@@ -1,3 +1,4 @@
+import {reloadWorkspace} from "./composables/live-api.js";
 import { computed, defineComponent, ref } from "vue";
 import { store, clientMetrics, users } from "./mock/data.js";
 import { pushToast, dismissToast, toasts } from "./composables/useToast.js";
@@ -42,6 +43,7 @@ export default defineComponent({
     const selectedClient = computed(() => store.clients.find((client) => client.id === selectedId.value) ?? null);
 
     function navigate(next, group) {
+      if (actor.value !== "admin" && !["work", "client"].includes(next)) next = "work";
       if (next === "import" && actor.value !== "admin") {
         pushToast("Нет доступа", "Импорт доступен только администратору.", "warning");
         return;
@@ -59,8 +61,11 @@ export default defineComponent({
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
-    function setActor(value) {
+    async function setActor(value) {
+ store.actor=value;
+ if(store.live){store.clients=[];try{await reloadWorkspace();}catch(e){pushToast("Не удалось загрузить данные",e.message,"error");}}
       actor.value = value;
+      lastList.value = value === "admin" ? "clients" : "work";
       view.value = value === "admin" ? "dashboard" : "work";
       selectedId.value = "";
       if (value !== "admin" && view.value === "import") view.value = "dashboard";
@@ -86,6 +91,7 @@ export default defineComponent({
   },
   template: `
     <div class="app">
+ <div v-if="store.loading" role="status">Загрузка данных…</div>
       <AppSidebar
         :view="view"
         :actor="actor"

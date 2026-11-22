@@ -1,0 +1,8 @@
+?   	github.com/KoznovaAV/Re-Hub/backend/cmd/api	[no test files]
+?   	github.com/KoznovaAV/Re-Hub/backend/cmd/h00-fixture	[no test files]
+ok  	github.com/KoznovaAV/Re-Hub/backend/internal/api	0.083s
+ok  	github.com/KoznovaAV/Re-Hub/backend/internal/db	0.009s
+ok  	github.com/KoznovaAV/Re-Hub/backend/internal/parser	0.005s
+ok  	github.com/KoznovaAV/Re-Hub/backend/internal/probe	0.011s
+ok  	github.com/KoznovaAV/Re-Hub/backend/internal/store	0.003s
+?   	github.com/KoznovaAV/Re-Hub/backend/migrations	[no test files]

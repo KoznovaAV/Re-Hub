@@ -70,6 +70,29 @@ func (s *Server) importClients(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 	errorsList := convertParserErrors(result.Errors)
+	if r.URL.Query().Get("preview") == "true" {
+		out := []map[string]any{}
+		created, updated := 0, 0
+		for _, row := range rows {
+			var exists bool
+			s.pool.QueryRow(r.Context(), "SELECT EXISTS(SELECT 1 FROM clients WHERE external_id=$1)", row.ExternalID).Scan(&exists)
+			action := "create"
+			if exists {
+				action = "update"
+				updated++
+			} else {
+				created++
+			}
+			out = append(out, map[string]any{"row": row.SourceRow, "externalId": row.ExternalID, "name": row.Name, "action": action})
+		}
+		writeJSON(w, 200, map[string]any{"rows": out, "errors": errorsList, "counters": map[string]int{"created": created, "updated": updated, "errors": len(errorsList), "total": result.NonemptyRowCount}, "fatal": false})
+		return
+	}
+	if len(errorsList) > 0 && r.FormValue("accept_partial") != "true" {
+		writeError(w, 422, "PARTIAL_IMPORT_REQUIRES_CONSENT", "Confirm importing valid rows separately")
+		return
+	}
+
 	keyMode, _ := context["key_mode"].(string)
 	importResult, err := s.store.SaveClients(r.Context(), name, actorID(r), keyMode, result.NonemptyRowCount, rows, errorsList)
 	if err != nil {
@@ -131,7 +154,30 @@ func (s *Server) importSnapshot(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 	scope := stringSlice(context["period_scope"])
-	importResult, err := s.store.SaveSnapshot(r.Context(), name, scope, snapshotDate, actorID(r), result.NonemptyRowCount, rows, convertParserErrors(result.Errors))
+	validRows, domainErrors, err := s.store.ValidateSnapshot(r.Context(), scope, snapshotDate, rows)
+	if err != nil {
+		writeError(w, 500, "DB_ERROR", "Could not validate snapshot")
+		return
+	}
+	errorsList := append(convertParserErrors(result.Errors), domainErrors...)
+	if r.URL.Query().Get("preview") == "true" {
+		out := []map[string]any{}
+		for _, row := range validRows {
+			out = append(out, map[string]any{"row": row.Row, "externalId": row.ExternalID, "total": row.TotalDocs, "unsent": row.NotSent, "inherited": row.TotalSourceID != "", "inheritedTotal": func() *int {
+				if row.TotalSourceID != "" {
+					return row.TotalDocs
+				}
+				return nil
+			}(), "status": "update"})
+		}
+		writeJSON(w, 200, map[string]any{"rows": out, "errors": errorsList, "counters": map[string]int{"accepted": len(validRows), "errors": len(errorsList), "total": result.NonemptyRowCount}, "fatal": false})
+		return
+	}
+	if len(errorsList) > 0 && r.FormValue("accept_partial") != "true" {
+		writeError(w, 422, "PARTIAL_IMPORT_REQUIRES_CONSENT", "Confirm importing valid rows separately")
+		return
+	}
+	importResult, err := s.store.SaveSnapshot(r.Context(), name, scope, snapshotDate, actorID(r), result.NonemptyRowCount, validRows, errorsList)
 	if err != nil {
 		log.Printf("save snapshot: %v", err)
 		writeError(w, http.StatusInternalServerError, "IMPORT_ERROR", "Could not save snapshot")
@@ -268,6 +314,7 @@ func convertParserErrors(items []parser.Error) []store.ParsedError {
 	for _, item := range items {
 		parsed := store.ParsedError{Scope: item.Scope, Code: item.Code, Message: item.Message}
 		if item.Source != nil {
+			parsed.Sheet = item.Source.Sheet
 			row := item.Source.Row
 			parsed.Row = &row
 			if item.Source.Column != nil {

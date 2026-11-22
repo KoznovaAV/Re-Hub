@@ -15,8 +15,8 @@ services:
 
   parser-service:
     build:
-      context: ./parser-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: parser-service/Dockerfile
     environment:
       PYTHON_HOST: 0.0.0.0
     healthcheck:
