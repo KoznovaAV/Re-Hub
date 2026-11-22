@@ -63,6 +63,10 @@ createServer(async (request, response) => {
     return sendFile(response, resolve(root, "index.html"));
   }
 
+  if (request.method === "GET" && ["/study", "/study.mjs", "/study-session.mjs"].includes(pathname)) {
+    return sendFile(response, resolve(root, pathname === "/study" ? "study.html" : pathname.slice(1)));
+  }
+
   if (request.method === "GET" && pathname === "/pilot") {
     return sendFile(response, resolve(root, "pilot.html"));
   }

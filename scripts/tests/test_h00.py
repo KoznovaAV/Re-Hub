@@ -39,3 +39,10 @@ class PilotTest(unittest.TestCase):
         score=next(r for r in result['runs'] if r['tool']=='rehub' and r['participant']==run['participant'])
         self.assertIn(missed,score['missed_ids'])
         self.assertEqual(score['false_exclusions'],1)
+
+    def test_observed_agent_run_never_confirms_human_speed(self):
+        d=self.data();d['data_kind']='agent_observed'
+        result=evaluation.evaluate(d)
+        self.assertEqual(result['human_participants'],0)
+        self.assertFalse(result['confirmed'])
+        self.assertTrue(result['criteria_met'])

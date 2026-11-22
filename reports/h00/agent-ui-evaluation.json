@@ -1,0 +1,108 @@
+{
+  "hypothesis": "H-00",
+  "data_kind": "agent_observed",
+  "human_participants": 0,
+  "speedup": 293.25811209469776,
+  "median_seconds": {
+    "excel": 9.941450000000012,
+    "rehub": 0.033899999999965076
+  },
+  "quality_passed": true,
+  "criteria_met": true,
+  "confirmed": false,
+  "conclusion": "Фактический прогон агента: не подтверждает скорость работы людей.",
+  "runs": [
+    {
+      "participant": "AGENT-ORDER-1",
+      "tool": "excel",
+      "group": "A",
+      "seconds": 12.617,
+      "ids": [
+        "PILOT-04",
+        "PILOT-05",
+        "PILOT-12"
+      ],
+      "executor": "agent",
+      "started_at": "2026-11-22T14:52:55.384Z",
+      "ended_at": "2026-11-22T14:53:08.001Z",
+      "elapsed_ms": 12617,
+      "visibility_changes": 0,
+      "source": "browser_monotonic_timer",
+      "precision": 1.0,
+      "recall": 1.0,
+      "excluded_errors": 0,
+      "missed_ids": [],
+      "false_positive_ids": [],
+      "false_exclusions": 0
+    },
+    {
+      "participant": "AGENT-ORDER-1",
+      "tool": "rehub",
+      "group": "B",
+      "seconds": 0.03379999999993015,
+      "ids": [
+        "PILOT-19",
+        "PILOT-20",
+        "PILOT-27"
+      ],
+      "executor": "agent",
+      "started_at": "2026-11-22T14:53:08.033Z",
+      "ended_at": "2026-11-22T14:53:08.067Z",
+      "elapsed_ms": 33.79999999993015,
+      "visibility_changes": 0,
+      "source": "browser_monotonic_timer",
+      "precision": 1.0,
+      "recall": 1.0,
+      "excluded_errors": 0,
+      "missed_ids": [],
+      "false_positive_ids": [],
+      "false_exclusions": 0
+    },
+    {
+      "participant": "AGENT-ORDER-2",
+      "tool": "rehub",
+      "group": "A",
+      "seconds": 0.034,
+      "ids": [
+        "PILOT-04",
+        "PILOT-05",
+        "PILOT-12"
+      ],
+      "executor": "agent",
+      "started_at": "2026-11-22T14:53:08.100Z",
+      "ended_at": "2026-11-22T14:53:08.134Z",
+      "elapsed_ms": 34,
+      "visibility_changes": 0,
+      "source": "browser_monotonic_timer",
+      "precision": 1.0,
+      "recall": 1.0,
+      "excluded_errors": 0,
+      "missed_ids": [],
+      "false_positive_ids": [],
+      "false_exclusions": 0
+    },
+    {
+      "participant": "AGENT-ORDER-2",
+      "tool": "excel",
+      "group": "B",
+      "seconds": 7.265900000000023,
+      "ids": [
+        "PILOT-19",
+        "PILOT-20",
+        "PILOT-27"
+      ],
+      "executor": "agent",
+      "started_at": "2026-11-22T14:53:08.167Z",
+      "ended_at": "2026-11-22T14:53:15.433Z",
+      "elapsed_ms": 7265.900000000023,
+      "visibility_changes": 0,
+      "source": "browser_monotonic_timer",
+      "precision": 1.0,
+      "recall": 1.0,
+      "excluded_errors": 0,
+      "missed_ids": [],
+      "false_positive_ids": [],
+      "false_exclusions": 0
+    }
+  ]
+}

@@ -19,11 +19,12 @@ test_incomplete_upload (test_parse_http.ParseHTTPTest.test_incomplete_upload) ..
 test_temp_cleanup_after_success_failure_and_unknown_kind (test_parse_http.ParseHTTPTest.test_temp_cleanup_after_success_failure_and_unknown_kind) ... ok
 test_transport_and_context_errors (test_parse_http.ParseHTTPTest.test_transport_and_context_errors) ... ok
 test_zip_entry_limit_and_recovery (test_parse_http.ParseHTTPTest.test_zip_entry_limit_and_recovery) ... ok
+test_extractor_loss_explains_only_matching_unknowns (test_pdf_coverage_audit.PDFCoverageAuditTest.test_extractor_loss_explains_only_matching_unknowns) ... ok
 test_excluded_and_inactive_flags_present (test_t04_clients_fixtures.T04ClientsFixturesTest.test_excluded_and_inactive_flags_present) ... ok
 test_parser_matches_golden_result (test_t04_clients_fixtures.T04ClientsFixturesTest.test_parser_matches_golden_result) ... ok
 test_seed_covers_thirty_clients_and_eight_scenarios (test_t04_clients_fixtures.T04ClientsFixturesTest.test_seed_covers_thirty_clients_and_eight_scenarios) ... ok
 
 ----------------------------------------------------------------------
-Ran 24 tests in 0.824s
+Ran 25 tests in 0.807s
 
 OK

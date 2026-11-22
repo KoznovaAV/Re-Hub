@@ -1,0 +1,5 @@
+"participant","tool","group","seconds","ids","precision","recall","excluded_errors","executor","started_at","ended_at"
+"AGENT-ORDER-1","excel","A","12.617","PILOT-04 PILOT-05 PILOT-12","1","1","0","agent","2026-11-22T14:52:55.384Z","2026-11-22T14:53:08.001Z"
+"AGENT-ORDER-1","rehub","B","0.03379999999993015","PILOT-19 PILOT-20 PILOT-27","1","1","0","agent","2026-11-22T14:53:08.033Z","2026-11-22T14:53:08.067Z"
+"AGENT-ORDER-2","rehub","A","0.034","PILOT-04 PILOT-05 PILOT-12","1","1","0","agent","2026-11-22T14:53:08.100Z","2026-11-22T14:53:08.134Z"
+"AGENT-ORDER-2","excel","B","7.265900000000023","PILOT-19 PILOT-20 PILOT-27","1","1","0","agent","2026-11-22T14:53:08.167Z","2026-11-22T14:53:15.433Z"

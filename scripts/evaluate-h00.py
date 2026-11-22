@@ -7,8 +7,8 @@ from statistics import median
 
 def evaluate(payload):
     kind = payload.get('data_kind', 'measured')
-    if kind not in ('measured', 'simulated'):
-        raise ValueError('data_kind: measured или simulated')
+    if kind not in ('measured', 'simulated', 'agent_observed'):
+        raise ValueError('data_kind: measured, simulated или agent_observed')
     gold, runs = payload['gold'], payload['runs']
     if len(gold) != 2 or len(runs) != 4:
         raise ValueError('Нужны два набора и четыре прохода')
@@ -48,12 +48,12 @@ def evaluate(payload):
     speedup = times['excel']/times['rehub']
     criteria_met = quality and speedup >= 2
     return {'hypothesis':'H-00','data_kind':kind,
-            'human_participants':0 if kind == 'simulated' else len(participants),
+            'human_participants':len(participants) if kind == 'measured' else 0,
             'speedup':speedup,'median_seconds':times,'quality_passed':quality,
             'criteria_met':criteria_met,
             'confirmed':criteria_met and kind == 'measured',
             'conclusion':('Учебные смоделированные данные: не подтверждают работу реальных пользователей.'
-                          if kind == 'simulated' else 'Критерии пилота выполнены.' if criteria_met else 'Критерии пилота не выполнены.'),
+                          if kind == 'simulated' else 'Фактический прогон агента: не подтверждает скорость работы людей.' if kind == 'agent_observed' else 'Критерии пилота выполнены.' if criteria_met else 'Критерии пилота не выполнены.'),
             'runs':scores}
 
 

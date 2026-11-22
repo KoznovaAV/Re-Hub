@@ -92,6 +92,7 @@ class Handler(BaseHTTPRequestHandler):
 
         kind = context.get("file_kind")
         temp_name = None
+        status, payload = 200, None
         try:
             with NamedTemporaryFile(delete=False, suffix=".xlsx") as temp:
                 temp.write(file_data)
@@ -101,22 +102,23 @@ class Handler(BaseHTTPRequestHandler):
             elif kind == "snapshot":
                 from customer_xlsx import parse_file
             else:
-                self.send_json(422, {"error": "unsupported_file_kind"})
-                return
-            result = validate_result(parse_file(temp_name, context))
-            self.send_json(200, result)
+                status, payload = 422, {"error": "unsupported_file_kind"}
+            if payload is None:
+                payload = validate_result(parse_file(temp_name, context))
         except ValidationError:
-            self.send_json(502, {"error": "parser_contract_violation"})
+            status, payload = 502, {"error": "parser_contract_violation"}
         except ValueError as exc:
-            self.send_json(422, {"error": "invalid_context", "message": str(exc)})
+            status, payload = 422, {"error": "invalid_context", "message": str(exc)}
         except Exception:
-            self.send_json(500, {"error": "parser_failure"})
+            status, payload = 500, {"error": "parser_failure"}
         finally:
             if temp_name:
                 try:
                     os.unlink(temp_name)
                 except OSError:
                     pass
+        # Completion must mean the temporary upload has already been removed.
+        self.send_json(status, payload)
 
     def do_GET(self):
         if self.path == "/health":
