@@ -40,8 +40,8 @@ class PilotTest(unittest.TestCase):
         self.assertIn(missed,score['missed_ids'])
         self.assertEqual(score['false_exclusions'],1)
 
-    def test_observed_agent_run_never_confirms_human_speed(self):
-        d=self.data();d['data_kind']='agent_observed'
+    def test_automated_run_never_confirms_human_speed(self):
+        d=self.data();d['data_kind']='automated'
         result=evaluation.evaluate(d)
         self.assertEqual(result['human_participants'],0)
         self.assertFalse(result['confirmed'])

@@ -1,4 +1,4 @@
-"""Observed agent run of /study. This does not recruit or simulate human participants.
+"""Observed automated run of /study. This does not recruit or simulate human participants.
 
 Uses a real Chromium page and LibreOffice Calc for the baseline. Timings come from
 page performance.now(), not constants. Run only against synthetic study data.
@@ -19,9 +19,9 @@ def main():
             try:
                 with urlopen(f'http://127.0.0.1:{port}/health',timeout=.3):break
             except OSError:time.sleep(.1)
-        with tempfile.TemporaryDirectory(prefix='h00-agent-ui-') as temp, sync_playwright() as pw:
+        with tempfile.TemporaryDirectory(prefix='h00-browser-workflow-') as temp, sync_playwright() as pw:
             folder=Path(temp);browser=pw.chromium.launch(executable_path=a.chromium,args=['--no-sandbox','--single-process','--no-zygote','--disable-gpu']);page=browser.new_page(viewport={'width':1240,'height':1000});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
-            page.goto(f'http://127.0.0.1:{port}/study');page.locator('#person1').fill('AGENT-ORDER-1');page.locator('#person2').fill('AGENT-ORDER-2');page.locator('#executor').select_option('agent');page.locator('#create').click()
+            page.goto(f'http://127.0.0.1:{port}/study');page.locator('#person1').fill('AUTO-ORDER-1');page.locator('#person2').fill('AUTO-ORDER-2');page.locator('#executor').select_option('automation');page.locator('#create').click()
             for index,tool in enumerate(['excel','rehub','rehub','excel']):
                 assert not page.locator('#gold').is_visible()
                 page.locator('#start').click()
@@ -45,15 +45,15 @@ def main():
                 event.value.save_as(folder/f'answer-{index}.csv')
                 if page.locator('#error').inner_text():raise AssertionError(page.locator('#error').inner_text())
             with page.expect_download() as event:page.locator('#journal').click()
-            event.value.save_as(a.out/'agent-ui-journal.json')
+            event.value.save_as(a.out/'browser-workflow-journal.json')
             with page.expect_download() as event:page.locator('#protocol').click()
-            event.value.save_as(a.out/'agent-ui-protocol.csv')
-            page.screenshot(path=str(a.out/'agent-ui-screen.png'),full_page=True)
+            event.value.save_as(a.out/'browser-workflow-protocol.csv')
+            page.screenshot(path=str(a.out/'browser-workflow-screen.png'),full_page=True)
             assert not errors,errors
             browser.close()
-        evaluation=subprocess.run(['python3','scripts/evaluate-h00.py',str(a.out/'agent-ui-journal.json')],cwd=ROOT,capture_output=True,text=True,check=True)
+        evaluation=subprocess.run(['python3','scripts/evaluate-h00.py',str(a.out/'browser-workflow-journal.json')],cwd=ROOT,capture_output=True,text=True,check=True)
         result=json.loads(evaluation.stdout);assert result['human_participants']==0 and result['confirmed'] is False and result['quality_passed']
-        (a.out/'agent-ui-evaluation.json').write_text(evaluation.stdout)
+        (a.out/'browser-workflow-evaluation.json').write_text(evaluation.stdout)
         print(json.dumps({k:result[k] for k in ['data_kind','human_participants','median_seconds','speedup','quality_passed','confirmed']},ensure_ascii=False,indent=2))
     finally:server.terminate();server.wait(timeout=10);log.close()
 if __name__=='__main__':main()

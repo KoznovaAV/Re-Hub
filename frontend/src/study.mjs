@@ -15,7 +15,7 @@ function render(){
  const t=task();if(t){$('task-heading').textContent=`Проход ${study.runs.length+1} из 4`;$('assignment').textContent=`Участник ${study.participants[t.person]} · ${t.tool==='excel'?'Excel / Calc':'Re:Hub'} · набор ${t.group}`;}
  $('start').disabled=Boolean(running);$('work').hidden=!running;
  $('excel').hidden=!running||t?.tool!=='excel';$('rehub').hidden=!running||t?.tool!=='rehub';
- $('kind').textContent=study.executor==='agent'?'Фактический прогон агента. Участников-людей: 0.':'Сессия для двух людей. Коды и подлинность участия проверяет организатор.';
+ $('kind').textContent=study.executor!=='human'?'Фактический автоматизированный прогон. Участников-людей: 0.':'Сессия для двух людей. Коды и подлинность участия проверяет организатор.';
  $('runs').replaceChildren(...study.runs.map(r=>{const tr=document.createElement('tr');for(const v of [r.participant,r.tool,r.group,r.seconds.toFixed(3),`${(r.precision*100).toFixed(1)}%`,`${(r.recall*100).toFixed(1)}%`])tr.insertCell().textContent=v;return tr;}));
  const median=xs=>{const a=xs.sort((a,b)=>a-b);return a.length%2?a[(a.length-1)/2]:(a[a.length/2-1]+a[a.length/2])/2;};
  $('summary').textContent=study.runs.length===4?`Сессия завершена. Медиана Excel: ${median(study.runs.filter(r=>r.tool==='excel').map(r=>r.seconds)).toFixed(3)} с; Re:Hub: ${median(study.runs.filter(r=>r.tool==='rehub').map(r=>r.seconds)).toFixed(3)} с. Это результат этой сессии; вывод проверяется оценщиком.`:`Завершено ${study.runs.length}/4; прервано: ${study.aborted.length}.`;

@@ -33,7 +33,7 @@ python scripts/evaluate-h00.py contracts/testing/h00/simulated/pilot.json
 
 ## Дополнение: пользовательские замеры и P-04
 
-Сбор интервалов и ответов реализован на `/study`. [Инструкция](../../docs/scenarios/user-measurements.md), [прогон агента](../h00/agent-ui-method.md). Для P-04 доступна независимая проверка PDF:
+Сбор интервалов и ответов реализован на `/study`. [Инструкция](../../docs/scenarios/user-measurements.md), [автоматизированный прогон](../h00/browser-workflow-method.md). Для P-04 доступна независимая проверка PDF:
 
 ```bash
 python3 -m pip install -r parser-service/requirements-audit.txt

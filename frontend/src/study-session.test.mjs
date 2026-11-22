@@ -4,10 +4,10 @@ import {createStudy,finishRun,journal,plan,parseIDs,sourceCSV} from './study-ses
 import {sample,callList} from './pilot-data.mjs';
 const stamp='2026-11-22T15:00:00.000Z';
 test('counterbalanced task journal records observed durations and quality without inventing people',()=>{
- const s=createStudy(['AGENT-1','AGENT-2'],'agent');
+ const s=createStudy(['AUTO-1','AUTO-2'],'automation');
  for(const task of plan)finishRun(s,{ids:callList(sample(task.group),'2026Q3',8).map(x=>x.client),elapsed_ms:1234,started_at:stamp,ended_at:'2026-11-22T15:00:01.234Z'});
- const j=journal(s);assert.equal(j.data_kind,'agent_observed');assert.equal(j.complete,true);assert.equal(j.runs.length,4);assert.ok(j.runs.every(r=>r.seconds===1.234&&r.precision===1&&r.recall===1));assert.equal(j.gold.A.approved_by,null);
- assert.deepEqual(j.runs.map(r=>[r.participant,r.tool,r.group]),[['AGENT-1','excel','A'],['AGENT-1','rehub','B'],['AGENT-2','rehub','A'],['AGENT-2','excel','B']]);
+ const j=journal(s);assert.equal(j.data_kind,'automated');assert.equal(j.complete,true);assert.equal(j.runs.length,4);assert.ok(j.runs.every(r=>r.seconds===1.234&&r.precision===1&&r.recall===1));assert.equal(j.gold.A.approved_by,null);
+ assert.deepEqual(j.runs.map(r=>[r.participant,r.tool,r.group]),[['AUTO-1','excel','A'],['AUTO-1','rehub','B'],['AUTO-2','rehub','A'],['AUTO-2','excel','B']]);
 });
 test('human collection needs two distinct codes and an explicit reviewer',()=>{
  assert.throws(()=>createStudy(['one','one']));assert.throws(()=>createStudy(['','two']));

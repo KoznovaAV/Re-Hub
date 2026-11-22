@@ -4,7 +4,7 @@ export const plan=[{person:0,tool:'excel',group:'A'},{person:0,tool:'rehub',grou
 export function createStudy(participants,executor='human') {
  const names=participants.map(x=>x.trim());
  if(names.length!==2||names.some(x=>!x)||new Set(names).size!==2)throw Error('Укажите два разных кода участника');
- if(!['human','agent'].includes(executor))throw Error('Неизвестный исполнитель');
+ if(!['human','automation'].includes(executor))throw Error('Неизвестный исполнитель');
  return {version:STUDY_VERSION,executor,participants:names,created_at:new Date().toISOString(),runs:[],aborted:[]};
 }
 export function parseIDs(text) {
@@ -26,7 +26,7 @@ export function finishRun(study,{ids,elapsed_ms,started_at,ended_at,visibility_c
 }
 export function journal(study,approvedBy=null) {
  const gold=Object.fromEntries(['A','B'].map(group=>[group,{all_ids:sample(group).map(x=>x.client),expected:callList(sample(group),'2026Q3',8).map(x=>x.client),excluded:sample(group).filter(x=>x.excluded).map(x=>x.client),approved_by:approvedBy?.trim()||null}]));
- return {study_version:study.version,data_kind:study.executor==='human'?'measured':'agent_observed',dataset_kind:'synthetic',task:'2026Q3; unsent >= 8; observed; not excluded; not contacted',timing_scope:'from task presentation through result submission; source download and opening included for Excel',gold,runs:study.runs,aborted:study.aborted,complete:study.runs.length===4};
+ return {study_version:study.version,data_kind:study.executor==='human'?'measured':'automated',dataset_kind:'synthetic',task:'2026Q3; unsent >= 8; observed; not excluded; not contacted',timing_scope:'from task presentation through result submission; source download and opening included for Excel',gold,runs:study.runs,aborted:study.aborted,complete:study.runs.length===4};
 }
 export function sourceCSV(group) {
  return ['client,period,unsent,contacted,promise,excluded,observed',...sample(group).flatMap(c=>c.periods.map(p=>[c.client,p.period,p.observed?p.unsent:'',Number(p.contacted),p.promise,Number(c.excluded),Number(p.observed)].join(',')))].join('\r\n');
