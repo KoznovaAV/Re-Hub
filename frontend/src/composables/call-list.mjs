@@ -3,7 +3,7 @@ export function callSummary(client, period = null) {
   const calls = (client.events ?? []).filter(e => e.type === 'call' && (!period || e.period === period));
   const last = [...calls].sort((a,b) => String(b.date).localeCompare(String(a.date)))[0];
   return { unknownPeriod, count: calls.length, missed: calls.filter(e => e.result === 'Недозвон').length,
-    status: last?.result ?? (unknownPeriod ? 'Период прежних звонков не указан' : 'Не звонили'), lastDate: last?.date ?? null, callbackOn: last?.callbackOn ?? null };
+    status: (last?.result === 'Не тот контакт' ? 'Не тот администратор' : last?.result) ?? (unknownPeriod ? 'Период прежних звонков не указан' : 'Не звонили'), lastDate: last?.date ?? null, callbackOn: last?.callbackOn ?? null };
 }
 export function eligibleForCall(client, period, latestDate=null) {
   const observations=[...client.history].filter(item=>item.period===period).sort((a,b)=>String(a.date).localeCompare(String(b.date)));

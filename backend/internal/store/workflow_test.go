@@ -28,7 +28,7 @@ func TestEventValidation(t *testing.T) {
 			t.Errorf("accepted invalid event %+v", c)
 		}
 	}
-	for _, result := range []string{"Дозвон", "Недозвон", "Отказ", "Не тот контакт"} {
+	for _, result := range []string{"Дозвон", "Недозвон", "Отказ", "Не тот контакт", "Не тот администратор"} {
 		if err := ValidateEvent(EventInput{Type: "call", Result: result, PeriodCode: "2026Q3", Date: date}); err != nil {
 			t.Fatal(err)
 		}

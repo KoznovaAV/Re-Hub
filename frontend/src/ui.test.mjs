@@ -13,6 +13,10 @@ const click=async text=>{assert.ok(buttons(text).length,`Missing ${text}`);butto
 const settle=async predicate=>{const deadline=Date.now()+4000;while(!predicate()){if(Date.now()>deadline)throw new Error('UI did not settle');await new Promise(r=>setTimeout(r,10));await tick();}};
 await tick();assert.ok(document.body.textContent.includes('Подготовить обзвон'));
 await click('Настроить список обзвона');assert.ok(document.body.textContent.includes('Не передано документов от'));
+assert.ok(document.body.textContent.includes('Срез:'));
+assert.ok(document.querySelector('thead').textContent.includes('Тип клиента'));
+assert.ok(!document.querySelector('thead').textContent.includes('Статус'));
+assert.ok([...document.querySelectorAll('option')].some(o=>o.value==='vip'&&o.textContent==='ВИП'));
 store.reportPeriod='2026Q2';await tick();
 const amount=document.querySelector('input[type="number"]');amount.value='20';amount.dispatchEvent(new window.Event('input',{bubbles:true}));await tick();
 assert.ok(document.querySelectorAll('tbody tr').length>0);
@@ -24,6 +28,7 @@ actor.value='operator-a';actor.dispatchEvent(new window.Event('change',{bubbles:
 const mine=store.clients.filter(c=>c.owner==='operator-a');
 assert.equal(document.querySelectorAll('tbody tr').length,mine.length);
 await click('Открыть');
+assert.ok(document.body.textContent.includes('Последний звонок'));
 await click('Зафиксировать взаимодействие');
 const result=[...document.querySelectorAll('select')].find(s=>[...s.options].some(o=>o.value==='Перенос'));
 result.value='Перенос';result.dispatchEvent(new window.Event('change',{bubbles:true}));await tick();

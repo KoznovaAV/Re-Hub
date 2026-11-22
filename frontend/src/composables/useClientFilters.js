@@ -1,3 +1,4 @@
+import {clientTypeCodes} from "./client-types.mjs";
 import { callSummary, eligibleForCall } from "./call-list.mjs";
 import { computed, ref } from "vue";
 import { archiveCount, clientMetrics, store } from "../mock/data.js";
@@ -35,7 +36,7 @@ export function useClientFilters(clients, archiveGroup) {
         }
         if (archiveGroup.value !== "all" && !archiveCount(metrics, archiveGroup.value)) return false;
         if (stage.value !== "all" && client.stage !== stage.value) return false;
-        if (tag.value !== "all" && !client.tags.includes(tag.value)) return false;
+        if (tag.value !== "all" && !clientTypeCodes(client).includes(tag.value)) return false;
         if (minShare.value !== "0" && (metrics.missing || (metrics.total > 0 ? metrics.unsent / metrics.total * 100 : 0) < Number(minShare.value))) return false;
         if (!includeMissing.value && metrics.missing) return false;
         if (owner.value === "free" && !metrics.free) return false;

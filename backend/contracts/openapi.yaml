@@ -319,7 +319,7 @@ paths:
               required: [event_type]
               properties:
                 event_type: { type: string, enum: [call, email, comment] }
-                result: { type: string, enum: [Дозвон, Обещание, Отказ, Недозвон, Перенос, Не тот контакт] }
+                result: { type: string, enum: [Дозвон, Обещание, Отказ, Недозвон, Перенос, Не тот контакт, Не тот администратор] }
                 comment: { type: string }
                 promise_label: { type: string, description: Выбранное название обещанного срока }
                 promised_at: { type: string, format: date, description: Только для обещания передать документы }

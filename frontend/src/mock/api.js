@@ -79,7 +79,7 @@ export async function addEvent(clientId, payload, actorId) {
   const call=payload.type==='call';
   if(!['call','email','comment'].includes(payload.type))return {ok:false,message:"Неизвестный тип события."};
   if(!call&&(payload.result||payload.promise||payload.callbackOn))return {ok:false,message:'Поля звонка не относятся к письму или комментарию.'};
-  if(call&&!['Дозвон','Недозвон','Перенос','Не тот контакт','Обещание','Отказ'].includes(payload.result))return {ok:false,message:"Укажите статус звонка."};
+  if(call&&!['Дозвон','Недозвон','Перенос','Не тот контакт','Не тот администратор','Обещание','Отказ'].includes(payload.result))return {ok:false,message:"Укажите статус звонка."};
   const validDate=value=>/^\d{4}-\d{2}-\d{2}$/.test(value||'')&&Number.isFinite(Date.parse(value))&&new Date(value).toISOString().slice(0,10)===value;
   const eventDate=payload.date||TODAY;
   if(!validDate(eventDate)||eventDate>TODAY)return {ok:false,message:'Укажите корректную дату события не позже сегодня.'};

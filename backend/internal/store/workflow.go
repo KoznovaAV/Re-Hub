@@ -24,7 +24,7 @@ func ValidateEvent(input EventInput) error {
 		return nil
 	}
 	switch input.Result {
-	case "Дозвон", "Недозвон", "Перенос", "Не тот контакт", "Обещание", "Отказ":
+	case "Дозвон", "Недозвон", "Перенос", "Не тот контакт", "Не тот администратор", "Обещание", "Отказ":
 	default:
 		return invalid("unknown call result")
 	}

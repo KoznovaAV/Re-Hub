@@ -1,3 +1,4 @@
+import {callSummary} from "../composables/call-list.mjs";
 import { computed, defineComponent, reactive, ref } from "vue";
 import {
   store,
@@ -43,6 +44,7 @@ export default defineComponent({
     const form = reactive({ date:TODAY,promiseChoice:"custom", callbackOn: "", type: "call", result: "Дозвон", promise: "", comment: "" });
     const errors = reactive({ result: "", promise: "" });
 
+    const lastCall=computed(()=>client.value?callSummary(client.value):{status:"Не звонили",count:0,missed:0});
     const claims = computed(() => client.value?.claims ?? []);
     const sanctions = computed(() => client.value?.sanctions ?? []);
 
@@ -77,7 +79,7 @@ export default defineComponent({
       { value: "Обещание", label: "Обещание" },
       { value: "Отказ", label: "Отказ" },
       {value:"Перенос",label:"Перенос звонка"},
-      {value:"Не тот контакт",label:"Не тот контакт"},
+      {value:"Не тот администратор",label:"Не тот администратор"},
       { value: "Недозвон", label: "Недозвон" },
     ];
     const typeOptions = [
@@ -170,7 +172,7 @@ export default defineComponent({
 
     return {
       client,
-      metrics,
+      metrics,lastCall,
       isAdmin,
       canAct,
       loading,
@@ -221,9 +223,9 @@ export default defineComponent({
 
       <UiCard title="Связаться с клиентом" class="section">
         <div v-if="client.contact.details" class="section">{{ client.contact.details }}</div>
- <div class="grid grid--3"><div><strong>{{ client.contact.name }}</strong><p><a :href="'tel:'+client.contact.phone">{{ client.contact.phone }}</a></p><a :href="'mailto:'+client.contact.email">{{ client.contact.email }}</a></div>
-        <div><strong>История общения</strong><p>{{ interactions[0] ? interactions[0].text : 'Звонков и комментариев пока нет' }}</p><p v-if="interactions[0]">{{ formatDate(interactions[0].date) }}; {{ interactions[0].result }}</p></div>
-        <div><strong>Документы</strong><p>{{ metrics.unsent }} не передано из {{ metrics.total ?? '-' }}</p><p>Обещанный срок: {{ client.promise ? formatDate(client.promise) : 'Не указан' }}</p></div></div>
+ <div class="grid grid--2"><div><strong>{{ client.contact.name }}</strong><p><a v-if="client.contact.phone && client.contact.phone !== '—'" :href="'tel:'+client.contact.phone">{{ client.contact.phone }}</a><span v-else>Телефон не указан</span></p><a v-if="client.contact.email && client.contact.email !== '—'" :href="'mailto:'+client.contact.email">{{ client.contact.email }}</a><span v-else>Почта не указана</span></div>
+        <div><strong>Последний звонок</strong><p>{{ lastCall.status }}</p><p>Звонков: {{ lastCall.count }}. Недозвонов: {{ lastCall.missed }}.</p><p v-if="lastCall.lastDate">Дата звонка: {{ formatDate(lastCall.lastDate) }}</p><p v-if="lastCall.callbackOn">Перезвонить: {{ formatDate(lastCall.callbackOn) }}</p></div>
+        </div>
       </UiCard>
       <div v-if="metrics.missing" class="callout callout--warning section">
         <div class="callout__icon">!</div>
@@ -283,14 +285,14 @@ export default defineComponent({
             <div class="timeline">
               <div
                 v-for="item in timeline"
-                :key="item.period"
+                :key="item.period + '-' + (item.date ?? 'missing')"
                 :class="['timeline__item', item.current ? 'is-current' : '', item.missing ? 'is-missing' : '']"
               >
                 <div class="timeline__dot"></div>
                 <div class="timeline__line"></div>
                 <div class="timeline__body">
                   <div class="timeline__head">
-                    <div class="timeline__period">{{ periodLabel(item.period) }}</div>
+                    <div class="timeline__period">{{ periodLabel(item.period) }}<span v-if="item.date"> · {{ formatDate(item.date) }}</span></div>
                     <div class="row">
                       <UiBadge v-if="item.missing" tone="warning">Нет в срезе</UiBadge>
                       <UiBadge v-else-if="item.closed" tone="success">Цикл закрыт</UiBadge>

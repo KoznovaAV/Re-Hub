@@ -23,16 +23,12 @@ export default defineComponent({
         let clients = 0;
         let date = null;
         for (const client of props.clients) {
-          let knownTotal = null;
-          for (const entry of client.history) {
-            if (periodIndex(entry.period) <= periodIndex(period.code)) knownTotal = entry.total ?? knownTotal;
-          }
-          const item = client.history.find((entry) => entry.period === period.code);
-          if (!item) continue;
-          plan += item.total ?? knownTotal ?? 0;
-          unsent += item.unsent;
-          clients += 1;
-          if (!date || item.date > date) date = item.date;
+          const metrics=clientMetrics(client,period.code);
+          if(metrics.missing||metrics.last?.period!==period.code)continue;
+          plan+=metrics.total??0;
+          unsent+=metrics.unsent;
+          clients+=1;
+          if(!date||metrics.last.date>date)date=metrics.last.date;
         }
         if (!clients) continue;
         const share = plan ? Math.round((unsent / plan) * 100) : null;
