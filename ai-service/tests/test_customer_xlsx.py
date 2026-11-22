@@ -1,9 +1,11 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
+from zipfile import ZipFile
 
 from openpyxl import Workbook
 
+from app import customer_xlsx
 from app.customer_xlsx import PERIODS, find_duplicates, parse_file, summary
 
 
@@ -230,6 +232,35 @@ class CustomerSnapshotTest(unittest.TestCase):
         result = parse_file(self.file, self.context)
         self.assertEqual(result["rows"], [])
         self.assertEqual(result["errors"][0]["code"], "INVALID_XLSX")
+
+    def test_zip_archive_size_limit_is_a_file_error(self):
+        original = customer_xlsx.MAX_UNCOMPRESSED_BYTES
+        customer_xlsx.MAX_UNCOMPRESSED_BYTES = 1024
+        try:
+            with ZipFile(self.file, "w") as archive:
+                archive.writestr("xl/workbook.xml", b"0" * 4096)
+            result = parse_file(self.file, self.context)
+        finally:
+            customer_xlsx.MAX_UNCOMPRESSED_BYTES = original
+        self.assertEqual(result["rows"], [])
+        self.assertEqual(result["errors"][0]["code"], "XLSX_LIMIT_EXCEEDED")
+
+    def test_defusedxml_is_active(self):
+        import openpyxl
+        self.assertTrue(openpyxl.DEFUSEDXML)
+
+    def test_scanned_row_limit_stops_pathological_empty_rows(self):
+        original = customer_xlsx.DEFAULT_MAX_SCANNED_ROWS
+        customer_xlsx.DEFAULT_MAX_SCANNED_ROWS = 2
+        try:
+            self.make_fixture(periods=["весь 2025 год"], rows_by_period={
+                "весь 2025 год": [[None, None, None, None, None]] * 5,
+            })
+            self.context["period_scope"] = ["Y2025"]
+            result = parse_file(self.file, self.context)
+        finally:
+            customer_xlsx.DEFAULT_MAX_SCANNED_ROWS = original
+        self.assertEqual(result["errors"][-1]["code"], "ROW_LIMIT_EXCEEDED")
 
     def test_customer_profile_cannot_switch_to_kcr_keys(self):
         self.make_fixture(rows_by_period=self.default_rows())

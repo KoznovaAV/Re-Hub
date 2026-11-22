@@ -16,7 +16,7 @@ import json
 import math
 from pathlib import Path
 import re
-from zipfile import BadZipFile
+from zipfile import BadZipFile, LargeZipFile, ZipFile
 
 from openpyxl import load_workbook
 from openpyxl.utils.exceptions import InvalidFileException
@@ -31,6 +31,13 @@ PROFILE = "customer_october_tabs_v1"
 ANONYMOUS = re.compile(r"[A-Z]{3}[0-9]{5}")
 NUMBER = re.compile(r"(?:[0-9]+|[0-9]{1,3}(?:[ \u00a0\u202f][0-9]{3})+)")
 MAX_INTEGER = 2147483647
+
+# Защита от XLSX/zip-бомб и патологически больших книг.
+MAX_XLSX_ENTRIES = 2_000
+MAX_XLSX_ENTRY_BYTES = 50 * 1024 * 1024
+MAX_UNCOMPRESSED_BYTES = 100 * 1024 * 1024
+MAX_COMPRESSION_RATIO = 200
+DEFAULT_MAX_SCANNED_ROWS = 100_000
 
 
 def normalized(value):
@@ -98,6 +105,33 @@ def row_is_empty(cells):
                for cell in cells)
 
 
+def xlsx_archive_error(file_path):
+    """Проверить zip-контейнер XLSX до передачи его openpyxl."""
+    try:
+        with ZipFile(file_path) as archive:
+            entries = archive.infolist()
+            if len(entries) > MAX_XLSX_ENTRIES:
+                return ("XLSX_LIMIT_EXCEEDED",
+                        f"XLSX contains more than {MAX_XLSX_ENTRIES} archive entries")
+            total_size = 0
+            for entry in entries:
+                if entry.file_size < 0:
+                    return "INVALID_XLSX", "The XLSX package contains an invalid entry"
+                total_size += entry.file_size
+                if (entry.file_size > MAX_XLSX_ENTRY_BYTES
+                        or total_size > MAX_UNCOMPRESSED_BYTES):
+                    return ("XLSX_LIMIT_EXCEEDED",
+                            "Uncompressed XLSX content exceeds the configured limit")
+                if (entry.compress_size > 0
+                        and entry.file_size > 5 * 1024 * 1024
+                        and entry.file_size / entry.compress_size > MAX_COMPRESSION_RATIO):
+                    return ("XLSX_LIMIT_EXCEEDED",
+                            "XLSX compression ratio looks like a decompression bomb")
+    except (OSError, BadZipFile, LargeZipFile, RuntimeError):
+        return "INVALID_XLSX", "The XLSX package could not be opened"
+    return None, None
+
+
 def validate_context(context):
     required = {"contract_version", "file_kind", "key_mode", "mapping_profile",
                 "snapshot_date", "period_scope", "coverage"}
@@ -143,6 +177,10 @@ def parse_file(file_path, context, max_rows=None):
                                  "source": source, "raw_value": None})
         return result
 
+    archive_code, archive_message = xlsx_archive_error(file_path)
+    if archive_code:
+        return file_error(archive_code, archive_message)
+
     try:
         book = load_workbook(file_path, read_only=True, data_only=False, keep_links=False)
     except (OSError, BadZipFile, InvalidFileException, ValueError, KeyError):
@@ -165,9 +203,17 @@ def parse_file(file_path, context, max_rows=None):
                     source = {"sheet": sheet.title, "row": 2, "column": "ABCDE"[column - 1]}
                     return file_error("INVALID_HEADER", "Unexpected snapshot header", source)
         key_column, key_pattern = 0, ANONYMOUS
+        max_scanned_rows = max(max_rows or 0, DEFAULT_MAX_SCANNED_ROWS)
+        scanned_rows = 0
         for sheet in book:
             period = PERIODS[sheet.title]
             for index, cells in enumerate(sheet.iter_rows(min_row=3, max_col=5), 3):
+                scanned_rows += 1
+                if scanned_rows > max_scanned_rows:
+                    return file_error(
+                        "ROW_LIMIT_EXCEEDED",
+                        f"Snapshot scan exceeds {max_scanned_rows} rows",
+                    )
                 if row_is_empty(cells):
                     continue
                 result["nonempty_row_count"] += 1

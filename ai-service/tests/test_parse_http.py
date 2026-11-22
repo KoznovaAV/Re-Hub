@@ -1,11 +1,13 @@
 import http.client
+from io import BytesIO
 import json
 from pathlib import Path
 import threading
 import unittest
 from http.server import ThreadingHTTPServer
+from zipfile import ZipFile
 
-from app import main
+from app import customer_xlsx, main
 
 FIXTURES = Path(__file__).parent / "fixtures" / "snapshot"
 BOUNDARY = "----rehub-test-boundary-7f90a7"
@@ -125,6 +127,29 @@ class ParseEndpointTest(unittest.TestCase):
         self.assertEqual(self.assert_json(status, content_type, payload)["error"],
                          "missing_file")
 
+    def test_too_many_multipart_parts_are_rejected(self):
+        original = main.MAX_MULTIPART_PARTS
+        main.MAX_MULTIPART_PARTS = 2
+        try:
+            status, content_type, payload = self.post_parse([
+                ("file", b"anything", "snapshot.xlsx"),
+                ("context", "{}", None),
+                ("extra", b"unexpected", None),
+            ])
+        finally:
+            main.MAX_MULTIPART_PARTS = original
+        self.assertEqual(status, 400)
+        self.assertEqual(self.assert_json(status, content_type, payload)["error"],
+                         "invalid_multipart")
+
+    def test_deeply_nested_context_is_rejected(self):
+        context = "[" * 10000 + "]" * 10000
+        status, content_type, payload = self.post_parse([
+            ("file", b"anything", "snapshot.xlsx"), ("context", context, None)])
+        self.assertEqual(status, 400)
+        self.assertEqual(self.assert_json(status, content_type, payload)["error"],
+                         "invalid_context")
+
     def test_invalid_xlsx_is_returned_as_parser_result(self):
         context = (FIXTURES / "normal.context.json").read_text(encoding="utf-8")
         status, content_type, payload = self.post_parse([
@@ -156,6 +181,24 @@ class ParseEndpointTest(unittest.TestCase):
         self.assertEqual(status, 422)
         self.assertEqual(result["errors"][-1]["code"], "ROW_LIMIT_EXCEEDED")
         self.assertEqual(len(result["rows"]), 2)
+
+    def test_archive_limit_is_a_readable_422_with_parser_result(self):
+        original = customer_xlsx.MAX_UNCOMPRESSED_BYTES
+        customer_xlsx.MAX_UNCOMPRESSED_BYTES = 1024
+        try:
+            archive = BytesIO()
+            with ZipFile(archive, "w") as zip_file:
+                zip_file.writestr("xl/workbook.xml", b"0" * 4096)
+            context = (FIXTURES / "normal.context.json").read_text(encoding="utf-8")
+            status, content_type, payload = self.post_parse([
+                ("file", archive.getvalue(), "bomb.xlsx"),
+                ("context", context, None),
+            ])
+        finally:
+            customer_xlsx.MAX_UNCOMPRESSED_BYTES = original
+        result = self.assert_json(status, content_type, payload)
+        self.assertEqual(status, 422)
+        self.assertEqual(result["errors"][0]["code"], "XLSX_LIMIT_EXCEEDED")
 
     def test_context_size_limit_is_a_readable_413(self):
         original = main.MAX_CONTEXT_BYTES

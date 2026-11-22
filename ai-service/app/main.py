@@ -17,6 +17,7 @@ import json
 import os
 import sys
 import tempfile
+import threading
 import traceback
 
 try:  # импорт пакета в тестах и при ``python -m app.main``
@@ -37,6 +38,8 @@ MAX_REQUEST_BYTES = _env_int("PARSE_MAX_REQUEST_BYTES", 32 * 1024 * 1024)
 MAX_FILE_BYTES = _env_int("PARSE_MAX_FILE_BYTES", 20 * 1024 * 1024)
 MAX_CONTEXT_BYTES = _env_int("PARSE_MAX_CONTEXT_BYTES", 64 * 1024)
 MAX_ROWS = _env_int("PARSE_MAX_ROWS", 50_000)
+MAX_MULTIPART_PARTS = _env_int("PARSE_MAX_MULTIPART_PARTS", 20)
+MAX_CONCURRENT_REQUESTS = _env_int("PARSE_MAX_CONCURRENCY", 8)
 
 
 def multipart_boundary(content_type):
@@ -63,9 +66,13 @@ def parse_multipart(content_type, body):
     boundary = multipart_boundary(content_type)
     delimiter = b"--" + boundary
     fields = {}
+    part_count = 0
     for chunk in body.split(delimiter)[1:]:
         if chunk.startswith(b"--"):
             break
+        part_count += 1
+        if part_count > MAX_MULTIPART_PARTS:
+            raise ValueError("too many multipart parts")
         if chunk.startswith(b"\r\n"):
             chunk = chunk[2:]
         elif chunk.startswith(b"\n"):
@@ -96,6 +103,30 @@ def parse_multipart(content_type, body):
 
 class FieldTooLarge(ValueError):
     """Текстовое поле multipart превысило транспортный лимит."""
+
+
+class BoundedThreadingHTTPServer(ThreadingHTTPServer):
+    """HTTP-сервер с ограничением числа одновременно обрабатываемых запросов."""
+
+    daemon_threads = True
+
+    def __init__(self, *args, **kwargs):
+        self._request_slots = threading.BoundedSemaphore(MAX_CONCURRENT_REQUESTS)
+        super().__init__(*args, **kwargs)
+
+    def process_request(self, request, client_address):
+        self._request_slots.acquire()
+        try:
+            super().process_request(request, client_address)
+        except BaseException:
+            self._request_slots.release()
+            raise
+
+    def process_request_thread(self, request, client_address):
+        try:
+            super().process_request_thread(request, client_address)
+        finally:
+            self._request_slots.release()
 
 
 def field_text(fields, name, limit):
@@ -205,7 +236,7 @@ class Handler(BaseHTTPRequestHandler):
             return
         try:
             context = json.loads(context_text)
-        except json.JSONDecodeError:
+        except (json.JSONDecodeError, RecursionError):
             self.send_json(400, {"error": "invalid_context", "detail": "context must be JSON"})
             return
         if not isinstance(context, dict):
@@ -242,7 +273,7 @@ class Handler(BaseHTTPRequestHandler):
             except ValueError as exc:
                 self.send_json(400, {"error": "invalid_context", "detail": str(exc)})
                 return
-            status = 422 if any(error["code"] == "ROW_LIMIT_EXCEEDED"
+            status = 422 if any(error["code"] in {"ROW_LIMIT_EXCEEDED", "XLSX_LIMIT_EXCEEDED"}
                                 for error in result["errors"]) else 200
             self.send_json(status, result)
         except (OSError, TimeoutError):
@@ -261,6 +292,6 @@ class Handler(BaseHTTPRequestHandler):
 if __name__ == "__main__":
     host = os.environ.get("PYTHON_HOST", "127.0.0.1")
     port = int(os.environ.get("PYTHON_PORT", "8001"))
-    with ThreadingHTTPServer((host, port), Handler) as server:
+    with BoundedThreadingHTTPServer((host, port), Handler) as server:
         print(f"Python probe listening on {host}:{port}", flush=True)
         server.serve_forever()
