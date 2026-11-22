@@ -91,3 +91,5 @@ CI проверяет Python, Go/PostgreSQL, интерфейс, Compose, без
 Python проверяет структуру книги и ячейки; Go проверяет дубли, клиента, период и числовые ограничения. Отсутствующее «Всего» наследуется только из более раннего среза той же пары клиент/период; значение и источник сохраняются. Отсутствие клиента в срезе не считается нулевым долгом.
 
 [Контракт API](backend/contracts/openapi.yaml), [роли и статусы](docs/scenarios/roles-and-statuses.md), [сверка требований заказчика](docs/scenarios/customer-comments-check.md), [статус H-00](reports/H-00-status.md).
+
+[Схема компонентов и путь данных](docs/architecture/components.md), [проверка готовности прототипа](reports/prototype-readiness.md), [процесс изменений](CONTRIBUTING.md).
