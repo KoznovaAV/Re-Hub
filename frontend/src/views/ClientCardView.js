@@ -7,7 +7,7 @@ import {
   periodLabel,
   users,
 } from "../mock/data.js";
-import { addEvent, reassignClient, takeClient, takeOverClient } from "../mock/api.js";
+import { addEvent, takeClient, takeOverClient, reassignClient, releaseClient, addClientAction } from "../mock/api.js";
 import { pushToast } from "../composables/useToast.js";
 import UiCard from "../components/UiCard.js";
 import UiBadge from "../components/UiBadge.js";
@@ -32,16 +32,15 @@ export default defineComponent({
     const client = computed(() => props.clients.find((item) => item.id === props.clientId) ?? null);
     const metrics = computed(() => (client.value ? clientMetrics(client.value,store.reportPeriod) : null));
     const isAdmin = computed(() => props.actor === "admin");
-    const canAct = computed(() => Boolean(client.value && (isAdmin.value || client.value.owner === props.actor)));
+    const canAct = computed(() => Boolean(client.value && (!isAdmin.value && client.value.owner === props.actor)));
     const loading = reactive({});
     const callOpen = ref(false);
-    const reassignOpen = ref(false);
-    const reassignTarget = ref("operator-a");
-    const operatorOptions = [
-      { value: "operator-a", label: "Оператор А" },
-      { value: "operator-b", label: "Оператор Б" },
-    ];
-    const form = reactive({ callbackOn: "", type: "call", result: "Дозвон", promise: "", stage: "", comment: "" });
+    const transferOpen=ref(false),actionOpen=ref(false),target=ref('operator-b');
+    const operatorOptions=Object.entries(users).filter(([key,u])=>u.role==='operator').map(([value,u])=>({value,label:u.name}));
+    const actionForm=reactive({kind:'claim',number:'',date:TODAY,status:'Направлена',comment:''});
+    const promiseOptions=[{value:'custom',label:'Своя дата'},{value:'month',label:'Конец текущего месяца'},{value:'next-month',label:'Конец следующего месяца'}];
+
+    const form = reactive({ date:TODAY,promiseChoice:"custom", callbackOn: "", type: "call", result: "Дозвон", promise: "", comment: "" });
     const errors = reactive({ result: "", promise: "" });
 
     const claims = computed(() => client.value?.claims ?? []);
@@ -52,7 +51,8 @@ export default defineComponent({
       if (!metrics.value) return [];
       let previousTotal = null;
       const items = metrics.value.history.map((item, index) => {
-        const total = item.total ?? previousTotal;
+        if(index===0||metrics.value.history[index-1].period!==item.period)previousTotal=null;
+ const total = item.total ?? previousTotal;
         const share = total > 0 ? Math.round((item.unsent / total) * 100) : null;
         const row = { ...item, total, share, inherited: item.total == null && previousTotal != null, current: index === metrics.value.history.length - 1 };
         previousTotal = total;
@@ -72,12 +72,6 @@ export default defineComponent({
       return items;
     });
 
-    const stageOptions = [
-      { value: "Не в работе", label: "Не в работе" },
-      { value: "В работе", label: "В работе" },
-      { value: "Ожидание", label: "Ожидание" },
-      { value: "Закрыт", label: "Закрыт" },
-    ];
     const resultOptions = [
       { value: "Дозвон", label: "Дозвон" },
       { value: "Обещание", label: "Обещание" },
@@ -94,10 +88,10 @@ export default defineComponent({
 
     function openCall() {
       form.type = "call";
+ form.date=TODAY;form.promiseChoice="custom";
       form.result = "Дозвон";
       form.promise = "";
       form.callbackOn = "";
-      form.stage = client.value?.stage ?? "В работе";
       form.comment = "";
       errors.result = "";
       errors.promise = "";
@@ -105,13 +99,23 @@ export default defineComponent({
     }
 
     async function saveCall() {
+      if(form.type==='call'&&form.result==='Обещание'&&form.promiseChoice!=='custom'){
+       const [y,m]=form.date.split('-').map(Number);const end=new Date(Date.UTC(y,m+(form.promiseChoice==='next-month'?1:0),0));form.promise=end.toISOString().slice(0,10);
+      }
+
       errors.result = form.type === "call" && !form.result ? "Укажите итог звонка." : "";
-      if (form.type === "call" && form.result === "Перенос" && (!form.callbackOn || form.callbackOn < TODAY)) { errors.promise = "Укажите дату повторного звонка не раньше сегодня."; return; }
-      errors.promise = form.result === "Обещание" && !form.promise ? "Укажите дату обещания." : "";
-      if (form.promise && form.promise < TODAY) errors.promise = "Дата обещания не может быть в прошлом.";
+      if (form.type === "call" && form.result === "Перенос" && (!form.callbackOn || form.callbackOn < form.date)) { errors.promise = "Укажите дату повторного звонка не раньше сегодня."; return; }
+      errors.promise = form.type === "call" && form.result === "Обещание" && !form.promise ? "Укажите дату обещания." : "";
+      if (form.type === "call" && form.result === "Обещание" && form.promise && form.promise < form.date) errors.promise = "Дата обещания не может быть в прошлом.";
       if (errors.result || errors.promise) return;
       loading.call = true;
-      const result = await addEvent(client.value.id, { ...form }, props.actor);
+      const payload = {type:form.type,comment:form.comment,date:form.date};
+      if(form.type === 'call') {
+        payload.result=form.result;
+        if(form.result === 'Обещание'){payload.promise=form.promise;payload.promiseLabel=promiseOptions.find(o=>o.value===form.promiseChoice)?.label;}
+        if(form.result === 'Перенос')payload.callbackOn=form.callbackOn;
+      }
+      const result = await addEvent(client.value.id, payload, props.actor);
       loading.call = false;
       if (!result.ok) {
         pushToast("Не удалось сохранить", result.message, "error");
@@ -137,17 +141,10 @@ export default defineComponent({
       else pushToast("Не удалось забрать", result.message, "error");
     }
 
-    async function reassign() {
-      loading.reassign = true;
-      const result = await reassignClient(client.value.id, props.actor, reassignTarget.value);
-      loading.reassign = false;
-      if (result.ok) {
-        reassignOpen.value = false;
-        pushToast("Ответственный изменён", `Клиент закреплён за ${result.ownerName}.`);
-      } else {
-        pushToast("Не удалось переназначить", result.message, "error");
-      }
-    }
+
+    async function transfer(){const r=await reassignClient(client.value.id,props.actor,target.value);if(r.ok){transferOpen.value=false;pushToast('Клиент передан','Ответственный изменён');}else pushToast('Не удалось передать',r.message,'error');}
+    async function release(){const r=await releaseClient(client.value.id,props.actor);if(r.ok)pushToast('Клиент освобождён','Освобождение записано в истории');else pushToast('Не удалось освободить',r.message,'error');}
+    async function saveAction(){const r=await addClientAction(client.value.id,{...actionForm},props.actor);if(r.ok){actionOpen.value=false;pushToast('Запись сохранена','Реквизиты письма добавлены в историю');}else pushToast('Не удалось сохранить',r.message,'error');}
 
     function plural(value, forms) {
       const tail = value % 100;
@@ -177,23 +174,18 @@ export default defineComponent({
       isAdmin,
       canAct,
       loading,
-      callOpen,
-      reassignOpen,
-      reassignTarget,
-      operatorOptions,
+      callOpen, transferOpen, actionOpen,target,operatorOptions,transfer,release,actionForm,saveAction,promiseOptions,
       form,
       errors,
       claims,
       sanctions,
       timeline,
-      stageOptions,
       resultOptions,
       typeOptions,
       openCall,
       saveCall,
       take,
       takeOver,
-      reassign,
       badgeToneFor,
       eventWord,
       plural,
@@ -218,15 +210,18 @@ export default defineComponent({
           <p class="page__subtitle mono">КЦР {{ client.externalId }} · ИНН {{ client.inn }} · КПП {{ client.kpp }}</p>
         </div>
         <div class="row row--wrap">
-          <UiButton v-if="metrics.free && !isAdmin" variant="secondary" :loading="loading.take" @click="take">Взять в работу</UiButton>
+          <UiButton v-if="canAct" variant="secondary" @click="transferOpen=true">Передать оператору</UiButton>
+ <UiButton v-if="canAct" variant="secondary" @click="release">Освободить</UiButton>
+ <UiButton v-if="isAdmin" variant="secondary" @click="actionOpen=true">Претензия / санкция</UiButton>
+ <UiButton v-if="metrics.free && !isAdmin" variant="secondary" :loading="loading.take" @click="take">Взять в работу</UiButton>
           <UiButton v-if="canAct && client.stage !== 'Закрыт'" variant="primary" @click="openCall">Зафиксировать взаимодействие</UiButton>
           <UiButton v-if="!canAct && metrics.owner && !isAdmin" variant="secondary" :loading="loading.takeOver" @click="takeOver">Забрать в работу</UiButton>
-          <UiButton v-if="isAdmin" variant="secondary" @click="reassignOpen = true">Переназначить</UiButton>
         </div>
       </div>
 
       <UiCard title="Связаться с клиентом" class="section">
-        <div class="grid grid--3"><div><strong>{{ client.contact.name }}</strong><p><a :href="'tel:'+client.contact.phone">{{ client.contact.phone }}</a></p><a :href="'mailto:'+client.contact.email">{{ client.contact.email }}</a></div>
+        <div v-if="client.contact.details" class="section">{{ client.contact.details }}</div>
+ <div class="grid grid--3"><div><strong>{{ client.contact.name }}</strong><p><a :href="'tel:'+client.contact.phone">{{ client.contact.phone }}</a></p><a :href="'mailto:'+client.contact.email">{{ client.contact.email }}</a></div>
         <div><strong>История общения</strong><p>{{ interactions[0] ? interactions[0].text : 'Звонков и комментариев пока нет' }}</p><p v-if="interactions[0]">{{ formatDate(interactions[0].date) }}; {{ interactions[0].result }}</p></div>
         <div><strong>Документы</strong><p>{{ metrics.unsent }} не передано из {{ metrics.total ?? '-' }}</p><p>Обещанный срок: {{ client.promise ? formatDate(client.promise) : 'Не указан' }}</p></div></div>
       </UiCard>
@@ -256,38 +251,32 @@ export default defineComponent({
 
       <div class="grid grid--sidebar">
         <div class="stack stack--lg">
-          <UiCard class="client-overview" title="Документы и сроки" :subtitle="metrics.last ? 'Последний срез: ' + periodLabel(metrics.last.period) : 'Нет наблюдений'">
-            <div class="grid grid--2">
-              <div class="stat">
-                <div class="stat__label">Всего документов</div>
-                <div class="stat__value">{{ metrics.total ?? '—' }}</div>
-                <div v-if="metrics.inherited" class="stat__hint">Унаследовано</div>
-              </div>
-              <div class="stat stat--warning">
-                <div class="stat__label">Не передано</div>
-                <div class="stat__value">{{ metrics.last ? metrics.unsent : '—' }}</div>
-                <div class="stat__hint">{{ metrics.share == null ? 'Доля не рассчитана' : metrics.share + '% от всего' }}</div>
-              </div>
-              <div class="stat">
-                <div class="stat__label">Динамика</div>
-                <div class="stat__value">{{ metrics.dynamics }}</div>
-                <div class="stat__hint">{{ metrics.delta == null ? 'Нет предыдущего среза' : (metrics.delta > 0 ? '+' : '') + metrics.delta + ' документов' }}</div>
-              </div>
-              <div class="stat">
-                <div class="stat__label">Обещание</div>
-                <div class="stat__value">{{ client.promise ? formatDate(client.promise) : '—' }}</div>
-                <div class="stat__hint">{{ client.promise ? 'Зафиксировано' : 'Не зафиксировано' }}</div>
+          <UiCard title="События" :subtitle="interactions.length + ' ' + eventWord(interactions.length)">
+            <template #actions>
+              <UiButton v-if="canAct && client.stage !== 'Закрыт'" size="sm" variant="secondary" @click="openCall">Добавить</UiButton>
+            </template>
+            <div v-if="interactions.length">
+              <div v-for="event in interactions" :key="event.id" class="event">
+                <div class="event__icon">{{ EVENT_ICONS[event.type] || '•' }}</div>
+                <div>
+                  <div class="event__head">
+                    <div class="event__title">{{ event.title }}</div>
+                    <div class="event__date">{{ formatDate(event.date) }}</div>
+                  </div>
+                  <div class="event__text">{{ event.text }}</div>
+                  <div v-if="event.callbackOn">Перезвонить: {{ formatDate(event.callbackOn) }}</div>
+                  <div v-if="event.promise" class="event__text">Обещание: {{ formatDate(event.promise) }} · {{ event.author }}</div>
+                  <div v-else class="event__text">{{ event.author }}</div>
+                </div>
               </div>
             </div>
-            <div class="divider"></div>
-            <div v-if="metrics.transferredPercent != null" class="client-progress">
-              <div class="row row--between">
-                <span>Передано оригиналов</span>
-                <strong>{{ metrics.transferred }} из {{ metrics.total }}</strong>
-              </div>
-              <progress :value="metrics.transferredPercent" max="100" aria-label="Доля переданных оригиналов"></progress>
-            </div>
-            <p v-else class="muted small">Долю переданных оригиналов пока нельзя рассчитать.</p>
+            <UiEmpty v-else icon="☎" title="Событий пока нет" text="Первый звонок появится здесь." />
+          </UiCard>
+          <UiCard title="Документы выбранного периода" :subtitle="metrics.last ? periodLabel(metrics.last.period) : 'Нет наблюдения'">
+            <div class="kv"><div class="kv__key">Всего</div><div class="kv__value">{{ metrics.total ?? '-' }}</div>
+            <div class="kv__key">Не передано</div><div class="kv__value">{{ metrics.missing ? 'Нет среза' : metrics.unsent }}</div>
+            <div class="kv__key">Доля долга</div><div class="kv__value">{{ metrics.missing || metrics.share == null ? '-' : metrics.share + '%' }}</div>
+            <div class="kv__key">Срок передачи</div><div class="kv__value">{{ client.promise ? formatDate(client.promise) : 'Не указан' }}</div></div>
           </UiCard>
 
           <UiCard title="История срезов" subtitle="Данные и звонки прошлых циклов сохранены">
@@ -321,46 +310,14 @@ export default defineComponent({
             </div>
           </UiCard>
 
-          <UiCard title="События" :subtitle="interactions.length + ' ' + eventWord(interactions.length)">
-            <template #actions>
-              <UiButton v-if="canAct && client.stage !== 'Закрыт'" size="sm" variant="secondary" @click="openCall">Добавить</UiButton>
-            </template>
-            <div v-if="interactions.length">
-              <div v-for="event in interactions" :key="event.id" class="event">
-                <div class="event__icon">{{ EVENT_ICONS[event.type] || '•' }}</div>
-                <div>
-                  <div class="event__head">
-                    <div class="event__title">{{ event.title }}</div>
-                    <div class="event__date">{{ formatDate(event.date) }}</div>
-                  </div>
-                  <div class="event__text">{{ event.text }}</div>
-                  <div v-if="event.callbackOn">Перезвонить: {{ formatDate(event.callbackOn) }}</div>
-                  <div v-if="event.promise" class="event__text">Обещание: {{ formatDate(event.promise) }} · {{ event.author }}</div>
-                  <div v-else class="event__text">{{ event.author }}</div>
-                </div>
-              </div>
-            </div>
-            <UiEmpty v-else icon="☎" title="Событий пока нет" text="Первый звонок появится здесь." />
-          </UiCard>
+
         </div>
 
         <div class="stack stack--lg">
-          <UiCard title="Контакт">
-            <div class="kv">
-              <div class="kv__key">Контактное лицо</div><div class="kv__value">{{ client.contact.name }}</div>
-              <div class="kv__key">Телефон</div><div class="kv__value">{{ client.contact.phone }}</div>
-              <div class="kv__key">Email</div><div class="kv__value">{{ client.contact.email }}</div>
-              <div class="kv__key">Ответственный</div><div class="kv__value">{{ metrics.ownerName }}</div>
-              <div class="kv__key">Этап</div><div class="kv__value">{{ client.stage }}</div>
-              <div class="kv__key">Обещание</div><div class="kv__value">{{ client.promise ? formatDate(client.promise) : '—' }}</div>
-            </div>
-            <div class="divider"></div>
-            <div class="stack stack--sm">
-              <UiButton v-if="canAct && client.stage !== 'Закрыт'" variant="primary" block @click="openCall">☎ Зафиксировать взаимодействие</UiButton>
-              <UiButton v-if="metrics.free && !isAdmin" variant="secondary" block :loading="loading.take" @click="take">Взять в работу</UiButton>
-              <UiButton v-if="isAdmin" variant="secondary" block @click="reassignOpen = true">Переназначить оператора</UiButton>
-              <UiButton v-if="!canAct && !isAdmin" variant="secondary" block :loading="loading.takeOver" @click="takeOver">Забрать в работу</UiButton>
-            </div>
+          <UiCard title="Работа с клиентом"><div class="kv">
+            <div class="kv__key">Ответственный</div><div class="kv__value">{{ metrics.ownerName }}</div>
+            <div class="kv__key">Этап обзвона</div><div class="kv__value">{{ client.stage }}</div></div>
+            <p class="muted small">Клиента берёт оператор. Результат звонка сохраняется отдельно от этапа и активности клиента.</p>
           </UiCard>
 
           <UiCard title="Претензии и санкции" :subtitle="claims.length + sanctions.length ? claims.length + ' ' + plural(claims.length, ['претензия', 'претензии', 'претензий']) + ' · ' + sanctions.length + ' ' + plural(sanctions.length, ['санкция', 'санкции', 'санкций']) : 'Нет записей'">
@@ -376,8 +333,8 @@ export default defineComponent({
             <div v-if="sanctions.length" class="stack stack--sm section">
               <div v-for="sanction in sanctions" :key="sanction.id" class="attention-item">
                 <div>
-                  <div class="table__primary">{{ sanction.type }}</div>
-                  <div class="table__secondary">{{ formatDate(sanction.date) }} · {{ sanction.amount }}</div>
+                  <div class="table__primary">Санкция № {{ sanction.number ?? sanction.type }}</div>
+                  <div class="table__secondary">{{ formatDate(sanction.date) }} · {{ sanction.comment ?? sanction.amount }}</div>
                 </div>
                 <UiBadge :tone="sanction.status === 'Списана' ? 'success' : 'warning'">{{ sanction.status }}</UiBadge>
               </div>
@@ -393,7 +350,7 @@ export default defineComponent({
               </div>
               <div v-if="metrics.overdue" class="callout callout--danger">
                 <div class="callout__icon">!</div>
-                <div><strong>Срок прошёл.</strong> Сравните долг с обещанием: даже частичное уменьшение не закрывает вопрос автоматически.</div>
+                <div><strong>Наступила дата звонка.</strong> Проверьте перенос последнего звонка.</div>
               </div>
               <div v-if="metrics.missing" class="callout callout--warning">
                 <div class="callout__icon">?</div>
@@ -401,7 +358,7 @@ export default defineComponent({
               </div>
               <div v-if="metrics.inherited" class="callout callout--accent">
                 <div class="callout__icon">i</div>
-                <div><strong>Неполный срез.</strong> «Всего» взято из предыдущего периода, доля пересчитана.</div>
+                <div><strong>Неполный срез.</strong> «Всего» взято из предыдущего среза того же периода, доля пересчитана.</div>
               </div>
             </div>
           </UiCard>
@@ -409,14 +366,15 @@ export default defineComponent({
       </div>
 
       <UiModal :open="callOpen" title="Зафиксировать событие" :subtitle="client.name" @close="callOpen = false">
-        <UiInput v-if="form.result === 'Перенос'" v-model="form.callbackOn" type="date" label="Дата повторного звонка" :error="errors.promise" />
+        <UiInput v-if="form.type === 'call' && form.result === 'Перенос'" v-model="form.callbackOn" type="date" label="Дата повторного звонка" :error="errors.promise" />
         <div class="stack">
+ <UiInput v-model="form.date" type="date" label="Дата события" :max="TODAY" required />
           <UiSelect v-model="form.type" :options="typeOptions" label="Тип события" />
           <template v-if="form.type === 'call'">
             <UiSelect v-model="form.result" :options="resultOptions" label="Итог звонка" required :error="errors.result" />
-            <UiInput v-if="form.result === 'Обещание'" v-model="form.promise" type="date" label="Дата обещания" required :error="errors.promise" :min="TODAY" />
+            <UiSelect v-if="form.result === 'Обещание'" v-model="form.promiseChoice" :options="promiseOptions" label="Срок передачи документов" />
+ <UiInput v-if="form.result === 'Обещание' && form.promiseChoice === 'custom'" v-model="form.promise" type="date" label="Дата обещания" required :error="errors.promise" :min="form.date" />
           </template>
-          <UiSelect v-model="form.stage" :options="stageOptions" label="Этап после контакта" />
           <label class="field">
             <span class="field__label">Комментарий</span>
             <textarea v-model="form.comment" class="textarea" placeholder="Что обсудили, что обещал клиент"></textarea>
@@ -428,23 +386,20 @@ export default defineComponent({
         </template>
       </UiModal>
 
-      <UiModal :open="reassignOpen" title="Переназначить клиента" subtitle="Доступно только администратору" @close="reassignOpen = false">
-        <div class="stack">
-          <div class="callout callout--accent">
-            <div class="callout__icon">i</div>
-            <div>Текущий ответственный: <strong>{{ metrics.ownerName }}</strong>. Переназначение попадёт в историю.</div>
-          </div>
-          <UiSelect
-            v-model="reassignTarget"
-            :options="operatorOptions"
-            label="Новый ответственный"
-          />
-        </div>
-        <template #footer>
-          <UiButton variant="secondary" @click="reassignOpen = false">Отмена</UiButton>
-          <UiButton variant="primary" :loading="loading.reassign" @click="reassign">Назначить</UiButton>
-        </template>
+      <UiModal :open="transferOpen" title="Передать клиента" @close="transferOpen=false">
+        <UiSelect v-model="target" :options="operatorOptions" label="Ответственный оператор" />
+        <template #footer><UiButton variant="secondary" @click="transferOpen=false">Отмена</UiButton><UiButton @click="transfer">Передать</UiButton></template>
       </UiModal>
+      <UiModal :open="actionOpen" title="Претензия или санкция" @close="actionOpen=false">
+        <UiSelect v-model="actionForm.kind" :options="[{value:'claim',label:'Претензия'},{value:'sanction',label:'Санкция'}]" label="Вид" />
+        <UiInput v-model="actionForm.number" label="Номер официального письма" required />
+        <UiInput v-model="actionForm.date" type="date" label="Дата официального письма" required />
+        <UiInput v-model="actionForm.status" label="Статус" required />
+        <UiInput v-model="actionForm.comment" label="Комментарий" />
+        <template #footer><UiButton variant="secondary" @click="actionOpen=false">Отмена</UiButton><UiButton @click="saveAction">Сохранить запись</UiButton></template>
+      </UiModal>
+
+
 
 
     </div>

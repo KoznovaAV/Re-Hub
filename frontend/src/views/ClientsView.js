@@ -47,13 +47,15 @@ export default defineComponent({
 
     const stageOptions = computed(() => [
       { value: "all", label: "Все этапы" },
-      ...filters.stages.value.filter((item) => item !== "all").map((item) => ({ value: item, label: item === "Ключевой" ? "VIP / Ключевой" : item })),
+      ...filters.stages.value.filter((item) => item !== "all").map((item) => ({ value: item, label: ({vip:"VIP",integrator:"Интегратор",tech_partner:"Техпартнёр",mpp:"МПП",newcomer:"Новичок",Ключевой:"VIP / Ключевой"})[item]??item })),
     ]);
     const tagOptions = computed(() => [
       { value: "all", label: "Все типы" },
-      ...filters.tags.value.filter((item) => item !== "all").map((item) => ({ value: item, label: item === "Ключевой" ? "VIP / Ключевой" : item })),
+      ...filters.tags.value.filter((item) => item !== "all").map((item) => ({ value: item, label: ({vip:"VIP",integrator:"Интегратор",tech_partner:"Техпартнёр",mpp:"МПП",newcomer:"Новичок",Ключевой:"VIP / Ключевой"})[item]??item })),
     ]);
     const shareOptions = [
+ {value:"5",label:"от 5%"},
+ {value:"25",label:"от 25%"},
       { value: "0", label: "Любая доля" },
       { value: "10", label: "от 10%" },
       { value: "20", label: "от 20%" },
@@ -76,7 +78,7 @@ export default defineComponent({
 
     async function take(row) {
       if (isAdmin.value) {
-        pushToast("Действие недоступно", "Администратор не берёт клиентов в работу. Откройте карточку и назначьте оператора.", "warning");
+        pushToast("Действие недоступно", "Администратор не берёт клиентов в работу. Операторы распределяют клиентов самостоятельно.", "warning");
         return;
       }
       loading[row.client.id] = true;
@@ -87,11 +89,11 @@ export default defineComponent({
     }
 
     async function pool() {
-      const result = await addToPool(selected.value);
+      const result = await addToPool(selected.value,props.actor);
       if (result.ok) {
         pushToast("Добавлено в пул", `${result.changed} клиентов доступны для обзвона.`);
         selected.value = [];
-      }
+      }else pushToast("Не удалось добавить в пул",result.message,"error");
     }
 
     function badgeTone(row) {

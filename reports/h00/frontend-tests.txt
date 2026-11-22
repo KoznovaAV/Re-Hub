@@ -1,0 +1,31 @@
+
+> test
+> node --test src/*.test.mjs
+
+✔ call list excludes missing period, zero debt and excluded clients (0.899491ms)
+✔ call counts and callback are separate from assignment and document promise (0.344114ms)
+✔ hidden clients leave selection (0.636309ms)
+✔ export prevents formulas and quotes values (0.172247ms)
+✔ undated legacy calls are not evidence that no call occurred in a period (0.175181ms)
+✔ S1: partial decrease is computed within a quarter and owner is retained (6.985553ms)
+✔ S2/S4: unchanged and partial values do not erase contacts or change owner (1406.751396ms)
+✔ S3: a positive value after a closed cycle is repeated, not a cross-quarter delta (0.752342ms)
+✔ S5: a client already owned is not duplicated in the pool (381.361697ms)
+✔ S6: 4% is excluded for an ordinary client and allowed for a newcomer; 5% is inclusive (0.687786ms)
+✔ S7: missing observation is distinct from zero and is not a candidate (0.289942ms)
+✔ S8: a missing total inherits within the same quarter, never from another quarter (701.037787ms)
+✔ zero documents produces a separate fully transferred state (0.410402ms)
+✔ operator transfers and releases explicitly; the former owner cannot write (102.205185ms)
+✔ historical dates and official letter details are retained (101.817657ms)
+✔ two separate sets of 15 clients; period observations stay separate (1.70315ms)
+✔ exclusion, missing observation and previous calls are respected (0.553556ms)
+Admin filters, callback, operator queues and partial import OK
+✔ src/ui.test.mjs (3769.772024ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3786.842222

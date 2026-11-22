@@ -6,6 +6,9 @@ from statistics import median
 
 
 def evaluate(payload):
+    kind = payload.get('data_kind', 'measured')
+    if kind not in ('measured', 'simulated'):
+        raise ValueError('data_kind: measured или simulated')
     gold, runs = payload['gold'], payload['runs']
     if len(gold) != 2 or len(runs) != 4:
         raise ValueError('Нужны два набора и четыре прохода')
@@ -14,7 +17,7 @@ def evaluate(payload):
         ids, expected, excluded = set(item['all_ids']), set(item['expected']), set(item['excluded'])
         if len(item['all_ids']) != 15 or len(ids) != 15 or ids & all_ids:
             raise ValueError('Нужны непересекающиеся наборы по 15 клиентов')
-        if not expected or expected & excluded or not (expected | excluded) <= ids or not item.get('approved_by'):
+        if not expected or expected & excluded or not (expected | excluded) <= ids or (kind == 'measured' and not item.get('approved_by')):
             raise ValueError('Нужен согласованный эталон без противоречий')
         all_ids |= ids
     participants = {r['participant'] for r in runs}
@@ -41,8 +44,15 @@ def evaluate(payload):
     times = {tool:median(s['seconds'] for s in scores if s['tool']==tool) for tool in ('excel','rehub')}
     quality = all(s['precision'] >= .8 and s['recall'] >= .9 and not s['excluded_errors'] for s in scores if s['tool']=='rehub')
     speedup = times['excel']/times['rehub']
-    return {'hypothesis':'H-00','speedup':speedup,'median_seconds':times,'quality_passed':quality,
-            'confirmed':quality and speedup >= 2,'runs':scores}
+    criteria_met = quality and speedup >= 2
+    return {'hypothesis':'H-00','data_kind':kind,
+            'human_participants':0 if kind == 'simulated' else len(participants),
+            'speedup':speedup,'median_seconds':times,'quality_passed':quality,
+            'criteria_met':criteria_met,
+            'confirmed':criteria_met and kind == 'measured',
+            'conclusion':('Учебные смоделированные данные: не подтверждают работу реальных пользователей.'
+                          if kind == 'simulated' else 'Критерии пилота выполнены.' if criteria_met else 'Критерии пилота не выполнены.'),
+            'runs':scores}
 
 
 if __name__ == '__main__':

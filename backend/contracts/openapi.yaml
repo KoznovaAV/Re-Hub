@@ -130,28 +130,32 @@ paths:
   /call-list:
     get:
       tags: [Workflow]
-      summary: Список обзвона по трём независимым фильтрам
+      summary: Список обзвона по периоду, количеству, доле и фактам звонков
       parameters:
-        - $ref: '#/components/parameters/LimitParam'
-        - $ref: '#/components/parameters/OffsetParam'
-        - name: min_share
-          in: query
-          description: Минимальная доля непереданных документов, %
-          schema: { type: number, minimum: 0, maximum: 100 }
         - name: tag
           in: query
-          description: Тег клиента (vip, integrator, tech_partner, mpp)
           schema: { type: string }
-        - name: contacted
-          in: query
-          description: Был ли по клиенту хотя бы один звонок
-          schema: { type: string, enum: [yes, no] }
         - name: stage
           in: query
           schema: { type: string }
+        - name: period
+          in: query
+          schema: { type: string }
+          description: Период документов и звонков; по умолчанию последний период срезов
+        - name: min_unsent
+          in: query
+          schema: { type: integer, minimum: 0 }
+        - name: min_share
+          in: query
+          schema: { type: number, minimum: 0, maximum: 100 }
+        - name: contacted
+          in: query
+          schema: { type: string, enum: [yes, no] }
+        - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/OffsetParam'
       responses:
         '200':
-          description: Свободные клиенты без исключений, отсортированные по доле долга
+          description: Свободные активные клиенты без исключений и с положительным долгом, отсортированные по коду
           content:
             application/json:
               schema:
@@ -281,28 +285,21 @@ paths:
         '409': { $ref: '#/components/responses/Conflict' }
         '404': { $ref: '#/components/responses/NotFound' }
 
-  /clients/{external_id}/reassign:
+  /clients/{external_id}/take-over:
     post:
       tags: [Workflow]
-      summary: Переназначить клиента другому оператору
+      summary: Оператор забирает назначенного клиента себе
+      description: Администратору запрещено. Целевой пользователь берётся из идентификатора текущего оператора. Тело отсутствует либо пустой JSON-объект.
       parameters:
         - name: external_id
           in: path
           required: true
           schema: { type: string }
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [user_id]
-              properties:
-                user_id: { type: string, format: uuid }
       responses:
-        '200': { description: Ответственный изменён }
-        '403': { description: Нужны права администратора }
-        '404': { $ref: '#/components/responses/NotFound' }
+        '200': { description: Клиент закреплён за текущим оператором }
+        '400': { description: Передан целевой пользователь или некорректное тело }
+        '403': { description: Действие разрешено только оператору }
+        '404': { description: Назначенный активный клиент не найден }
 
   /clients/{external_id}/events:
     post:
@@ -322,10 +319,12 @@ paths:
               required: [event_type]
               properties:
                 event_type: { type: string, enum: [call, email, comment] }
-                result: { type: string, enum: [Дозвон, Обещание, Отказ, Недозвон] }
+                result: { type: string, enum: [Дозвон, Обещание, Отказ, Недозвон, Перенос, Не тот контакт] }
                 comment: { type: string }
-                stage: { type: string }
-                promised_at: { type: string, format: date }
+                promise_label: { type: string, description: Выбранное название обещанного срока }
+                promised_at: { type: string, format: date, description: Только для обещания передать документы }
+                callback_on: { type: string, format: date, description: Обязательна при переносе звонка; не раньше event_date }
+                period_code: { type: string, description: Обязателен для звонка }
                 event_date: { type: string, format: date, description: Для исторических записей }
       responses:
         '201': { description: Событие создано }
@@ -334,7 +333,7 @@ paths:
   /today:
     get:
       tags: [Workflow]
-      summary: Получить список "Сегодня нужно"
+      summary: Получить явно назначенные повторные звонки текущего оператора
       responses:
         '200':
           description: Список задач
@@ -344,6 +343,82 @@ paths:
                 type: array
                 items: { $ref: '#/components/schemas/TodayTask' }
 
+
+  /workspace:
+    get:
+      tags: [Clients]
+      summary: Страница доступных клиентов с историей срезов, событий и официальных писем
+      description: Оператор получает только пул и назначенных клиентов. Параметры limit (до 1000), offset.
+      responses:
+        '200': { description: data, meta, history, events, actions }
+  /pool:
+    post:
+      tags: [Workflow]
+      summary: Администратор передаёт выбранных кандидатов в пул
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ids, period]
+              properties:
+                ids: { type: array, maxItems: 5000, items: { type: string } }
+                period: { type: string }
+      responses:
+        '200': { description: Число добавленных клиентов changed }
+        '403': { description: Только администратор }
+  /clients/{external_id}/reassign:
+    post:
+      tags: [Workflow]
+      summary: Ответственный оператор передаёт клиента коллеге
+      parameters:
+        - { name: external_id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id]
+              properties:
+                user_id: { type: string, format: uuid }
+      responses:
+        '200': { description: Новый ответственный и запись аудита сохранены }
+        '403': { description: Только текущий ответственный оператор }
+        '422': { description: Неверный оператор }
+  /clients/{external_id}/release:
+    post:
+      tags: [Workflow]
+      summary: Ответственный оператор вручную освобождает клиента
+      parameters:
+        - { name: external_id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Клиент освобождён, история сохранена }
+        '403': { description: Только текущий ответственный оператор }
+  /clients/{external_id}/actions:
+    post:
+      tags: [Workflow]
+      summary: Администратор регистрирует претензию или санкцию
+      parameters:
+        - { name: external_id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [kind, number, date, status]
+              properties:
+                kind: { type: string, enum: [claim, sanction] }
+                number: { type: string }
+                date: { type: string, format: date }
+                status: { type: string }
+                comment: { type: string }
+      responses:
+        '201': { description: Реквизиты письма сохранены в карточке и истории }
+        '403': { description: Только администратор }
+        '422': { description: Незаполненные реквизиты }
 
 components:
   securitySchemes:
@@ -357,7 +432,7 @@ components:
       name: X-User-Id
       in: header
       required: false
-      description: UUID пользователя; в демо по умолчанию оператор А. Роль администратора — X-Role admin.
+      description: UUID пользователя; в демо по умолчанию оператор А. X-Role admin включает чтение и импорт администратора, но не операторские действия.
       schema: { type: string, format: uuid }
 
   responses:
@@ -508,6 +583,8 @@ components:
         event_date: { type: string, format: date }
         result: { type: string }
         promised_at: { type: string, format: date, nullable: true }
+        callback_on: { type: string, format: date, nullable: true }
+        period_code: { type: string, nullable: true }
         comment: { type: string }
         author_name: { type: string }
 

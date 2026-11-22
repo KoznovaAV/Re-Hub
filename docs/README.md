@@ -12,3 +12,6 @@
 
 - [Требования ревью](scenarios/customer-review.md)
 - [Проверка H-00](../reports/H-00-status.md)
+
+- [Роли и состояния](scenarios/roles-and-statuses.md)
+- [Автоматизированный эксперимент H-00](../reports/h00/automated.md)

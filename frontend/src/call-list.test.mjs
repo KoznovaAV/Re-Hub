@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {callSummary,eligibleForCall,visibleSelection,csvCell} from './composables/call-list.mjs';
-const client=()=>({id:'a',active:true,stage:'В работе',history:[{period:'2026Q2',unsent:10}],events:[]});
+const client=()=>({id:'a',active:true,stage:'В работе',history:[{period:'2026Q2',unsent:10,total:100}],events:[]});
 test('call list excludes missing period, zero debt and excluded clients',()=>{
  const c=client();assert.equal(eligibleForCall(c,'2026Q3'),false);assert.equal(eligibleForCall(c,'2026Q2'),true);
  for(const patch of [{excluded:true},{active:false},{stage:'Закрыт'},{history:[{period:'2026Q2',unsent:0}]}])assert.equal(eligibleForCall({...c,...patch},'2026Q2'),false);

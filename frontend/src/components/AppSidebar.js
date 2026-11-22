@@ -1,3 +1,4 @@
+import { store } from "../mock/data.js";
 import { computed, defineComponent } from "vue";
 import { users } from "../mock/data.js";
 
@@ -19,7 +20,7 @@ export default defineComponent({
       ...(isAdmin.value ? [{ id: "import", label: "Импорт данных", icon: "⇪", count: 0 }] : []),
       { id: "history", label: "История и аналитика", icon: "◔", count: 0 },
     ].filter(item => isAdmin.value || item.id === "work"));
-    return { items, users };
+    return { items, users,store };
   },
   template: `
     <aside class="sidebar">
@@ -48,7 +49,7 @@ export default defineComponent({
 
       <div class="sidebar__footer">
         <div class="sidebar__footer-title">{{ users[actor].name }}</div>
-        <div class="sidebar__footer-text">Демо-режим. Данные хранятся в памяти браузера и сбрасываются при перезагрузке.</div>
+        <div class="sidebar__footer-text">{{ store.live ? "Рабочие данные. Изменения сохраняются." : "Демонстрация. Изменения сбрасываются при перезагрузке." }}</div>
       </div>
     </aside>
   `,

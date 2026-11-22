@@ -70,6 +70,29 @@ func (s *Server) importClients(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 	errorsList := convertParserErrors(result.Errors)
+	if r.URL.Query().Get("preview") == "true" {
+		out := []map[string]any{}
+		created, updated := 0, 0
+		for _, row := range rows {
+			var exists bool
+			s.pool.QueryRow(r.Context(), "SELECT EXISTS(SELECT 1 FROM clients WHERE external_id=$1)", row.ExternalID).Scan(&exists)
+			action := "create"
+			if exists {
+				action = "update"
+				updated++
+			} else {
+				created++
+			}
+			out = append(out, map[string]any{"row": row.SourceRow, "externalId": row.ExternalID, "name": row.Name, "action": action})
+		}
+		writeJSON(w, 200, map[string]any{"rows": out, "errors": errorsList, "counters": map[string]int{"created": created, "updated": updated, "errors": len(errorsList), "total": result.NonemptyRowCount}, "fatal": false})
+		return
+	}
+	if len(errorsList) > 0 && r.FormValue("accept_partial") != "true" {
+		writeError(w, 422, "PARTIAL_IMPORT_REQUIRES_CONSENT", "Confirm importing valid rows separately")
+		return
+	}
+
 	keyMode, _ := context["key_mode"].(string)
 	importResult, err := s.store.SaveClients(r.Context(), name, actorID(r), keyMode, result.NonemptyRowCount, rows, errorsList)
 	if err != nil {
@@ -129,6 +152,41 @@ func (s *Server) importSnapshot(w http.ResponseWriter, r *http.Request) {
 			Sheet:      row.Source.Sheet,
 			Row:        row.Source.Row,
 		})
+	}
+	if r.URL.Query().Get("preview") == "true" {
+		out := []map[string]any{}
+		errorsList := convertParserErrors(result.Errors)
+		accepted := 0
+		for _, row := range rows {
+			var exists bool
+			s.pool.QueryRow(r.Context(), "SELECT EXISTS(SELECT 1 FROM clients WHERE external_id=$1)", row.ExternalID).Scan(&exists)
+			status := "update"
+			if !exists {
+				status = "error"
+				n := row.Row
+				errorsList = append(errorsList, store.ParsedError{Scope: "row", Row: &n, Code: "CLIENT_UNKNOWN", Message: "Client must be imported before the snapshot", ExternalID: row.ExternalID})
+			} else {
+				accepted++
+			}
+			out = append(out, map[string]any{"row": row.Row, "externalId": row.ExternalID, "total": row.TotalDocs, "unsent": row.NotSent, "status": status})
+		}
+		writeJSON(w, 200, map[string]any{"rows": out, "errors": errorsList, "counters": map[string]int{"accepted": accepted, "errors": len(errorsList), "total": result.NonemptyRowCount}, "fatal": false})
+		return
+	}
+	unknown := false
+	for _, row := range rows {
+		var exists bool
+		if err := s.pool.QueryRow(r.Context(), "SELECT EXISTS(SELECT 1 FROM clients WHERE external_id=$1)", row.ExternalID).Scan(&exists); err != nil {
+			writeError(w, 500, "DB_ERROR", "Could not validate client codes")
+			return
+		}
+		if !exists {
+			unknown = true
+		}
+	}
+	if (len(result.Errors) > 0 || unknown) && r.FormValue("accept_partial") != "true" {
+		writeError(w, 422, "PARTIAL_IMPORT_REQUIRES_CONSENT", "Confirm importing valid rows separately")
+		return
 	}
 	scope := stringSlice(context["period_scope"])
 	importResult, err := s.store.SaveSnapshot(r.Context(), name, scope, snapshotDate, actorID(r), result.NonemptyRowCount, rows, convertParserErrors(result.Errors))

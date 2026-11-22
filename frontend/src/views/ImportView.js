@@ -1,6 +1,7 @@
+import {upload,reloadWorkspace} from "../composables/live-api.js";
 import { computed, defineComponent, ref } from "vue";
 import { importClients, importSlice, confirmClients, confirmSlice } from "../mock/api.js";
-import { TODAY, formatDate } from "../mock/data.js";
+import { TODAY, formatDate, store } from "../mock/data.js";
 import { pushToast } from "../composables/useToast.js";
 import UiCard from "../components/UiCard.js";
 import UiBadge from "../components/UiBadge.js";
@@ -16,6 +17,7 @@ export default defineComponent({
   emits: ["navigate", "open-client"],
   setup(props, { emit }) {
     const tab = ref("clients");
+ const pendingFile=ref(null),snapshotDate=ref(TODAY),contextText=ref(""),live=store.live;
     const step = ref("idle");
     const result = ref(null);
     const doneSummary = ref(null);
@@ -62,6 +64,11 @@ export default defineComponent({
 
     async function onFile(file) {
       if (!file) return;
+      if(store.live){
+       pendingFile.value=file;step.value='loading';acceptPartial.value=false;
+       try{const data=await upload(file,tab.value,{preview:true,date:snapshotDate.value,context:contextText.value});result.value={...data,fileName:file.name,errors:data.errors??[]};step.value='preview';}
+       catch(e){step.value='idle';pushToast('Не удалось проверить файл',e.message,'error');}return;
+      }
       const name = file.name.toLowerCase();
       let kind = "success";
       if (tab.value === "clients" && name.includes("duplicate")) kind = "duplicate";
@@ -87,6 +94,12 @@ export default defineComponent({
     async function confirm() {
       if (!canConfirm.value) return;
       loading.value = true;
+      if(store.live){
+       try{const r=await upload(pendingFile.value,tab.value,{date:snapshotDate.value,context:contextText.value,acceptPartial:acceptPartial.value});
+        const c=r.data.counters;result.value.errors=r.data.errors??[];doneSummary.value={created:c.created,updated:c.updated,accepted:c.rows_ok,errors:c.rows_errors};
+        await reloadWorkspace();step.value='done';pushToast('Импорт завершён','Принято строк: '+c.rows_ok+'. Ошибок: '+c.rows_errors);
+       }catch(e){pushToast('Импорт не выполнен',e.message,'error');}finally{loading.value=false;}return;
+      }
       const response =
         tab.value === "clients" ? await confirmClients(result.value) : await confirmSlice(result.value);
       loading.value = false;
@@ -115,7 +128,7 @@ export default defineComponent({
       const errors = result.value?.errors ?? [];
       const rows = [
         ["Строка", "Колонка", "Код", "Причина", "Значение"],
-        ...errors.map((error) => [error.row, error.column, error.code, error.message, error.value]),
+        ...errors.map((error) => [error.row, error.column, error.code, error.message, error.value ?? error.raw_value]),
       ];
       const csv = rows
         .map((row) => row.map((value) => `"${String(value ?? "").replaceAll('"', '""')}"`).join(";"))
@@ -133,7 +146,7 @@ export default defineComponent({
     }
 
     return {
-      tab,
+      tab,live,store,snapshotDate,contextText,
       step,
       result,
       doneSummary,
@@ -176,6 +189,11 @@ export default defineComponent({
       </div>
 
       <template v-else>
+       <div v-if="live" class="card section stack">
+        <p>Загрузите XLSX: сначала проверка и предпросмотр, затем сохранение. Ошибочные строки можно скачать.</p>
+        <label v-if="tab==='slice'" class="field">Дата среза<input v-model="snapshotDate" type="date" class="input" /></label>
+        <details><summary>Настройка формата файла</summary><p>По умолчанию используется согласованный формат заказчика. Для другого шаблона укажите JSON сопоставления колонок.</p><textarea v-model="contextText" class="textarea" aria-label="Настройка формата файла"></textarea></details>
+       </div>
         <div class="row row--between section">
           <UiTabs :model-value="tab" :tabs="tabs" @update:model-value="switchTab" />
           <span class="small muted">Шаблон: согласованный XLSX · период определяется по вкладке</span>
@@ -192,7 +210,7 @@ export default defineComponent({
               >
                 <div class="dropzone__icon">⇪</div>
                 <div class="dropzone__title">Перетащите XLSX сюда</div>
-                <div class="dropzone__text">Файл не отправляется на сервер: это демо на mock-данных. Для сценария ошибки выберите демо-файл ниже.</div>
+                <div class="dropzone__text">{{ live ? "Файл будет проверен перед сохранением." : "Демонстрация на подготовленных данных. Изменения сбрасываются при перезагрузке." }}</div>
                 <div class="row dropzone__actions">
                   <UiButton variant="primary" @click="pickFile">Выбрать файл</UiButton>
                   <input ref="fileInput" class="sr-only" type="file" accept=".xlsx" @change="onFile($event.target.files[0])" />
@@ -309,7 +327,8 @@ export default defineComponent({
               </template>
             </UiCard>
 
-            <UiCard v-if="step === 'done'" title="Импорт завершён" subtitle="Изменения применены к демо-базе">
+            <UiCard v-if="step === 'done'" title="Импорт завершён" :subtitle="live ? 'Данные сохранены' : 'Изменения применены к демо-базе'">
+ <UiButton v-if="result?.errors?.length" variant="secondary" @click="downloadErrors">Скачать проблемные строки</UiButton>
               <div class="callout callout--accent section">
                 <div class="callout__icon">✓</div>
                 <div>
@@ -326,7 +345,7 @@ export default defineComponent({
           </div>
 
           <div class="stack stack--lg">
-            <UiCard title="Демо-сценарии" subtitle="Нажмите, чтобы воспроизвести сценарий из ТЗ">
+            <UiCard v-if="!live" title="Демо-сценарии" subtitle="Нажмите, чтобы воспроизвести сценарий из ТЗ">
               <div class="demo-list">
                 <button v-for="demo in demos" :key="demo.kind" type="button" class="demo-item" @click="run(demo.kind)">
                   <span>

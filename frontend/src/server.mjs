@@ -46,7 +46,16 @@ createServer(async (request, response) => {
   const url = new URL(request.url ?? "/", "http://localhost");
   const pathname = url.pathname;
 
-  if (request.method === "GET" && pathname === "/health") {
+  if (request.method === "GET" && pathname === "/app-config") return json(response,200,{live:process.env.REHUB_MODE!=="demo"});
+ if(pathname.startsWith("/api/v1/")){
+ try {
+ const chunks=[];let size=0;for await(const chunk of request){size+=chunk.length;if(size>26*1024*1024)return json(response,413,{message:"Файл слишком большой"});chunks.push(chunk);}
+ const headers={};for(const name of ["content-type","x-role","x-user-id"]){if(request.headers[name])headers[name]=request.headers[name];}
+ const upstream=await fetch(new URL(pathname+url.search,backend),{method:request.method,headers,body:["GET","HEAD"].includes(request.method)?undefined:Buffer.concat(chunks),signal:AbortSignal.timeout(60000),redirect:"error"});
+ return json(response,upstream.status,await upstream.json());
+ }catch{return json(response,502,{message:"Сервер данных недоступен"});}
+ }
+ if (request.method === "GET" && pathname === "/health") {
     return json(response, 200, { status: "ok", service: "frontend" });
   }
 
