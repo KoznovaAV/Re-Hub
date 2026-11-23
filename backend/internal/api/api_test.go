@@ -100,4 +100,29 @@ func TestConvertParserErrors(t *testing.T) {
 	if items[0].ExternalID != externalID || items[0].PeriodCode != period || items[0].RawValue != "bad" {
 		t.Fatalf("mapped error = %#v", items[0])
 	}
+	if !CompleteForCSV(items[0]) {
+		t.Fatalf("error incomplete for CSV: %#v", items[0])
+	}
+	csv := ErrorsCSV(items)
+	if !strings.Contains(csv, "Лист;Строка;Колонка;ID;Период;Код;Причина;Значение") {
+		t.Fatalf("csv header missing: %q", csv)
+	}
+	if !strings.Contains(csv, "1 кв 2026;7;A;AAA00001;2026Q1;INVALID_EXTERNAL_ID;bad id;bad") {
+		t.Fatalf("csv row missing fields: %q", csv)
+	}
+}
+
+func TestConvertParserErrorsFillsBlankReason(t *testing.T) {
+	column := "E"
+	item := parser.Error{
+		Scope: "row", Code: "INTEGER_REQUIRED", Message: "   ", RawValue: nil,
+		Source: &parser.Source{Sheet: "весь 2025 год", Row: 4, Column: &column},
+	}
+	items := convertParserErrors([]parser.Error{item})
+	if items[0].Message != "INTEGER_REQUIRED" {
+		t.Fatalf("message = %q", items[0].Message)
+	}
+	if !CompleteForCSV(items[0]) {
+		t.Fatalf("incomplete: %#v", items[0])
+	}
 }

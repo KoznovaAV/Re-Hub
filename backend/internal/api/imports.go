@@ -312,7 +312,11 @@ func firstFileError(result *parser.Result) *parser.Error {
 func convertParserErrors(items []parser.Error) []store.ParsedError {
 	result := make([]store.ParsedError, 0, len(items))
 	for _, item := range items {
-		parsed := store.ParsedError{Scope: item.Scope, Code: item.Code, Message: item.Message}
+		message := strings.TrimSpace(item.Message)
+		if message == "" {
+			message = item.Code
+		}
+		parsed := store.ParsedError{Scope: item.Scope, Code: item.Code, Message: message}
 		if item.Source != nil {
 			parsed.Sheet = item.Source.Sheet
 			row := item.Source.Row

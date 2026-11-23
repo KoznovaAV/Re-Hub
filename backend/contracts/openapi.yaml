@@ -1262,6 +1262,10 @@ components:
           format: date
     ImportError:
       type: object
+      description: |
+        Unified parser/domain error payload used by the import UI CSV download.
+        CSV columns: Лист=sheet, Строка=row, Колонка=column, ID=external_id,
+        Период=period_code, Код=code, Причина=message, Значение=raw_value.
       required:
       - scope
       - code
@@ -1277,8 +1281,10 @@ components:
           type: string
         message:
           type: string
+          description: Human-readable reason shown as Причина in the errors CSV
         raw_value:
           type: string
+          description: Original cell value shown as Значение in the errors CSV
         external_id:
           type: string
         period_code:
