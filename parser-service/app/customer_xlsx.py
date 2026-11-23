@@ -67,7 +67,7 @@ def key_error_from(cell, pattern):
     if cell.data_type == "f":
         return None, "FORMULA_NOT_ALLOWED"
     if cell.data_type == "e":
-        return None, "EXCEL_CELL_ERROR"
+        return None, "INVALID_EXTERNAL_ID"
     if value is None or isinstance(value, str) and not value.strip():
         return None, "INVALID_EXTERNAL_ID"
     if not isinstance(value, str):

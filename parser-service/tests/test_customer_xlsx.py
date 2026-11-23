@@ -79,7 +79,7 @@ class CustomerSnapshotTest(unittest.TestCase):
             "duplicate_groups": 1,
             "duplicate_observations": 1,
             "errors_by_code": {
-                "FORMULA_NOT_ALLOWED": 1, "EXCEL_CELL_ERROR": 1,
+                "FORMULA_NOT_ALLOWED": 1, "INVALID_EXTERNAL_ID": 1,
                 "KEY_MUST_BE_TEXT": 1, "INTEGER_REQUIRED": 1,
             },
         })
@@ -166,7 +166,7 @@ class CustomerSnapshotTest(unittest.TestCase):
         self.context["period_scope"] = ["Y2025"]
         result = parse_file(self.file, self.context)
         self.assertEqual([error["code"] for error in result["errors"]], [
-            "KEY_MUST_BE_TEXT", "EXCEL_CELL_ERROR", "FORMULA_NOT_ALLOWED",
+            "KEY_MUST_BE_TEXT", "INVALID_EXTERNAL_ID", "FORMULA_NOT_ALLOWED",
             "INVALID_EXTERNAL_ID",
         ])
         self.assertTrue(all(error["source"]["column"] == "A" for error in result["errors"]))

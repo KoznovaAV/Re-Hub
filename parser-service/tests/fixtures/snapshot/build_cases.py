@@ -171,7 +171,7 @@ CASES = {
                           "AAA00004", "Y2025"),
                 row_error("весь 2025 год", 7, "A", "KEY_MUST_BE_TEXT", 1234567,
                           None, "Y2025"),
-                row_error("весь 2025 год", 8, "A", "EXCEL_CELL_ERROR", "#N/A",
+                row_error("весь 2025 год", 8, "A", "INVALID_EXTERNAL_ID", "#N/A",
                           None, "Y2025"),
                 row_error("1 кв 2026", 4, "E", "FORMULA_NOT_ALLOWED", "=A1",
                           "AAA00006", "2026Q1"),

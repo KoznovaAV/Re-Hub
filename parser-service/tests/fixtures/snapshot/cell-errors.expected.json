@@ -92,7 +92,7 @@
     },
     {
       "scope": "row",
-      "code": "EXCEL_CELL_ERROR",
+      "code": "INVALID_EXTERNAL_ID",
       "message": "Invalid field at column A",
       "source": {
         "sheet": "весь 2025 год",
