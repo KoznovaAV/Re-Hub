@@ -7,6 +7,12 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 import threading
+from jsonschema.exceptions import ValidationError
+
+try:
+    from .contract import validate_result
+except ImportError:
+    from contract import validate_result
 
 
 def _env_int(name, default):
@@ -22,6 +28,10 @@ MAX_CONTEXT_BYTES = _env_int("PARSE_MAX_CONTEXT_BYTES", 64 * 1024)
 MAX_MULTIPART_PARTS = _env_int("PARSE_MAX_MULTIPART_PARTS", 20)
 MAX_ROWS = _env_int("PARSE_MAX_ROWS", 50_000)
 MAX_CONCURRENT_REQUESTS = _env_int("PARSE_MAX_CONCURRENCY", 8)
+ALLOWED_FILE_MIME = {
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/octet-stream",
+}
 
 
 class BoundedThreadingHTTPServer(ThreadingHTTPServer):
@@ -50,13 +60,13 @@ class BoundedThreadingHTTPServer(ThreadingHTTPServer):
 
 class Handler(BaseHTTPRequestHandler):
     def setup(self):
-        self.timeout = 15
+        self.timeout = 3
         super().setup()
 
     def send_json(self, status, payload):
-        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        body = json.dumps(payload).encode("utf-8")
         self.send_response(status)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
@@ -90,6 +100,9 @@ class Handler(BaseHTTPRequestHandler):
         except (ValueError, TypeError, MessageError):
             self.send_json(400, {"error": "invalid_multipart"})
             return
+        if not message.is_multipart():
+            self.send_json(400, {"error": "invalid_multipart"})
+            return
 
         file_data = None
         file_name = ""
@@ -103,6 +116,12 @@ class Handler(BaseHTTPRequestHandler):
             name = part.get_param("name", header="content-disposition")
             payload = part.get_payload(decode=True)
             if name == "file" and payload is not None:
+                if file_data is not None:
+                    self.send_json(400, {"error": "duplicate_file"})
+                    return
+                if part.get_content_type() not in ALLOWED_FILE_MIME:
+                    self.send_json(415, {"error": "unsupported_file_mime"})
+                    return
                 file_name = part.get_filename() or ""
                 file_data = payload
             elif name == "context" and payload is not None:
@@ -130,28 +149,37 @@ class Handler(BaseHTTPRequestHandler):
 
         kind = context.get("file_kind")
         temp_name = None
+        status, payload = 200, None
         try:
             with NamedTemporaryFile(delete=False, suffix=".xlsx") as temp:
                 temp.write(file_data)
                 temp_name = temp.name
+            parse_file = None
             if kind == "clients":
                 from customer_clients import parse_file
-                result = parse_file(temp_name, context)
             elif kind == "snapshot":
                 from customer_xlsx import parse_file
-                result = parse_file(temp_name, context, max_rows=MAX_ROWS)
             else:
-                self.send_json(422, {"error": "unsupported_file_kind"})
-                return
-            self.send_json(200, result)
+                status, payload = 422, {"error": "unsupported_file_kind"}
+            if parse_file is not None:
+                if kind == "snapshot":
+                    payload = validate_result(parse_file(temp_name, context, max_rows=MAX_ROWS))
+                else:
+                    payload = validate_result(parse_file(temp_name, context))
+        except ValidationError:
+            status, payload = 502, {"error": "parser_contract_violation"}
         except ValueError as exc:
-            self.send_json(422, {"error": "invalid_context", "message": str(exc)})
+            status, payload = 422, {"error": "invalid_context", "message": str(exc)}
+        except Exception:
+            status, payload = 500, {"error": "parser_failure"}
         finally:
             if temp_name:
                 try:
                     os.unlink(temp_name)
                 except OSError:
                     pass
+        # Completion must mean the temporary upload has already been removed.
+        self.send_json(status, payload)
 
     def do_GET(self):
         if self.path == "/health":
