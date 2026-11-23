@@ -1,0 +1,31 @@
+{
+  "list_version": "1.0",
+  "items": [
+    {
+      "external_id": "AAA00001",
+      "period_code": "Y2025",
+      "excluded": false
+    },
+    {
+      "external_id": "AAA00002",
+      "period_code": "Y2025",
+      "excluded": false
+    },
+    {
+      "external_id": "AAA00003",
+      "period_code": "2026Q1",
+      "excluded": false
+    },
+    {
+      "external_id": "AAA00004",
+      "period_code": "2026Q1",
+      "excluded": true,
+      "exclusion_reason": "synthetic exclusion"
+    },
+    {
+      "external_id": "AAA00005",
+      "period_code": "2026Q2",
+      "excluded": false
+    }
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "contract_version": "1.0",
+  "file_kind": "snapshot",
+  "key_mode": "anonymous",
+  "nonempty_row_count": 8,
+  "rows": [
+    {
+      "source": {
+        "sheet": "весь 2025 год",
+        "row": 3
+      },
+      "data": {
+        "external_id": "AAA00001",
+        "period_code": "Y2025",
+        "total_docs": 1234,
+        "unsent_docs": 2
+      }
+    },
+    {
+      "source": {
+        "sheet": "1 кв 2026",
+        "row": 3
+      },
+      "data": {
+        "external_id": "AAA00005",
+        "period_code": "2026Q1",
+        "total_docs": null,
+        "unsent_docs": 0
+      }
+    }
+  ],
+  "errors": [
+    {
+      "scope": "row",
+      "code": "FORMULA_NOT_ALLOWED",
+      "message": "Invalid field at column D",
+      "source": {
+        "sheet": "весь 2025 год",
+        "row": 4,
+        "column": "D"
+      },
+      "raw_value": "=1+1",
+      "key_hint": {
+        "external_id": "AAA00002",
+        "period_code": "Y2025"
+      }
+    },
+    {
+      "scope": "row",
+      "code": "EXCEL_CELL_ERROR",
+      "message": "Invalid field at column E",
+      "source": {
+        "sheet": "весь 2025 год",
+        "row": 5,
+        "column": "E"
+      },
+      "raw_value": "#N/A",
+      "key_hint": {
+        "external_id": "AAA00003",
+        "period_code": "Y2025"
+      }
+    },
+    {
+      "scope": "row",
+      "code": "INVALID_INTEGER",
+      "message": "Invalid field at column D",
+      "source": {
+        "sheet": "весь 2025 год",
+        "row": 6,
+        "column": "D"
+      },
+      "raw_value": "1 24",
+      "key_hint": {
+        "external_id": "AAA00004",
+        "period_code": "Y2025"
+      }
+    },
+    {
+      "scope": "row",
+      "code": "KEY_MUST_BE_TEXT",
+      "message": "Invalid field at column A",
+      "source": {
+        "sheet": "весь 2025 год",
+        "row": 7,
+        "column": "A"
+      },
+      "raw_value": 1234567,
+      "key_hint": {
+        "external_id": null,
+        "period_code": "Y2025"
+      }
+    },
+    {
+      "scope": "row",
+      "code": "INVALID_EXTERNAL_ID",
+      "message": "Invalid field at column A",
+      "source": {
+        "sheet": "весь 2025 год",
+        "row": 8,
+        "column": "A"
+      },
+      "raw_value": "#N/A",
+      "key_hint": {
+        "external_id": null,
+        "period_code": "Y2025"
+      }
+    },
+    {
+      "scope": "row",
+      "code": "FORMULA_NOT_ALLOWED",
+      "message": "Invalid field at column E",
+      "source": {
+        "sheet": "1 кв 2026",
+        "row": 4,
+        "column": "E"
+      },
+      "raw_value": "=A1",
+      "key_hint": {
+        "external_id": "AAA00006",
+        "period_code": "2026Q1"
+      }
+    }
+  ]
+}
