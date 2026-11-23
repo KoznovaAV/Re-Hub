@@ -1,0 +1,772 @@
+{
+  "python": "3.12.14",
+  "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+  "openpyxl": "3.1.5",
+  "input_sha256": "77f7c092d2693ebf673939e762bfa383c2dae4604e9df5a23cb9f0a73b973dc8",
+  "context_sha256": "7b9640d084f906c1ecbb86dfb5378313b656cda86f86d9ee48d7c38057ee62dd",
+  "repeat": 40,
+  "runs": [
+    {
+      "elapsed_seconds": 0.913449,
+      "parse_seconds": 0.215669,
+      "schema_seconds": 0.697897,
+      "peak_rss_mib": 46.52,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.915724,
+      "parse_seconds": 0.228835,
+      "schema_seconds": 0.686939,
+      "peak_rss_mib": 46.531,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.898181,
+      "parse_seconds": 0.206149,
+      "schema_seconds": 0.692082,
+      "peak_rss_mib": 46.523,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.889653,
+      "parse_seconds": 0.19292,
+      "schema_seconds": 0.696783,
+      "peak_rss_mib": 46.531,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.883732,
+      "parse_seconds": 0.216354,
+      "schema_seconds": 0.66743,
+      "peak_rss_mib": 46.527,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.917409,
+      "parse_seconds": 0.220262,
+      "schema_seconds": 0.697196,
+      "peak_rss_mib": 46.531,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.927626,
+      "parse_seconds": 0.224015,
+      "schema_seconds": 0.703663,
+      "peak_rss_mib": 46.516,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.958879,
+      "parse_seconds": 0.22927,
+      "schema_seconds": 0.729642,
+      "peak_rss_mib": 46.531,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.957854,
+      "parse_seconds": 0.230259,
+      "schema_seconds": 0.727661,
+      "peak_rss_mib": 46.512,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.924904,
+      "parse_seconds": 0.212688,
+      "schema_seconds": 0.712264,
+      "peak_rss_mib": 46.539,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.921922,
+      "parse_seconds": 0.231573,
+      "schema_seconds": 0.6904,
+      "peak_rss_mib": 46.527,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.886299,
+      "parse_seconds": 0.202506,
+      "schema_seconds": 0.68384,
+      "peak_rss_mib": 46.605,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.916834,
+      "parse_seconds": 0.212786,
+      "schema_seconds": 0.704098,
+      "peak_rss_mib": 46.527,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.915574,
+      "parse_seconds": 0.201932,
+      "schema_seconds": 0.713736,
+      "peak_rss_mib": 46.523,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.920893,
+      "parse_seconds": 0.204793,
+      "schema_seconds": 0.716152,
+      "peak_rss_mib": 46.52,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.918501,
+      "parse_seconds": 0.201938,
+      "schema_seconds": 0.716674,
+      "peak_rss_mib": 46.52,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.920436,
+      "parse_seconds": 0.221927,
+      "schema_seconds": 0.69856,
+      "peak_rss_mib": 46.52,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.880036,
+      "parse_seconds": 0.196749,
+      "schema_seconds": 0.683336,
+      "peak_rss_mib": 46.52,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.878492,
+      "parse_seconds": 0.196203,
+      "schema_seconds": 0.682379,
+      "peak_rss_mib": 46.535,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.912721,
+      "parse_seconds": 0.202505,
+      "schema_seconds": 0.710304,
+      "peak_rss_mib": 46.523,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.900164,
+      "parse_seconds": 0.208592,
+      "schema_seconds": 0.691625,
+      "peak_rss_mib": 46.52,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.92682,
+      "parse_seconds": 0.232794,
+      "schema_seconds": 0.694076,
+      "peak_rss_mib": 46.52,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.867409,
+      "parse_seconds": 0.195502,
+      "schema_seconds": 0.671966,
+      "peak_rss_mib": 46.52,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.908262,
+      "parse_seconds": 0.201764,
+      "schema_seconds": 0.706564,
+      "peak_rss_mib": 46.527,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.931513,
+      "parse_seconds": 0.229186,
+      "schema_seconds": 0.702491,
+      "peak_rss_mib": 46.496,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.886563,
+      "parse_seconds": 0.201758,
+      "schema_seconds": 0.684854,
+      "peak_rss_mib": 46.52,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.919701,
+      "parse_seconds": 0.208943,
+      "schema_seconds": 0.710806,
+      "peak_rss_mib": 46.516,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.873775,
+      "parse_seconds": 0.191126,
+      "schema_seconds": 0.682701,
+      "peak_rss_mib": 46.535,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.922977,
+      "parse_seconds": 0.207037,
+      "schema_seconds": 0.716236,
+      "peak_rss_mib": 46.527,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.919148,
+      "parse_seconds": 0.222574,
+      "schema_seconds": 0.696619,
+      "peak_rss_mib": 46.523,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.900438,
+      "parse_seconds": 0.220708,
+      "schema_seconds": 0.679781,
+      "peak_rss_mib": 46.527,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.901493,
+      "parse_seconds": 0.195828,
+      "schema_seconds": 0.705718,
+      "peak_rss_mib": 46.523,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.951433,
+      "parse_seconds": 0.223259,
+      "schema_seconds": 0.728223,
+      "peak_rss_mib": 46.527,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.968815,
+      "parse_seconds": 0.210174,
+      "schema_seconds": 0.758687,
+      "peak_rss_mib": 46.512,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.914746,
+      "parse_seconds": 0.23068,
+      "schema_seconds": 0.684115,
+      "peak_rss_mib": 46.52,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.962877,
+      "parse_seconds": 0.224587,
+      "schema_seconds": 0.73834,
+      "peak_rss_mib": 46.531,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.891333,
+      "parse_seconds": 0.204791,
+      "schema_seconds": 0.686588,
+      "peak_rss_mib": 46.539,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.912568,
+      "parse_seconds": 0.199768,
+      "schema_seconds": 0.71285,
+      "peak_rss_mib": 46.398,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.896056,
+      "parse_seconds": 0.19642,
+      "schema_seconds": 0.699694,
+      "peak_rss_mib": 46.52,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    },
+    {
+      "elapsed_seconds": 0.918891,
+      "parse_seconds": 0.24018,
+      "schema_seconds": 0.678761,
+      "peak_rss_mib": 46.512,
+      "summary": {
+        "source_rows": 12772,
+        "parsed_rows": 12768,
+        "rejected_rows": 4,
+        "duplicates_in_parsed_rows": 2,
+        "errors_by_code": {
+          "INVALID_EXTERNAL_ID": 4
+        }
+      },
+      "unique_clients": 4205,
+      "file_errors": 0
+    }
+  ],
+  "p95_seconds": 0.958879,
+  "p95_method": "nearest-rank",
+  "profile_separate_run": [
+    {
+      "function": "parser_benchmark.py:17:measure",
+      "calls": 1,
+      "self_seconds": 0.003544,
+      "cumulative_seconds": 3.039331
+    },
+    {
+      "function": "validators.py:349:iter_errors",
+      "calls": 12,
+      "self_seconds": 2e-05,
+      "cumulative_seconds": 2.309085
+    },
+    {
+      "function": "validators.py:396:descend",
+      "calls": 206303,
+      "self_seconds": 0.35921,
+      "cumulative_seconds": 2.309044
+    },
+    {
+      "function": "_keywords.py:290:properties",
+      "calls": 77417,
+      "self_seconds": 0.091505,
+      "cumulative_seconds": 2.308622
+    },
+    {
+      "function": "_keywords.py:59:items",
+      "calls": 33,
+      "self_seconds": 0.021258,
+      "cumulative_seconds": 2.289386
+    },
+    {
+      "function": "contract.py:12:validate_result",
+      "calls": 1,
+      "self_seconds": 4e-06,
+      "cumulative_seconds": 2.272082
+    },
+    {
+      "function": "validators.py:448:validate",
+      "calls": 1,
+      "self_seconds": 3e-06,
+      "cumulative_seconds": 2.272078
+    },
+    {
+      "function": "_keywords.py:332:allOf",
+      "calls": 102,
+      "self_seconds": 0.000228,
+      "cumulative_seconds": 1.591319
+    },
+    {
+      "function": "_keywords.py:382:if_",
+      "calls": 8,
+      "self_seconds": 2.1e-05,
+      "cumulative_seconds": 1.554254
+    },
+    {
+      "function": "_keywords.py:274:ref",
+      "calls": 13554,
+      "self_seconds": 0.00849,
+      "cumulative_seconds": 1.131024
+    },
+    {
+      "function": "customer_xlsx.py:79:parse_file",
+      "calls": 1,
+      "self_seconds": 0.024246,
+      "cumulative_seconds": 0.525484
+    },
+    {
+      "function": "validators.py:339:evolve",
+      "calls": 206270,
+      "self_seconds": 0.242569,
+      "cumulative_seconds": 0.517974
+    }
+  ],
+  "stage_median_seconds": {
+    "parse_seconds": 0.20955849999999998,
+    "schema_seconds": 0.6982284999999999
+  },
+  "median_seconds": 0.9156489999999999,
+  "maximum_peak_rss_mib": 46.605
+}

@@ -1,0 +1,91 @@
+name: Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        type: choice
+        options: [staging, production]
+        default: staging
+      image_tag:
+        description: Known-good image tag (sha-xxxxxxx or v1.2.3)
+        required: true
+        type: string
+
+concurrency:
+  group: deploy-${{ inputs.environment || 'staging' }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  preflight:
+    name: Preflight
+    runs-on: ubuntu-24.04
+    environment:
+      name: ${{ inputs.environment || 'staging' }}
+    outputs:
+      configured: ${{ steps.check.outputs.configured }}
+      owner: ${{ steps.owner.outputs.owner }}
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+    steps:
+      - name: Lowercase repository owner
+        id: owner
+        run: echo "owner=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+      - name: Check deployment secrets
+        id: check
+        run: |
+          if [ -n "${DEPLOY_HOST}" ] && [ -n "${DEPLOY_USER}" ] && [ -n "${DEPLOY_SSH_KEY}" ] && [ -n "${DEPLOY_PATH}" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::error title=Rollback not configured::DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY or DEPLOY_PATH is missing."
+            exit 1
+          fi
+
+  rollback:
+    name: Rollback ${{ inputs.environment }}
+    needs: preflight
+    if: needs.preflight.outputs.configured == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment:
+      name: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Copy deploy files
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          source: "deploy/"
+          target: ${{ secrets.DEPLOY_PATH }}
+          strip_components: 1
+          overwrite: true
+      - name: Roll back over SSH
+        uses: appleboy/ssh-action@v1
+        env:
+          IMAGE_TAG: ${{ inputs.image_tag }}
+          IMAGE_OWNER: ${{ needs.preflight.outputs.owner }}
+          GHCR_USER: ${{ secrets.GHCR_USER || github.actor }}
+          GHCR_TOKEN: ${{ secrets.GHCR_READ_TOKEN }}
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          script_stop: true
+          envs: IMAGE_TAG,IMAGE_OWNER,GHCR_USER,GHCR_TOKEN
+          script: |
+            cd "${{ secrets.DEPLOY_PATH }}"
+            chmod +x remote-deploy.sh remote-rollback.sh
+            ./remote-rollback.sh

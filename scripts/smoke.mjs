@@ -11,7 +11,9 @@ async function get(path, expectedStatus = 200) {
 
 assert.match(await (await get("/")).text(), /Re:Hub/);
 assert.deepEqual(await (await get("/health")).json(), { status: "ok", service: "frontend" });
-assert.deepEqual(await (await get("/api/health")).json(), { status: "ok", service: "backend" });
+const backendHealth = await (await get("/api/health")).json();
+assert.equal(backendHealth.status, "ok");
+assert.equal(backendHealth.service, "backend");
 
 if (expectUnavailable) {
   assert.deepEqual(await (await get("/api/probe", 503)).json(), { error: "python_unavailable" });

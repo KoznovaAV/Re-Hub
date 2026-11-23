@@ -1,0 +1,440 @@
+{
+  "contract_version": "1.0",
+  "file_kind": "clients",
+  "key_mode": "anonymous",
+  "nonempty_row_count": 30,
+  "rows": [
+    {
+      "source": {
+        "sheet": "Все КЦР",
+        "row": 3
+      },
+      "data": {
+        "external_id": "AAA00001",
+        "tags": [
+          "vip"
+        ],
+        "excluded": false,
+        "active": true,
+        "contact_details": "Админ S1 +70001"
+      }
+    },
+    {
+      "source": {
+        "sheet": "Все КЦР",
+        "row": 4
+      },
+      "data": {
+        "external_id": "AAA00002",
+        "excluded": false,
+        "active": true,
+        "contact_details": "Админ S2 +70002"
+      }
+    },
+    {
+      "source": {
+        "sheet": "Все КЦР",
+        "row": 5
+      },
+      "data": {
+        "external_id": "AAA00003",
+        "tags": [
+          "mpp"
+        ],
+        "excluded": false,
+        "active": true,
+        "contact_details": "Админ S3 +70003"
+      }
+    },
+    {
+      "source": {
+        "sheet": "Все КЦР",
+        "row": 6
+      },
+      "data": {
+        "external_id": "AAA00004",
+        "excluded": false,
+        "active": true,
+        "contact_details": "Админ S4 +70004"
+      }
+    },
+    {
+      "source": {
+        "sheet": "Все КЦР",
+        "row": 7
+      },
+      "data": {
+        "external_id": "AAA00005",
+        "tags": [
+          "integrator"
+        ],
+        "excluded": false,
+        "active": true,
+        "contact_details": "Админ S5 +70005"
+      }
+    },
+    {
+      "source": {
+        "sheet": "Все КЦР",
+        "row": 8
+      },
+      "data": {
+        "external_id": "AAA00006",
+        "excluded": false,
+        "active": true,
+        "contact_details": "Админ S6 ordinary"
+      }
+    },
+    {
+      "source": {
+        "sheet": "Все КЦР",
+        "row": 9
+      },
+      "data": {
+        "external_id": "AAA00007",
+        "tags": [
+          "newcomer"
+        ],
+        "excluded": false,
+        "active": true,
+        "contact_details": "Админ S6 newbie"
+      }
+    },
+    {
+      "source": {
+        "sheet": "Все КЦР",
+        "row": 10
+      },
+      "data": {
+        "external_id": "AAA00008",
+        "excluded": false,
+        "active": true,
+        "contact_details": "Админ S7 +70008"
+      }
+    },
+    {
+      "source": {
+        "sheet": "Все КЦР",
+        "row": 11
+      },
+      "data": {
+        "external_id": "AAA00009",
+        "tags": [
+          "tech_partner"
+        ],
+        "excluded": false,
+        "active": true,
+        "contact_details": "Админ S8 +70009"
+      }
+    },
+    {
+      "source": {
+        "sheet": "Все КЦР",
+        "row": 12
+      },
+      "data": {
+        "external_id": "AAA00010",
+        "excluded": true,
+        "active": true,
+        "contact_details": "Исключён 10"
+      }
+    },
+    {
+      "source": {
+        "sheet": "Все КЦР",
+        "row": 13
+      },
+      "data": {
+        "external_id": "AAA00011",
+        "tags": [
+          "vip"
+        ],
+        "excluded": true,
+        "active": true,
+        "contact_details": "Исключён VIP"
+      }
+    },
+    {
+      "source": {
+        "sheet": "Все КЦР",
+        "row": 14
+      },
+      "data": {
+        "external_id": "AAA00012",
+        "excluded": true,
+        "active": false,
+        "contact_details": "Исключён и недействующий"
+      }
+    },
+    {
+      "source": {
+        "sheet": "Все КЦР",
+        "row": 15
+      },
+      "data": {
+        "external_id": "AAA00013",
+        "excluded": false,
+        "active": false,
+        "contact_details": "Недействующий 13"
+      }
+    },
+    {
+      "source": {
+        "sheet": "Все КЦР",
+        "row": 16
+      },
+      "data": {
+        "external_id": "AAA00014",
+        "tags": [
+          "mpp"
+        ],
+        "excluded": false,
+        "active": false
+      }
+    },
+    {
+      "source": {
+        "sheet": "Все КЦР",
+        "row": 17
+      },
+      "data": {
+        "external_id": "AAA00015",
+        "excluded": false,
+        "active": false,
+        "contact_details": "Недействующий 15"
+      }
+    },
+    {
+      "source": {
+        "sheet": "Все КЦР",
+        "row": 18
+      },
+      "data": {
+        "external_id": "AAA00016",
+        "tags": [
+          "vip",
+          "integrator"
+        ],
+        "excluded": false,
+        "active": true,
+        "contact_details": "Мульти-тег 16"
+      }
+    },
+    {
+      "source": {
+        "sheet": "Все КЦР",
+        "row": 19
+      },
+      "data": {
+        "external_id": "AAA00017",
+        "tags": [
+          "tech_partner"
+        ],
+        "excluded": false,
+        "active": true
+      }
+    },
+    {
+      "source": {
+        "sheet": "Все КЦР",
+        "row": 20
+      },
+      "data": {
+        "external_id": "AAA00018",
+        "tags": [
+          "mpp"
+        ],
+        "excluded": false,
+        "active": true,
+        "contact_details": "Контакт 18"
+      }
+    },
+    {
+      "source": {
+        "sheet": "Все КЦР",
+        "row": 21
+      },
+      "data": {
+        "external_id": "AAA00019",
+        "tags": [
+          "newcomer"
+        ],
+        "excluded": false,
+        "active": true,
+        "contact_details": "Новичок 19"
+      }
+    },
+    {
+      "source": {
+        "sheet": "Все КЦР",
+        "row": 22
+      },
+      "data": {
+        "external_id": "AAA00020",
+        "tags": [
+          "vip"
+        ],
+        "excluded": false,
+        "active": true,
+        "contact_details": "VIP 20"
+      }
+    },
+    {
+      "source": {
+        "sheet": "Все КЦР",
+        "row": 23
+      },
+      "data": {
+        "external_id": "AAA00021",
+        "excluded": false,
+        "active": true,
+        "contact_details": "Обычный 21"
+      }
+    },
+    {
+      "source": {
+        "sheet": "Все КЦР",
+        "row": 24
+      },
+      "data": {
+        "external_id": "AAA00022",
+        "excluded": false,
+        "active": true,
+        "contact_details": "Обычный 22"
+      }
+    },
+    {
+      "source": {
+        "sheet": "Все КЦР",
+        "row": 25
+      },
+      "data": {
+        "external_id": "AAA00023",
+        "excluded": false,
+        "active": true
+      }
+    },
+    {
+      "source": {
+        "sheet": "Все КЦР",
+        "row": 26
+      },
+      "data": {
+        "external_id": "AAA00024",
+        "excluded": false,
+        "active": true,
+        "contact_details": "Обычный 24"
+      }
+    },
+    {
+      "source": {
+        "sheet": "Все КЦР",
+        "row": 27
+      },
+      "data": {
+        "external_id": "AAA00025",
+        "excluded": false,
+        "active": true,
+        "contact_details": "Обычный 25"
+      }
+    },
+    {
+      "source": {
+        "sheet": "Все КЦР",
+        "row": 28
+      },
+      "data": {
+        "external_id": "AAA00026",
+        "excluded": true,
+        "active": true
+      }
+    },
+    {
+      "source": {
+        "sheet": "Все КЦР",
+        "row": 29
+      },
+      "data": {
+        "external_id": "AAA00027",
+        "tags": [
+          "integrator"
+        ],
+        "excluded": false,
+        "active": true,
+        "contact_details": "Интегратор 27"
+      }
+    },
+    {
+      "source": {
+        "sheet": "Все КЦР",
+        "row": 30
+      },
+      "data": {
+        "external_id": "AAA00028",
+        "excluded": false,
+        "active": true,
+        "contact_details": "Обычный 28"
+      }
+    },
+    {
+      "source": {
+        "sheet": "Все КЦР",
+        "row": 31
+      },
+      "data": {
+        "external_id": "AAA00029",
+        "excluded": false,
+        "active": true,
+        "contact_details": "Обычный 29"
+      }
+    },
+    {
+      "source": {
+        "sheet": "Все КЦР",
+        "row": 32
+      },
+      "data": {
+        "external_id": "AAA00030",
+        "tags": [
+          "newcomer"
+        ],
+        "excluded": false,
+        "active": true,
+        "contact_details": "Новичок 30"
+      }
+    }
+  ],
+  "errors": [],
+  "meta": {
+    "client_count": 30,
+    "excluded_count": 4,
+    "inactive_count": 4,
+    "scenario_clients": {
+      "S-1": [
+        "AAA00001"
+      ],
+      "S-2": [
+        "AAA00002"
+      ],
+      "S-3": [
+        "AAA00003"
+      ],
+      "S-4": [
+        "AAA00004"
+      ],
+      "S-5": [
+        "AAA00005"
+      ],
+      "S-6": [
+        "AAA00006",
+        "AAA00007"
+      ],
+      "S-7": [
+        "AAA00008"
+      ],
+      "S-8": [
+        "AAA00009"
+      ]
+    }
+  }
+}

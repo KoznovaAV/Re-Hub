@@ -3,7 +3,7 @@
 **Дата:** 2026-11-19. **Статус:** каркас на синтетике; M-01 и реальный эталон
 не используются.
 
-Скрипт: [`ai-service/app/call_list_metrics.py`](../ai-service/app/call_list_metrics.py).
+Скрипт: [`parser-service/app/call_list_metrics.py`](../parser-service/app/call_list_metrics.py).
 Машиночитаемый результат:
 [`V-02-synthetic-results.json`](V-02-synthetic-results.json).
 
@@ -17,8 +17,8 @@
 ## Синтетический прогон
 
 Исходные файлы:
-[`reference.json`](../ai-service/tests/fixtures/v02/reference.json) и
-[`actual.json`](../ai-service/tests/fixtures/v02/actual.json).
+[`reference.json`](../parser-service/tests/fixtures/v02/reference.json) и
+[`actual.json`](../parser-service/tests/fixtures/v02/actual.json).
 
 | Метрика | Значение |
 |---|---:|
@@ -38,7 +38,7 @@
 ## Воспроизведение
 
 ```powershell
-cd ai-service
+cd parser-service
 py -3 -m app.call_list_metrics `
   --reference tests/fixtures/v02/reference.json `
   --actual tests/fixtures/v02/actual.json `

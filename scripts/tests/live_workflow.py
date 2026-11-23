@@ -1,0 +1,77 @@
+"""Browser regression against a disposable instance seeded with h00-fixture."""
+import argparse
+import json
+from pathlib import Path
+from playwright.sync_api import sync_playwright, expect
+
+def main():
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--url',required=True)
+    parser.add_argument('--chromium',default='/tmp/chromium')
+    args=parser.parse_args()
+    root=Path(__file__).resolve().parents[2]
+    results=[]
+    with sync_playwright() as p:
+        browser=p.chromium.launch(executable_path=args.chromium,args=['--no-sandbox','--single-process','--no-zygote','--disable-gpu'])
+        page=browser.new_page(viewport={'width':1440,'height':1000});page.set_default_timeout(10000)
+        errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+        page.goto(args.url);expect(page.get_by_role('heading',name='Подготовить обзвон',exact=True)).to_be_visible()
+        page.get_by_role('button',name='Настроить список обзвона',exact=True).click()
+        page.get_by_label('Поиск',exact=True).fill('BCH00001')
+        row=page.locator('tbody tr').filter(has_text='BCH00001');expect(row).to_have_count(1)
+        row.locator('input[type=checkbox]').check()
+        page.get_by_role('button',name='Добавить в пул (1)',exact=True).click()
+        expect(page.get_by_text('1 клиентов доступны для обзвона.',exact=True)).to_be_visible()
+        results.append('Admin creates pool from persisted clients')
+        def actor(value):
+            page.get_by_label('Текущий пользователь').select_option(value)
+            expect(page.get_by_role('heading',name='Работа с клиентами',exact=True) if value!='admin' else page.get_by_role('heading',name='Подготовить обзвон',exact=True)).to_be_visible()
+        actor('operator-a')
+        page.get_by_role('tab',name='Свободные',exact=True).click()
+        page.locator('tbody tr').filter(has_text='BCH00001').get_by_role('button',name='Взять в работу',exact=True).click()
+        expect(page.get_by_text('Клиент в работе',exact=True)).to_be_visible()
+        page.get_by_role('tab',name='Мои клиенты',exact=True).click()
+        page.get_by_role('button',name='Открыть',exact=True).first.click()
+        page.get_by_role('button',name='Зафиксировать взаимодействие',exact=True).click()
+        page.get_by_text('Тип события',exact=True).locator('..').locator('select').select_option('comment')
+        page.get_by_label('Дата события').fill('2026-10-01')
+        page.locator('textarea').fill('Проверка сохранения исторической записи')
+        page.get_by_role('button',name='Сохранить',exact=True).click()
+        expect(page.get_by_text('Событие добавлено',exact=True)).to_be_visible()
+        page.reload();expect(page.get_by_role('heading',name='Подготовить обзвон',exact=True)).to_be_visible()
+        actor('operator-a');page.get_by_role('button',name='Открыть',exact=True).first.click()
+        expect(page.get_by_text('Проверка сохранения исторической записи',exact=True).first).to_be_visible()
+        results.append('Contact, ownership and historical date survive full page reload')
+        page.get_by_role('button',name='Передать оператору',exact=True).click()
+        page.get_by_text('Ответственный оператор',exact=True).locator('..').locator('select').select_option('operator-b')
+        page.get_by_role('button',name='Передать',exact=True).click()
+        expect(page.get_by_text('Клиент передан',exact=True)).to_be_visible()
+        actor('operator-b');page.get_by_role('button',name='Открыть',exact=True).first.click()
+        page.get_by_role('button',name='Освободить',exact=True).click()
+        expect(page.get_by_text('Клиент освобождён',exact=True)).to_be_visible()
+        results.append('Operators transfer and release without administrator assignment')
+        actor('admin');page.get_by_role('button',name='Настроить список обзвона',exact=True).click()
+        page.get_by_label('Поиск',exact=True).fill('BCH00001')
+        page.get_by_role('button',name='Открыть',exact=True).first.click()
+        page.get_by_role('button',name='Претензия / санкция',exact=True).click()
+        page.get_by_label('Номер официального письма').fill('UI-42')
+        page.get_by_role('button',name='Сохранить запись',exact=True).click()
+        expect(page.get_by_text('Претензия № UI-42',exact=True)).to_be_visible()
+        page.reload();expect(page.get_by_role('heading',name='Подготовить обзвон',exact=True)).to_be_visible()
+        page.get_by_role('button',name='Настроить список обзвона',exact=True).click()
+        page.get_by_label('Поиск',exact=True).fill('BCH00001');page.get_by_role('button',name='Открыть',exact=True).first.click()
+        expect(page.get_by_text('Претензия № UI-42',exact=True)).to_be_visible()
+        results.append('Official letter details survive full page reload')
+        page.get_by_role('button',name='Импорт данных',exact=False).first.click()
+        page.locator('input[type=file]').set_input_files(str(root/'parser-service/tests/fixtures/t04/clients.xlsx'))
+        expect(page.get_by_text('Предпросмотр импорта',exact=True)).to_be_visible(timeout=30000)
+        check=page.locator('input[type=checkbox]');
+        if check.count():check.first.check()
+        page.get_by_role('button',name='Подтвердить импорт',exact=True).click()
+        expect(page.get_by_text('Импорт завершён',exact=True).first).to_be_visible(timeout=30000)
+        results.append('Real XLSX is parsed, previewed and committed through the UI')
+        assert not errors,errors
+        browser.close()
+    print(json.dumps({'browser_checks':results,'passed':len(results),'page_errors':errors},ensure_ascii=False,indent=2))
+
+if __name__=='__main__':main()

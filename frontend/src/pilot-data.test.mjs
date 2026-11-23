@@ -2,12 +2,12 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { callList, sample } from "./pilot-data.mjs";
 
-test("two separate sets of 30 clients; period observations stay separate", () => {
+test("two separate sets of 15 clients; period observations stay separate", () => {
   const a = sample("A");
   const b = sample("B");
-  assert.equal(a.length, 30);
-  assert.equal(b.length, 30);
-  assert.equal(new Set([...a, ...b].map(row => row.client)).size, 60);
+  assert.equal(a.length, 15);
+  assert.equal(b.length, 15);
+  assert.equal(new Set([...a, ...b].map(row => row.client)).size, 30);
   assert.deepEqual(a[0].periods.map(row => row.observed), [true, false]);
 });
 

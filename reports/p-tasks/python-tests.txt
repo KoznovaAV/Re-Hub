@@ -1,0 +1,30 @@
+test_both_parsers_and_nested_mutations (test_contract.ContractTest.test_both_parsers_and_nested_mutations) ... ok
+test_examples_match_contract (test_contract.ContractTest.test_examples_match_contract) ... ok
+test_header_alias_cannot_silently_override_key (test_customer_clients.CustomerClientsTest.test_header_alias_cannot_silently_override_key) ... ok
+test_kcr_mode_uses_seven_digit_code (test_customer_clients.CustomerClientsTest.test_kcr_mode_uses_seven_digit_code) ... ok
+test_name_and_contacts_are_independent (test_customer_clients.CustomerClientsTest.test_name_and_contacts_are_independent) ... ok
+test_parses_flags_tags_and_contacts (test_customer_clients.CustomerClientsTest.test_parses_flags_tags_and_contacts) ... ok
+test_rejects_wrong_sheet_and_unknown_header (test_customer_clients.CustomerClientsTest.test_rejects_wrong_sheet_and_unknown_header) ... ok
+test_row_errors_for_bad_keys_tags_and_formulas (test_customer_clients.CustomerClientsTest.test_row_errors_for_bad_keys_tags_and_formulas) ... ok
+test_customer_profile_cannot_switch_to_kcr_keys (test_customer_xlsx.CustomerSnapshotTest.test_customer_profile_cannot_switch_to_kcr_keys) ... ok
+test_periods_provenance_and_errors (test_customer_xlsx.CustomerSnapshotTest.test_periods_provenance_and_errors) ... ok
+test_rejects_unknown_tabs_and_headers (test_customer_xlsx.CustomerSnapshotTest.test_rejects_unknown_tabs_and_headers) ... ok
+test_one_command_artifacts_and_private_rows (test_data_quality.DataQualityTest.test_one_command_artifacts_and_private_rows) ... ok
+test_pilot_pack_parses (test_generate_test_data.GenerateTestDataTest.test_pilot_pack_parses) ... ok
+test_bad_parser_contract_is_rejected_and_service_recovers (test_parse_http.ParseHTTPTest.test_bad_parser_contract_is_rejected_and_service_recovers) ... ok
+test_clients_and_snapshots_return_common_contract (test_parse_http.ParseHTTPTest.test_clients_and_snapshots_return_common_contract) ... ok
+test_corrupt_and_expanded_archive_limits (test_parse_http.ParseHTTPTest.test_corrupt_and_expanded_archive_limits) ... ok
+test_file_mime_and_missing_boundary (test_parse_http.ParseHTTPTest.test_file_mime_and_missing_boundary) ... ok
+test_incomplete_upload (test_parse_http.ParseHTTPTest.test_incomplete_upload) ... ok
+test_temp_cleanup_after_success_failure_and_unknown_kind (test_parse_http.ParseHTTPTest.test_temp_cleanup_after_success_failure_and_unknown_kind) ... ok
+test_transport_and_context_errors (test_parse_http.ParseHTTPTest.test_transport_and_context_errors) ... ok
+test_zip_entry_limit_and_recovery (test_parse_http.ParseHTTPTest.test_zip_entry_limit_and_recovery) ... ok
+test_extractor_loss_explains_only_matching_unknowns (test_pdf_coverage_audit.PDFCoverageAuditTest.test_extractor_loss_explains_only_matching_unknowns) ... ok
+test_excluded_and_inactive_flags_present (test_t04_clients_fixtures.T04ClientsFixturesTest.test_excluded_and_inactive_flags_present) ... ok
+test_parser_matches_golden_result (test_t04_clients_fixtures.T04ClientsFixturesTest.test_parser_matches_golden_result) ... ok
+test_seed_covers_thirty_clients_and_eight_scenarios (test_t04_clients_fixtures.T04ClientsFixturesTest.test_seed_covers_thirty_clients_and_eight_scenarios) ... ok
+
+----------------------------------------------------------------------
+Ran 25 tests in 0.807s
+
+OK

@@ -1,0 +1,934 @@
+{
+  "size": 30,
+  "synthetic": true,
+  "expert_approved": false,
+  "criteria": {
+    "min_unsent": 8,
+    "min_share": 30,
+    "contacted": "no"
+  },
+  "clients": [
+    {
+      "id": "BCH00001",
+      "name": "Тест 1",
+      "excluded": false,
+      "inactive": false,
+      "closed": false,
+      "scenario": "eligible"
+    },
+    {
+      "id": "BCH00002",
+      "name": "Тест 2",
+      "excluded": false,
+      "inactive": false,
+      "closed": false,
+      "scenario": "zero"
+    },
+    {
+      "id": "BCH00003",
+      "name": "Тест 3",
+      "excluded": true,
+      "inactive": false,
+      "closed": false,
+      "scenario": "excluded"
+    },
+    {
+      "id": "BCH00004",
+      "name": "Тест 4",
+      "excluded": false,
+      "inactive": true,
+      "closed": false,
+      "scenario": "inactive"
+    },
+    {
+      "id": "BCH00005",
+      "name": "Тест 5",
+      "excluded": false,
+      "inactive": false,
+      "closed": false,
+      "scenario": "missing"
+    },
+    {
+      "id": "BCH00006",
+      "name": "Тест 6",
+      "excluded": false,
+      "inactive": false,
+      "closed": false,
+      "scenario": "called"
+    },
+    {
+      "id": "BCH00007",
+      "name": "Тест 7",
+      "excluded": false,
+      "inactive": false,
+      "closed": false,
+      "scenario": "below_threshold"
+    },
+    {
+      "id": "BCH00008",
+      "name": "Тест 8",
+      "excluded": false,
+      "inactive": false,
+      "closed": true,
+      "scenario": "closed"
+    },
+    {
+      "id": "BCH00009",
+      "name": "Тест 9",
+      "excluded": false,
+      "inactive": false,
+      "closed": false,
+      "scenario": "unknown_total"
+    },
+    {
+      "id": "BCH00010",
+      "name": "Тест 10",
+      "excluded": false,
+      "inactive": false,
+      "closed": false,
+      "scenario": "boundary"
+    },
+    {
+      "id": "BCH00011",
+      "name": "Тест 11",
+      "excluded": false,
+      "inactive": false,
+      "closed": false,
+      "scenario": "q2_only"
+    },
+    {
+      "id": "BCH00012",
+      "name": "Тест 12",
+      "excluded": false,
+      "inactive": false,
+      "closed": false,
+      "scenario": "q3_only"
+    },
+    {
+      "id": "BCH00013",
+      "name": "Тест 13",
+      "excluded": false,
+      "inactive": false,
+      "closed": false,
+      "scenario": "eligible"
+    },
+    {
+      "id": "BCH00014",
+      "name": "Тест 14",
+      "excluded": false,
+      "inactive": false,
+      "closed": false,
+      "scenario": "zero"
+    },
+    {
+      "id": "BCH00015",
+      "name": "Тест 15",
+      "excluded": true,
+      "inactive": false,
+      "closed": false,
+      "scenario": "excluded"
+    },
+    {
+      "id": "BCH00016",
+      "name": "Тест 16",
+      "excluded": false,
+      "inactive": true,
+      "closed": false,
+      "scenario": "inactive"
+    },
+    {
+      "id": "BCH00017",
+      "name": "Тест 17",
+      "excluded": false,
+      "inactive": false,
+      "closed": false,
+      "scenario": "missing"
+    },
+    {
+      "id": "BCH00018",
+      "name": "Тест 18",
+      "excluded": false,
+      "inactive": false,
+      "closed": false,
+      "scenario": "called"
+    },
+    {
+      "id": "BCH00019",
+      "name": "Тест 19",
+      "excluded": false,
+      "inactive": false,
+      "closed": false,
+      "scenario": "below_threshold"
+    },
+    {
+      "id": "BCH00020",
+      "name": "Тест 20",
+      "excluded": false,
+      "inactive": false,
+      "closed": true,
+      "scenario": "closed"
+    },
+    {
+      "id": "BCH00021",
+      "name": "Тест 21",
+      "excluded": false,
+      "inactive": false,
+      "closed": false,
+      "scenario": "unknown_total"
+    },
+    {
+      "id": "BCH00022",
+      "name": "Тест 22",
+      "excluded": false,
+      "inactive": false,
+      "closed": false,
+      "scenario": "boundary"
+    },
+    {
+      "id": "BCH00023",
+      "name": "Тест 23",
+      "excluded": false,
+      "inactive": false,
+      "closed": false,
+      "scenario": "q2_only"
+    },
+    {
+      "id": "BCH00024",
+      "name": "Тест 24",
+      "excluded": false,
+      "inactive": false,
+      "closed": false,
+      "scenario": "q3_only"
+    },
+    {
+      "id": "BCH00025",
+      "name": "Тест 25",
+      "excluded": false,
+      "inactive": false,
+      "closed": false,
+      "scenario": "eligible"
+    },
+    {
+      "id": "BCH00026",
+      "name": "Тест 26",
+      "excluded": false,
+      "inactive": false,
+      "closed": false,
+      "scenario": "zero"
+    },
+    {
+      "id": "BCH00027",
+      "name": "Тест 27",
+      "excluded": true,
+      "inactive": false,
+      "closed": false,
+      "scenario": "excluded"
+    },
+    {
+      "id": "BCH00028",
+      "name": "Тест 28",
+      "excluded": false,
+      "inactive": true,
+      "closed": false,
+      "scenario": "inactive"
+    },
+    {
+      "id": "BCH00029",
+      "name": "Тест 29",
+      "excluded": false,
+      "inactive": false,
+      "closed": false,
+      "scenario": "missing"
+    },
+    {
+      "id": "BCH00030",
+      "name": "Тест 30",
+      "excluded": false,
+      "inactive": false,
+      "closed": false,
+      "scenario": "called"
+    }
+  ],
+  "rows": [
+    {
+      "id": "BCH00001",
+      "period": "2026Q2",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00001",
+      "period": "2026Q3",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00002",
+      "period": "2026Q2",
+      "unsent": 0,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00002",
+      "period": "2026Q3",
+      "unsent": 0,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00003",
+      "period": "2026Q2",
+      "unsent": 40,
+      "total": 100,
+      "excluded": true,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00003",
+      "period": "2026Q3",
+      "unsent": 40,
+      "total": 100,
+      "excluded": true,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00004",
+      "period": "2026Q2",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": true,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00004",
+      "period": "2026Q3",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": true,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00005",
+      "period": "2026Q2",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": false,
+      "closed": false
+    },
+    {
+      "id": "BCH00005",
+      "period": "2026Q3",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": false,
+      "closed": false
+    },
+    {
+      "id": "BCH00006",
+      "period": "2026Q2",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": true,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00006",
+      "period": "2026Q3",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": true,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00007",
+      "period": "2026Q2",
+      "unsent": 5,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00007",
+      "period": "2026Q3",
+      "unsent": 5,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00008",
+      "period": "2026Q2",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": true
+    },
+    {
+      "id": "BCH00008",
+      "period": "2026Q3",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": true
+    },
+    {
+      "id": "BCH00009",
+      "period": "2026Q2",
+      "unsent": 40,
+      "total": 0,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00009",
+      "period": "2026Q3",
+      "unsent": 40,
+      "total": 0,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00010",
+      "period": "2026Q2",
+      "unsent": 30,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00010",
+      "period": "2026Q3",
+      "unsent": 30,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00011",
+      "period": "2026Q2",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00011",
+      "period": "2026Q3",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": false,
+      "closed": false
+    },
+    {
+      "id": "BCH00012",
+      "period": "2026Q2",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": false,
+      "closed": false
+    },
+    {
+      "id": "BCH00012",
+      "period": "2026Q3",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00013",
+      "period": "2026Q2",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00013",
+      "period": "2026Q3",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00014",
+      "period": "2026Q2",
+      "unsent": 0,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00014",
+      "period": "2026Q3",
+      "unsent": 0,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00015",
+      "period": "2026Q2",
+      "unsent": 40,
+      "total": 100,
+      "excluded": true,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00015",
+      "period": "2026Q3",
+      "unsent": 40,
+      "total": 100,
+      "excluded": true,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00016",
+      "period": "2026Q2",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": true,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00016",
+      "period": "2026Q3",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": true,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00017",
+      "period": "2026Q2",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": false,
+      "closed": false
+    },
+    {
+      "id": "BCH00017",
+      "period": "2026Q3",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": false,
+      "closed": false
+    },
+    {
+      "id": "BCH00018",
+      "period": "2026Q2",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": true,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00018",
+      "period": "2026Q3",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": true,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00019",
+      "period": "2026Q2",
+      "unsent": 5,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00019",
+      "period": "2026Q3",
+      "unsent": 5,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00020",
+      "period": "2026Q2",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": true
+    },
+    {
+      "id": "BCH00020",
+      "period": "2026Q3",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": true
+    },
+    {
+      "id": "BCH00021",
+      "period": "2026Q2",
+      "unsent": 40,
+      "total": 0,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00021",
+      "period": "2026Q3",
+      "unsent": 40,
+      "total": 0,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00022",
+      "period": "2026Q2",
+      "unsent": 30,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00022",
+      "period": "2026Q3",
+      "unsent": 30,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00023",
+      "period": "2026Q2",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00023",
+      "period": "2026Q3",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": false,
+      "closed": false
+    },
+    {
+      "id": "BCH00024",
+      "period": "2026Q2",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": false,
+      "closed": false
+    },
+    {
+      "id": "BCH00024",
+      "period": "2026Q3",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00025",
+      "period": "2026Q2",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00025",
+      "period": "2026Q3",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00026",
+      "period": "2026Q2",
+      "unsent": 0,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00026",
+      "period": "2026Q3",
+      "unsent": 0,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00027",
+      "period": "2026Q2",
+      "unsent": 40,
+      "total": 100,
+      "excluded": true,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00027",
+      "period": "2026Q3",
+      "unsent": 40,
+      "total": 100,
+      "excluded": true,
+      "inactive": false,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00028",
+      "period": "2026Q2",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": true,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00028",
+      "period": "2026Q3",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": true,
+      "contacted": false,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00029",
+      "period": "2026Q2",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": false,
+      "closed": false
+    },
+    {
+      "id": "BCH00029",
+      "period": "2026Q3",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": false,
+      "observed": false,
+      "closed": false
+    },
+    {
+      "id": "BCH00030",
+      "period": "2026Q2",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": true,
+      "observed": true,
+      "closed": false
+    },
+    {
+      "id": "BCH00030",
+      "period": "2026Q3",
+      "unsent": 40,
+      "total": 100,
+      "excluded": false,
+      "inactive": false,
+      "contacted": true,
+      "observed": true,
+      "closed": false
+    }
+  ],
+  "expected": {
+    "2026Q2": [
+      "BCH00001",
+      "BCH00010",
+      "BCH00011",
+      "BCH00013",
+      "BCH00022",
+      "BCH00023",
+      "BCH00025"
+    ],
+    "2026Q3": [
+      "BCH00001",
+      "BCH00010",
+      "BCH00012",
+      "BCH00013",
+      "BCH00022",
+      "BCH00024",
+      "BCH00025"
+    ]
+  }
+}

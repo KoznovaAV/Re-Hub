@@ -1,0 +1,157 @@
+{
+  "study_version": "h00-browser-v1",
+  "data_kind": "automated",
+  "dataset_kind": "synthetic",
+  "task": "2026Q3; unsent >= 8; observed; not excluded; not contacted",
+  "timing_scope": "from task presentation through result submission; source download and opening included for Excel",
+  "gold": {
+    "A": {
+      "all_ids": [
+        "PILOT-01",
+        "PILOT-02",
+        "PILOT-03",
+        "PILOT-04",
+        "PILOT-05",
+        "PILOT-06",
+        "PILOT-07",
+        "PILOT-08",
+        "PILOT-09",
+        "PILOT-10",
+        "PILOT-11",
+        "PILOT-12",
+        "PILOT-13",
+        "PILOT-14",
+        "PILOT-15"
+      ],
+      "expected": [
+        "PILOT-04",
+        "PILOT-05",
+        "PILOT-12"
+      ],
+      "excluded": [
+        "PILOT-01",
+        "PILOT-07",
+        "PILOT-13"
+      ],
+      "approved_by": null
+    },
+    "B": {
+      "all_ids": [
+        "PILOT-16",
+        "PILOT-17",
+        "PILOT-18",
+        "PILOT-19",
+        "PILOT-20",
+        "PILOT-21",
+        "PILOT-22",
+        "PILOT-23",
+        "PILOT-24",
+        "PILOT-25",
+        "PILOT-26",
+        "PILOT-27",
+        "PILOT-28",
+        "PILOT-29",
+        "PILOT-30"
+      ],
+      "expected": [
+        "PILOT-19",
+        "PILOT-20",
+        "PILOT-27"
+      ],
+      "excluded": [
+        "PILOT-16",
+        "PILOT-22",
+        "PILOT-28"
+      ],
+      "approved_by": null
+    }
+  },
+  "runs": [
+    {
+      "participant": "AUTO-ORDER-1",
+      "tool": "excel",
+      "group": "A",
+      "seconds": 12.617,
+      "ids": [
+        "PILOT-04",
+        "PILOT-05",
+        "PILOT-12"
+      ],
+      "executor": "automation",
+      "started_at": "2026-11-22T14:52:55.384Z",
+      "ended_at": "2026-11-22T14:53:08.001Z",
+      "elapsed_ms": 12617,
+      "visibility_changes": 0,
+      "source": "browser_monotonic_timer",
+      "precision": 1,
+      "recall": 1,
+      "excluded_errors": 0,
+      "missed_ids": []
+    },
+    {
+      "participant": "AUTO-ORDER-1",
+      "tool": "rehub",
+      "group": "B",
+      "seconds": 0.03379999999993015,
+      "ids": [
+        "PILOT-19",
+        "PILOT-20",
+        "PILOT-27"
+      ],
+      "executor": "automation",
+      "started_at": "2026-11-22T14:53:08.033Z",
+      "ended_at": "2026-11-22T14:53:08.067Z",
+      "elapsed_ms": 33.79999999993015,
+      "visibility_changes": 0,
+      "source": "browser_monotonic_timer",
+      "precision": 1,
+      "recall": 1,
+      "excluded_errors": 0,
+      "missed_ids": []
+    },
+    {
+      "participant": "AUTO-ORDER-2",
+      "tool": "rehub",
+      "group": "A",
+      "seconds": 0.034,
+      "ids": [
+        "PILOT-04",
+        "PILOT-05",
+        "PILOT-12"
+      ],
+      "executor": "automation",
+      "started_at": "2026-11-22T14:53:08.100Z",
+      "ended_at": "2026-11-22T14:53:08.134Z",
+      "elapsed_ms": 34,
+      "visibility_changes": 0,
+      "source": "browser_monotonic_timer",
+      "precision": 1,
+      "recall": 1,
+      "excluded_errors": 0,
+      "missed_ids": []
+    },
+    {
+      "participant": "AUTO-ORDER-2",
+      "tool": "excel",
+      "group": "B",
+      "seconds": 7.265900000000023,
+      "ids": [
+        "PILOT-19",
+        "PILOT-20",
+        "PILOT-27"
+      ],
+      "executor": "automation",
+      "started_at": "2026-11-22T14:53:08.167Z",
+      "ended_at": "2026-11-22T14:53:15.433Z",
+      "elapsed_ms": 7265.900000000023,
+      "visibility_changes": 0,
+      "source": "browser_monotonic_timer",
+      "precision": 1,
+      "recall": 1,
+      "excluded_errors": 0,
+      "missed_ids": []
+    }
+  ],
+  "aborted": [],
+  "complete": true
+}

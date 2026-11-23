@@ -1,61 +1,31 @@
 openapi: 3.0.3
 info:
   title: ReHub API
-  description: |
-    API для сервиса контроля передачи оригиналов документов и коммуникации с клиентами КЦР.
+  description: Реализованный API прототипа. X-Role и X-User-Id задаются клиентом, это демонстрационная идентификация,
+    не аутентификация. /auth/login и JWT не реализованы. CSV ошибок браузер формирует из JSON импорта, отдельного
+    маршрута скачивания нет.
   version: 1.0.0
   contact:
     name: Команда ReHub
-
 servers:
-  - url: http://localhost:8080/api/v1
-    description: Локальная среда разработки (Go-бэкенд)
-
+- url: http://localhost:8080/api/v1
+  description: Локальная среда разработки (Go-бэкенд)
 tags:
-  - name: Auth
-  - name: Clients
-  - name: Slices
-  - name: Workflow
-  - name: AI
-
-security:
-  - BearerAuth: []
-
+- name: Clients
+- name: Slices
+- name: Workflow
+- name: Diagnostics
 paths:
-  /auth/login:
-    post:
-      tags: [Auth]
-      summary: Авторизация пользователя
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [username, password]
-              properties:
-                username: { type: string, example: "admin@rehub.ru" }
-                password: { type: string, format: password, example: "secretpassword" }
-      responses:
-        '200':
-          description: Успешная авторизация
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  token: { type: string }
-                  role: { type: string, enum: [admin, operator] }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-
   /slices:
     get:
-      tags: [Slices]
+      tags:
+      - Slices
       summary: Получить историю загруженных срезов
       parameters:
-        - $ref: '#/components/parameters/LimitParam'
-        - $ref: '#/components/parameters/OffsetParam'
+      - $ref: '#/components/parameters/LimitParam'
+      - $ref: '#/components/parameters/OffsetParam'
+      - $ref: '#/components/parameters/ActorHeader'
+      - $ref: '#/components/parameters/RoleHeader'
       responses:
         '200':
           description: Список срезов
@@ -63,75 +33,397 @@ paths:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/PaginatedResponse'
-                  - type: object
-                    properties:
-                      data: { type: array, items: { $ref: '#/components/schemas/Slice' } }
+                - $ref: '#/components/schemas/PaginatedResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Slice'
+        '500':
+          description: Ошибка чтения или записи БД
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: БД или парсер не настроены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     post:
-      tags: [Slices]
-      summary: Загрузить новый срез из Excel
+      tags:
+      - Slices
+      summary: Загрузить срез из Excel (4 вкладки, ParserResult v1)
+      parameters:
+      - $ref: '#/components/parameters/ActorHeader'
+      - $ref: '#/components/parameters/RoleHeader'
+      - name: preview
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Только строка true включает предпросмотр без записи.
       requestBody:
         required: true
         content:
           multipart/form-data:
             schema:
               type: object
-              required: [period_id, slice_date, file]
+              required:
+              - file
               properties:
-                period_id: { type: string, format: uuid }
-                slice_date: { type: string, format: date, example: "2026-10-20" }
-                file: { type: string, format: binary }
+                file:
+                  type: string
+                  format: binary
+                snapshot_date:
+                  type: string
+                  format: date
+                  example: '2026-10-20'
+                period_scope:
+                  type: string
+                  description: Коды периодов через запятую; по умолчанию Y2025,2026Q1,2026Q2,2026Q3
+                context:
+                  type: string
+                  description: JSON ImportContext v1; поля можно передать отдельными form-полями
+                accept_partial:
+                  type: string
+                  enum:
+                  - 'true'
+                  - 'false'
+                  default: 'false'
+                  description: Явное согласие на сохранение корректных строк при наличии ошибок.
       responses:
         '201':
-          description: Срез создан
+          description: Срез обработан; частичные ошибки возвращаются в errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportResult'
+        '400':
+          description: Неверный multipart, расширение или размер файла
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Неверный контекст, файл или нет согласия на частичный импорт
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Ошибка Python или нарушение контракта
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Ошибка чтения или записи БД
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: БД или парсер не настроены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '200':
+          description: Предпросмотр
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportPreview'
+        '403':
+          description: Требуется администратор
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      description: XLSX до 25 МиБ. preview=true возвращает проверенные строки без записи. Для записи файл отправляется
+        повторно. Ошибки UI преобразует в CSV.
+  /periods:
+    get:
+      tags:
+      - Slices
+      summary: Справочник отчётных периодов
+      responses:
+        '200':
+          description: Периоды, доступные для импорта
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  slice_id: { type: string, format: uuid }
-                  rows_total: { type: integer }
-                  rows_ok: { type: integer }
-                  rows_errors: { type: integer }
-        '400': { $ref: '#/components/responses/BadRequest' }
-
-  /slices/{id}/errors:
-    get:
-      tags: [Slices]
-      summary: Скачать отчет об ошибках импорта
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Period'
+        '500':
+          description: Ошибка чтения или записи БД
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: БД или парсер не настроены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema: { type: string, format: uuid }
+      - $ref: '#/components/parameters/ActorHeader'
+      - $ref: '#/components/parameters/RoleHeader'
+  /call-list:
+    get:
+      tags:
+      - Workflow
+      summary: Список обзвона по периоду, количеству, доле и фактам звонков
+      parameters:
+      - name: tag
+        in: query
+        schema:
+          type: string
+      - name: stage
+        in: query
+        schema:
+          type: string
+      - name: period
+        in: query
+        schema:
+          type: string
+        description: Период документов и звонков; по умолчанию последний период срезов
+      - name: min_unsent
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+      - name: min_share
+        in: query
+        schema:
+          type: number
+          minimum: 0
+          maximum: 100
+      - name: contacted
+        in: query
+        schema:
+          type: string
+          enum:
+          - 'yes'
+          - 'no'
+      - $ref: '#/components/parameters/LimitParam'
+      - $ref: '#/components/parameters/OffsetParam'
+      - $ref: '#/components/parameters/ActorHeader'
+      - $ref: '#/components/parameters/RoleHeader'
       responses:
         '200':
-          description: Файл с ошибками
+          description: Свободные активные клиенты без исключений и с положительным долгом, отсортированные по коду
           content:
-            application/octet-stream:
-              schema: { type: string, format: binary }
-        '404': { $ref: '#/components/responses/NotFound' }
-
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Client'
+                  meta:
+                    type: object
+        '500':
+          description: Ошибка чтения или записи БД
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: БД или парсер не настроены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '403':
+          description: Действие запрещено для роли или клиента
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /clients/import:
+    post:
+      tags:
+      - Slices
+      summary: Загрузить справочник клиентов из Excel
+      parameters:
+      - $ref: '#/components/parameters/ActorHeader'
+      - $ref: '#/components/parameters/RoleHeader'
+      - name: preview
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Только строка true включает предпросмотр без записи.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+              - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                context:
+                  type: string
+                  description: JSON ImportContext v1 с file_kind=clients
+                accept_partial:
+                  type: string
+                  enum:
+                  - 'true'
+                  - 'false'
+                  default: 'false'
+                  description: Явное согласие на сохранение корректных строк при наличии ошибок.
+      responses:
+        '201':
+          description: Клиенты созданы или обновлены; ошибки строк возвращаются в errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportResult'
+        '500':
+          description: Ошибка чтения или записи БД
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: БД или парсер не настроены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '200':
+          description: Предпросмотр
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportPreview'
+        '400':
+          description: Неверный multipart, расширение или размер файла
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Требуется администратор
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Неверный контекст, файл или нет согласия на частичный импорт
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Ошибка Python или нарушение контракта
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      description: XLSX до 25 МиБ. preview=true возвращает проверенные строки без записи. Для записи файл отправляется
+        повторно. Ошибки UI преобразует в CSV.
   /clients:
     get:
-      tags: [Clients]
+      tags:
+      - Clients
       summary: Получить список клиентов с фильтрами
       parameters:
-        - $ref: '#/components/parameters/LimitParam'
-        - $ref: '#/components/parameters/OffsetParam'
-        - name: external_id
-          in: query
-          description: Поиск по внешнему ID (код КЦР)
-          schema: { type: string }
-        - name: inn
-          in: query
-          schema: { type: string }
-        - name: stage
-          in: query
-          schema: { type: string }
-        - name: assigned_to
-          in: query
-          schema: { type: string, format: uuid }
+      - $ref: '#/components/parameters/LimitParam'
+      - $ref: '#/components/parameters/OffsetParam'
+      - name: external_id
+        in: query
+        description: Поиск по внешнему ID (код КЦР)
+        schema:
+          type: string
+      - name: inn
+        in: query
+        schema:
+          type: string
+      - name: stage
+        in: query
+        schema:
+          type: string
+      - name: assigned
+        in: query
+        description: free — без ответственного, assigned — с ответственным, mine — мои
+        schema:
+          type: string
+          enum:
+          - free
+          - assigned
+          - mine
+      - name: tag
+        in: query
+        schema:
+          type: string
+      - name: contacted
+        in: query
+        schema:
+          type: string
+          enum:
+          - 'yes'
+          - 'no'
+      - name: min_share
+        in: query
+        schema:
+          type: number
+          minimum: 0
+          maximum: 100
+      - name: excluded
+        in: query
+        schema:
+          type: boolean
+      - name: inactive
+        in: query
+        schema:
+          type: boolean
+      - name: sort
+        in: query
+        schema:
+          type: string
+          enum:
+          - name
+          - external_id
+          - stage
+          - promised_at
+          - updated_at
+          - share
+          - unsent
+      - name: order
+        in: query
+        schema:
+          type: string
+          enum:
+          - asc
+          - desc
+          default: asc
+      - $ref: '#/components/parameters/ActorHeader'
+      - $ref: '#/components/parameters/RoleHeader'
+      - name: period
+        in: query
+        schema:
+          type: string
+      - name: pool
+        in: query
+        schema:
+          type: boolean
       responses:
         '200':
           description: Список клиентов
@@ -139,69 +431,242 @@ paths:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/PaginatedResponse'
-                  - type: object
-                    properties:
-                      data: { type: array, items: { $ref: '#/components/schemas/Client' } }
-
+                - $ref: '#/components/schemas/PaginatedResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Client'
+        '500':
+          description: Ошибка чтения или записи БД
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: БД или парсер не настроены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /clients/{external_id}:
     get:
-      tags: [Clients]
+      tags:
+      - Clients
       summary: Получить полную карточку клиента по external_id (код КЦР)
       parameters:
-        - name: external_id
-          in: path
-          required: true
-          schema: { type: string }
+      - name: external_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - $ref: '#/components/parameters/ActorHeader'
+      - $ref: '#/components/parameters/RoleHeader'
       responses:
         '200':
           description: Данные клиента
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ClientDetails' }
-        '404': { $ref: '#/components/responses/NotFound' }
-
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Client'
+                  history:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SliceRecord'
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ClientEvent'
+                  actions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ClientAction'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          description: Ошибка чтения или записи БД
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: БД или парсер не настроены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Действие запрещено для роли или клиента
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /clients/{external_id}/take:
     post:
-      tags: [Workflow]
+      tags:
+      - Workflow
       summary: Взять клиента в работу
       parameters:
-        - name: external_id
-          in: path
-          required: true
-          schema: { type: string }
+      - name: external_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - $ref: '#/components/parameters/ActorHeader'
+      - $ref: '#/components/parameters/RoleHeader'
       responses:
-        '200': { description: Клиент взят в работу }
-        '409': { $ref: '#/components/responses/Conflict' }
-        '404': { $ref: '#/components/responses/NotFound' }
-
+        '200':
+          description: Клиент взят в работу
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          description: Ошибка чтения или записи БД
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: БД или парсер не настроены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Действие запрещено для роли или клиента
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /clients/{external_id}/take-over:
+    post:
+      tags:
+      - Workflow
+      summary: Оператор забирает назначенного клиента себе
+      description: Администратору запрещено. Целевой пользователь берётся из идентификатора текущего оператора.
+        Тело отсутствует либо пустой JSON-объект.
+      parameters:
+      - name: external_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - $ref: '#/components/parameters/ActorHeader'
+      - $ref: '#/components/parameters/RoleHeader'
+      responses:
+        '200':
+          description: Клиент закреплён за текущим оператором
+        '400':
+          description: Передан целевой пользователь или некорректное тело
+        '403':
+          description: Действие разрешено только оператору
+        '404':
+          description: Назначенный активный клиент не найден
+        '500':
+          description: Ошибка чтения или записи БД
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: БД или парсер не настроены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /clients/{external_id}/events:
     post:
-      tags: [Workflow]
+      tags:
+      - Workflow
       summary: Зафиксировать событие
       parameters:
-        - name: external_id
-          in: path
-          required: true
-          schema: { type: string }
+      - name: external_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - $ref: '#/components/parameters/ActorHeader'
+      - $ref: '#/components/parameters/RoleHeader'
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [event_type]
+              required:
+              - event_type
               properties:
-                event_type: { type: string, enum: [call, email_sent, comment] }
-                payload: { type: object }
+                event_type:
+                  type: string
+                  enum:
+                  - call
+                  - email
+                  - comment
+                result:
+                  type: string
+                  enum:
+                  - Дозвон
+                  - Обещание
+                  - Отказ
+                  - Недозвон
+                  - Перенос
+                  - Не тот контакт
+                  - Не тот администратор
+                comment:
+                  type: string
+                promise_label:
+                  type: string
+                  description: Выбранное название обещанного срока
+                promised_at:
+                  type: string
+                  format: date
+                  description: Только для обещания передать документы
+                callback_on:
+                  type: string
+                  format: date
+                  description: Обязательна при переносе звонка; не раньше event_date
+                period_code:
+                  type: string
+                  description: Обязателен для звонка
+                event_date:
+                  type: string
+                  format: date
+                  description: Для исторических записей
       responses:
-        '201': { description: Событие создано }
-        '400': { $ref: '#/components/responses/BadRequest' }
-
+        '201':
+          description: Событие создано
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          description: Ошибка чтения или записи БД
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: БД или парсер не настроены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '403':
+          description: Действие запрещено для роли или клиента
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /today:
     get:
-      tags: [Workflow]
-      summary: Получить список "Сегодня нужно"
+      tags:
+      - Workflow
+      summary: Получить явно назначенные повторные звонки текущего оператора
       responses:
         '200':
           description: Список задач
@@ -209,52 +674,325 @@ paths:
             application/json:
               schema:
                 type: array
-                items: { $ref: '#/components/schemas/TodayTask' }
-
-  /ai/query:
+                items:
+                  $ref: '#/components/schemas/TodayTask'
+        '500':
+          description: Ошибка чтения или записи БД
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: БД или парсер не настроены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      parameters:
+      - $ref: '#/components/parameters/ActorHeader'
+      - $ref: '#/components/parameters/RoleHeader'
+      - $ref: '#/components/parameters/LimitParam'
+      - $ref: '#/components/parameters/OffsetParam'
+  /workspace:
+    get:
+      tags:
+      - Clients
+      summary: Страница доступных клиентов с историей срезов, событий и официальных писем
+      description: Оператор получает только пул и назначенных клиентов. Параметры limit (до 1000), offset.
+      responses:
+        '200':
+          description: data
+          meta: null
+          history: null
+          events: null
+          actions: null
+        '500':
+          description: Ошибка чтения или записи БД
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: БД или парсер не настроены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      parameters:
+      - $ref: '#/components/parameters/ActorHeader'
+      - $ref: '#/components/parameters/RoleHeader'
+      - $ref: '#/components/parameters/LimitParam'
+      - $ref: '#/components/parameters/OffsetParam'
+  /pool:
     post:
-      tags: [AI]
-      summary: Запрос к ИИ-помощнику
+      tags:
+      - Workflow
+      summary: Администратор передаёт выбранных кандидатов в пул
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [query]
+              required:
+              - ids
               properties:
-                query: { type: string, example: "Покажи клиентов, которым пора позвонить" }
-                client_external_id: { type: string }
+                ids:
+                  type: array
+                  maxItems: 5000
+                  items:
+                    type: string
+                period:
+                  type: string
       responses:
         '200':
-          description: Ответ ИИ
+          description: Число добавленных клиентов changed
+        '403':
+          description: Только администратор
+        '500':
+          description: Ошибка чтения или записи БД
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/AIResponse' }
-        '422': { $ref: '#/components/responses/BadRequest' }
-
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: БД или парсер не настроены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      parameters:
+      - $ref: '#/components/parameters/ActorHeader'
+      - $ref: '#/components/parameters/RoleHeader'
+  /clients/{external_id}/reassign:
+    post:
+      tags:
+      - Workflow
+      summary: Ответственный оператор передаёт клиента коллеге
+      parameters:
+      - name: external_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - $ref: '#/components/parameters/ActorHeader'
+      - $ref: '#/components/parameters/RoleHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - user_id
+              properties:
+                user_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Новый ответственный и запись аудита сохранены
+        '403':
+          description: Только текущий ответственный оператор
+        '422':
+          description: Неверный оператор
+        '500':
+          description: Ошибка чтения или записи БД
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: БД или парсер не настроены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /clients/{external_id}/release:
+    post:
+      tags:
+      - Workflow
+      summary: Ответственный оператор вручную освобождает клиента
+      parameters:
+      - name: external_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - $ref: '#/components/parameters/ActorHeader'
+      - $ref: '#/components/parameters/RoleHeader'
+      responses:
+        '200':
+          description: Клиент освобождён
+          история сохранена: null
+        '403':
+          description: Только текущий ответственный оператор
+        '500':
+          description: Ошибка чтения или записи БД
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: БД или парсер не настроены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /clients/{external_id}/actions:
+    post:
+      tags:
+      - Workflow
+      summary: Администратор регистрирует претензию или санкцию
+      parameters:
+      - name: external_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - $ref: '#/components/parameters/ActorHeader'
+      - $ref: '#/components/parameters/RoleHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - kind
+              - number
+              - date
+              - status
+              properties:
+                kind:
+                  type: string
+                  enum:
+                  - claim
+                  - sanction
+                number:
+                  type: string
+                date:
+                  type: string
+                  format: date
+                status:
+                  type: string
+                comment:
+                  type: string
+      responses:
+        '201':
+          description: Реквизиты письма сохранены в карточке и истории
+        '403':
+          description: Только администратор
+        '422':
+          description: Незаполненные реквизиты
+        '500':
+          description: Ошибка чтения или записи БД
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: БД или парсер не настроены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /health:
+    servers:
+    - url: http://localhost:8080
+    get:
+      tags:
+      - Diagnostics
+      summary: Состояние Go и БД
+      responses:
+        '200':
+          description: Диагностика успешна
+        '503':
+          description: Зависимость недоступна
+  /api/probe:
+    servers:
+    - url: http://localhost:8080
+    get:
+      tags:
+      - Diagnostics
+      summary: Контрольный обмен Go/Python
+      responses:
+        '200':
+          description: Диагностика успешна
+        '503':
+          description: Зависимость недоступна
 components:
-  securitySchemes:
-    BearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
-
   parameters:
-    LimitParam: { name: limit, in: query, schema: { type: integer, default: 20 } }
-    OffsetParam: { name: offset, in: query, schema: { type: integer, default: 0 } }
-
+    LimitParam:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        default: 200
+        minimum: 1
+        maximum: 1000
+      description: Некорректное значение заменяется на 200.
+    OffsetParam:
+      name: offset
+      in: query
+      schema:
+        type: integer
+        default: 0
+        minimum: 0
+    ActorHeader:
+      name: X-User-Id
+      in: header
+      required: false
+      description: UUID пользователя; в демо по умолчанию оператор А. X-Role admin включает чтение и импорт администратора,
+        но не операторские действия.
+      schema:
+        type: string
+        format: uuid
+    RoleHeader:
+      name: X-Role
+      in: header
+      description: Демо-роль. Только admin включает административные действия. Заголовок не защищён от подмены.
+      schema:
+        type: string
+        enum:
+        - admin
+        - operator
+        default: operator
   responses:
     Unauthorized:
       description: Не авторизован
-      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
     BadRequest:
       description: Ошибка валидации
-      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
     NotFound:
       description: Не найдено
-      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
     Conflict:
       description: Конфликт (например, клиент уже взят)
-      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
-
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unprocessable:
+      description: Данные не прошли доменную валидацию
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
   schemas:
     PaginatedResponse:
       type: object
@@ -262,85 +1000,339 @@ components:
         meta:
           type: object
           properties:
-            total: { type: integer }
-            limit: { type: integer }
-            offset: { type: integer }
-
+            total:
+              type: integer
+            limit:
+              type: integer
+            offset:
+              type: integer
     ErrorResponse:
       type: object
-      required: [code, message]
+      required:
+      - code
+      - message
       properties:
-        code: { type: string }
-        message: { type: string }
+        code:
+          type: string
+        message:
+          type: string
         details:
           type: array
           items:
             type: object
             properties:
-              row: { type: integer }
-              column: { type: string }
-              issue: { type: string }
+              row:
+                type: integer
+              column:
+                type: string
+              issue:
+                type: string
       example:
-        code: "VALIDATION_ERROR"
-        message: "Ошибка импорта Excel"
+        code: VALIDATION_ERROR
+        message: Ошибка импорта Excel
         details:
-          - row: 15
-            column: "external_id"
-            issue: "Пустой код КЦР"
-          - row: 42
-            column: "inn"
-            issue: "Некорректный формат ИНН"
-
+        - row: 15
+          column: external_id
+          issue: Пустой код КЦР
+        - row: 42
+          column: inn
+          issue: Некорректный формат ИНН
+    Period:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: 2026Q3
+        label:
+          type: string
+          example: 2026Q3
+        year:
+          type: integer
+        quarter:
+          type: integer
+          minimum: 0
+          maximum: 4
+    ImportResult:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            import_id:
+              type: string
+              format: uuid
+            kind:
+              type: string
+              enum:
+              - clients
+              - snapshot
+            status:
+              type: string
+              enum:
+              - completed
+              - partial
+              - failed
+            counters:
+              type: object
+              properties:
+                rows_total:
+                  type: integer
+                rows_ok:
+                  type: integer
+                rows_errors:
+                  type: integer
+                created:
+                  type: integer
+                updated:
+                  type: integer
+            period_scope:
+              type: array
+              items:
+                type: string
+            errors:
+              type: array
+              items:
+                $ref: '#/components/schemas/ImportError'
     Slice:
       type: object
       properties:
-        id: { type: string, format: uuid }
-        period_id: { type: string, format: uuid }
-        slice_date: { type: string, format: date }
-        uploaded_by: { type: string, format: uuid }
-        uploaded_at: { type: string, format: date-time }
-
+        id:
+          type: string
+          format: uuid
+        period_code:
+          type: string
+        slice_date:
+          type: string
+          format: date-time
+        file_name:
+          type: string
+        rows:
+          type: integer
+        clients:
+          type: integer
+        unsent_docs:
+          type: integer
+        uploaded_at:
+          type: string
+          format: date-time
     Client:
       type: object
       properties:
-        id: { type: string, format: uuid, description: Внутренний UUID }
-        external_id: { type: string, description: Внешний ID (код КЦР), уникальный }
-        inn: { type: string, description: ИНН не уникален }
-        name: { type: string }
-        current_stage: { type: string }
-        assigned_to_id: { type: string, format: uuid, nullable: true }
-        last_slice_not_sent: { type: integer }
-        last_slice_share_not_sent: { type: number }
-
-    ClientDetails:
-      allOf:
-        - $ref: '#/components/schemas/Client'
-        - type: object
-          properties:
-            kpp: { type: string }
-            contact_name: { type: string }
-            contact_phone: { type: string }
-            contact_email: { type: string }
-            next_contact_at: { type: string, format: date }
-            events:
-              type: array
-              items: { type: object }
-            slices_history:
-              type: array
-              items: { type: object }
-
+        id:
+          type: string
+          format: uuid
+          description: Внутренний UUID
+        external_id:
+          type: string
+          description: Внешний ID (код КЦР), уникальный
+        inn:
+          type: string
+          description: ИНН не уникален; может быть пустым
+        kpp:
+          type: string
+        name:
+          type: string
+        contact_details:
+          type: string
+          description: Исходная контактная строка из справочника
+        stage:
+          type: string
+        assigned_to:
+          type: string
+          format: uuid
+          nullable: true
+        assigned_name:
+          type: string
+        excluded:
+          type: boolean
+        inactive:
+          type: boolean
+        tags:
+          type: array
+          items:
+            type: string
+        promised_at:
+          type: string
+          format: date-time
+          nullable: true
+        last_contact_at:
+          type: string
+          format: date-time
+          nullable: true
+        latest:
+          $ref: '#/components/schemas/SliceRecord'
+        previous:
+          $ref: '#/components/schemas/SliceRecord'
+        missing:
+          type: boolean
+          description: Клиента нет в последнем срезе
+        in_pool:
+          type: boolean
+        active:
+          type: boolean
+        excluded_reason:
+          type: string
+        contact_name:
+          type: string
+        contact_phone:
+          type: string
+        contact_email:
+          type: string
+        joined_on:
+          type: string
+          format: date-time
+    SliceRecord:
+      type: object
+      properties:
+        period_code:
+          type: string
+        slice_date:
+          type: string
+          format: date-time
+        total_docs:
+          type: integer
+          nullable: true
+        not_sent_docs:
+          type: integer
+        share:
+          type: number
+          nullable: true
+        inherited:
+          type: boolean
+    ClientEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum:
+          - call
+          - email
+          - comment
+          - system
+          - claim
+          - slice
+        event_date:
+          type: string
+          format: date-time
+        result:
+          type: string
+        promised_at:
+          type: string
+          format: date-time
+          nullable: true
+        callback_on:
+          type: string
+          format: date-time
+          nullable: true
+        period_code:
+          type: string
+          nullable: true
+        comment:
+          type: string
+        author_name:
+          type: string
+        client_id:
+          type: string
+          format: uuid
+        author_id:
+          type: string
+          format: uuid
+        promise_label:
+          type: string
+        created_at:
+          type: string
+          format: date-time
     TodayTask:
       type: object
       properties:
-        client_external_id: { type: string }
-        client_name: { type: string }
-        task_type: { type: string }
-        due_date: { type: string, format: date }
-
-    AIResponse:
+        client_external_id:
+          type: string
+        client_name:
+          type: string
+        task_type:
+          type: string
+        due_date:
+          type: string
+          format: date
+    ImportError:
+      type: object
+      required:
+      - scope
+      - code
+      - message
+      properties:
+        scope:
+          type: string
+        sheet:
+          type: string
+        column:
+          type: string
+        code:
+          type: string
+        message:
+          type: string
+        raw_value:
+          type: string
+        external_id:
+          type: string
+        period_code:
+          type: string
+        row:
+          type: integer
+    ImportPreview:
+      type: object
+      required:
+      - rows
+      - errors
+      - counters
+      - fatal
+      properties:
+        rows:
+          type: array
+          items:
+            type: object
+            description: 'clients: row, externalId, name, action. snapshot: row, externalId, total, unsent, inherited,
+              inheritedTotal, status.'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImportError'
+        counters:
+          type: object
+          properties:
+            created:
+              type: integer
+            updated:
+              type: integer
+            accepted:
+              type: integer
+            errors:
+              type: integer
+            total:
+              type: integer
+        fatal:
+          type: boolean
+    ClientAction:
       type: object
       properties:
-        answer: { type: string }
-        sources:
-          type: array
-          items: { type: object }
+        id:
+          type: string
+        client_id:
+          type: string
+        kind:
+          type: string
+        number:
+          type: string
+        status:
+          type: string
+        comment:
+          type: string
+        date:
+          type: string
+          format: date-time
