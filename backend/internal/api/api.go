@@ -153,6 +153,10 @@ func (s *Server) listClients(w http.ResponseWriter, r *http.Request) {
 	}
 	limit, offset := parseLimit(r)
 	query := r.URL.Query()
+	minUnsent, _ := strconv.Atoi(query.Get("min_unsent"))
+	if minUnsent < 0 {
+		minUnsent = 0
+	}
 	filters := store.ListFilters{
 		WorkOnly:   !isAdmin(r),
 		PoolOnly:   query.Get("pool") == "true",
@@ -164,6 +168,7 @@ func (s *Server) listClients(w http.ResponseWriter, r *http.Request) {
 		UserID:     actorID(r),
 		Tag:        strings.TrimSpace(query.Get("tag")),
 		Contacted:  strings.TrimSpace(query.Get("contacted")),
+		MinUnsent:  minUnsent,
 		MinShare:   parseShare(query.Get("min_share")),
 		Excluded:   parseBool(query.Get("excluded")),
 		Inactive:   parseBool(query.Get("inactive")),
