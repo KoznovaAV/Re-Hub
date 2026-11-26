@@ -1,0 +1,15 @@
+import {JSDOM} from 'jsdom';
+import assert from 'node:assert/strict';
+const dom=new JSDOM('<div id="app"></div>',{url:'http://localhost'});
+for(const name of ['window','document','Element','Document','HTMLElement','SVGElement','Node','localStorage','MutationObserver'])globalThis[name]=dom.window[name];
+window.scrollTo=()=>{};
+const {createApp,nextTick}=await import('vue');
+const Sidebar=(await import('./components/AppSidebar.js')).default;
+const app=createApp(Sidebar,{view:'work',actor:'operator-a',actionCount:0,clientCount:10});
+app.mount('#app');await nextTick();
+const labels=[...document.querySelectorAll('.nav-item')].map(node=>node.textContent.replace(/\s+/g,' ').trim());
+assert.ok(labels.some(label=>label.includes('?????? ? ?????????')));
+assert.ok(!labels.some(label=>label.includes('?????? ??????')));
+assert.ok(!labels.some(label=>label.includes('??????? ? ?????????')));
+app.unmount();dom.window.close();
+console.log('operator navigation limited to work queue');
