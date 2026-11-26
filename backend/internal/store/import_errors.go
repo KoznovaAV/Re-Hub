@@ -2,6 +2,8 @@ package store
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func (s *Store) ImportErrors(ctx context.Context, importID string) ([]ParsedError, error) {
@@ -19,9 +21,14 @@ func (s *Store) ImportErrors(ctx context.Context, importID string) ([]ParsedErro
 	result := []ParsedError{}
 	for rows.Next() {
 		var item ParsedError
-		if err := rows.Scan(&item.Scope, &item.Row, &item.Column, &item.Code, &item.Message,
+		var row pgtype.Int4
+		if err := rows.Scan(&item.Scope, &row, &item.Column, &item.Code, &item.Message,
 			&item.RawValue, &item.Sheet, &item.ExternalID, &item.PeriodCode); err != nil {
 			return nil, err
+		}
+		if row.Valid {
+			value := int(row.Int32)
+			item.Row = &value
 		}
 		result = append(result, item)
 	}
