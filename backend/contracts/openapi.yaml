@@ -701,11 +701,19 @@ paths:
       description: Оператор получает только пул и назначенных клиентов. Параметры limit (до 1000), offset.
       responses:
         '200':
-          description: data
-          meta: null
-          history: null
-          events: null
-          actions: null
+          description: Workspace page with histories, events and actions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Client' }
+                  meta: { type: object }
+                  history: { type: object }
+                  events: { type: object }
+                  actions: { type: object }
         '500':
           description: Ошибка чтения или записи БД
           content:
@@ -826,7 +834,6 @@ paths:
       responses:
         '200':
           description: Клиент освобождён
-          история сохранена: null
         '403':
           description: Только текущий ответственный оператор
         '500':
@@ -904,7 +911,7 @@ paths:
   /imports/{id}/errors.csv:
     get:
       tags: [Slices]
-      summary: ??????? CSV ? ???????? ???????
+      summary: Download import errors as CSV
       parameters:
         - name: id
           in: path
@@ -912,11 +919,11 @@ paths:
           schema: { type: string, format: uuid }
       responses:
         '200':
-          description: CSV ? ?????????? ????????
+          description: CSV with invalid rows
           content:
             text/csv:
               schema: { type: string }
-        '403': { description: ????? ????? ?????????????? }
+        '403': { description: Administrator role required }
         '400': { $ref: '#/components/responses/BadRequest' }
 
   /health:
