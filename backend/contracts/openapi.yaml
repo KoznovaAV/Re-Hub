@@ -901,6 +901,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /imports/{id}/errors.csv:
+    get:
+      tags: [Slices]
+      summary: ??????? CSV ? ???????? ???????
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: CSV ? ?????????? ????????
+          content:
+            text/csv:
+              schema: { type: string }
+        '403': { description: ????? ????? ?????????????? }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
   /health:
     servers:
     - url: http://localhost:8080
