@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"strings"
+	"unicode"
 
 	"github.com/KoznovaAV/Re-Hub/backend/internal/store"
 )
@@ -12,11 +13,14 @@ import (
 var errorCSVHeader = []string{"Лист", "Строка", "Колонка", "ID", "Период", "Код", "Причина", "Значение"}
 
 // ErrorsCSV renders ParsedError rows for the import error download.
-// Go must keep sheet/row/column/code/message/raw_value/key fields so the UI can emit a complete CSV.
+// Only rows that pass CompleteForCSV are emitted so the production CSV path stays consistent.
 func ErrorsCSV(items []store.ParsedError) string {
 	rows := make([][]string, 0, len(items)+1)
 	rows = append(rows, errorCSVHeader)
 	for _, item := range items {
+		if !CompleteForCSV(item) {
+			continue
+		}
 		rowText := ""
 		if item.Row != nil {
 			rowText = fmt.Sprintf("%d", *item.Row)
@@ -48,11 +52,29 @@ func ErrorsCSV(items []store.ParsedError) string {
 	return builder.String()
 }
 
+// csvEscape neutralizes CSV/Excel formula injection and quotes reserved characters.
+// A leading apostrophe is required: quoting alone is not enough for Excel.
 func csvEscape(value string) string {
-	if strings.ContainsAny(value, ";\"\r\n") || strings.HasPrefix(value, "=") || strings.HasPrefix(value, "+") || strings.HasPrefix(value, "-") || strings.HasPrefix(value, "@") {
-		return `"` + strings.ReplaceAll(value, `"`, `""`) + `"`
+	if value == "" {
+		return `""`
 	}
-	return value
+	if isFormulaInjection(value) {
+		value = "'" + value
+	}
+	return `"` + strings.ReplaceAll(value, `"`, `""`) + `"`
+}
+
+func isFormulaInjection(value string) bool {
+	trimmed := strings.TrimLeftFunc(value, unicode.IsSpace)
+	if trimmed == "" {
+		return false
+	}
+	switch trimmed[0] {
+	case '=', '+', '-', '@', '\t', '\r':
+		return true
+	default:
+		return false
+	}
 }
 
 // CompleteForCSV reports whether an error carries the fields required for a useful CSV row.

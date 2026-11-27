@@ -287,6 +287,42 @@ func insertErrors(ctx context.Context, tx pgx.Tx, importID string, errorsList []
 	return nil
 }
 
+// ImportExists reports whether an import_jobs row is present.
+func (s *Store) ImportExists(ctx context.Context, importID string) (bool, error) {
+	var ok bool
+	err := s.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM import_jobs WHERE id = $1::uuid)`, importID).Scan(&ok)
+	return ok, err
+}
+
+// ListImportErrors returns persisted parser/domain errors for CSV download.
+func (s *Store) ListImportErrors(ctx context.Context, importID string) ([]ParsedError, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT scope, row_number, COALESCE(column_name, ''), code, message,
+		       COALESCE(raw_value, ''), COALESCE(external_id, ''), COALESCE(period_code, ''), COALESCE(source_sheet, '')
+		FROM import_errors
+		WHERE import_id = $1::uuid
+		ORDER BY row_number NULLS FIRST, code, id`, importID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	result := make([]ParsedError, 0)
+	for rows.Next() {
+		var item ParsedError
+		var rowNumber *int
+		if err := rows.Scan(
+			&item.Scope, &rowNumber, &item.Column, &item.Code, &item.Message,
+			&item.RawValue, &item.ExternalID, &item.PeriodCode, &item.Sheet,
+		); err != nil {
+			return nil, err
+		}
+		item.Row = rowNumber
+		result = append(result, item)
+	}
+	return result, rows.Err()
+}
+
 func rowError(row ParsedRow, code, message string) ParsedError {
 	rowNumber := row.Row
 	return ParsedError{

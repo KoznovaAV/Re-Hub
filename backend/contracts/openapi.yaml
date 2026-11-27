@@ -2,8 +2,8 @@ openapi: 3.0.3
 info:
   title: ReHub API
   description: Реализованный API прототипа. X-Role и X-User-Id задаются клиентом, это демонстрационная идентификация,
-    не аутентификация. /auth/login и JWT не реализованы. CSV ошибок браузер формирует из JSON импорта, отдельного
-    маршрута скачивания нет.
+    не аутентификация. /auth/login и JWT не реализованы. После импорта CSV ошибок доступен через
+    GET /imports/{id}/errors.csv (чтение из import_errors).
   version: 1.0.0
   contact:
     name: Команда ReHub
@@ -338,7 +338,51 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
       description: XLSX до 25 МиБ. preview=true возвращает проверенные строки без записи. Для записи файл отправляется
-        повторно. Ошибки UI преобразует в CSV.
+        повторно. После сохранения ошибки доступны как CSV по import_id.
+  /imports/{id}/errors.csv:
+    get:
+      tags:
+      - Slices
+      summary: Скачать CSV ошибок импорта из БД
+      description: |
+        Читает import_errors для указанного import_id. Колонки:
+        Лист;Строка;Колонка;ID;Период;Код;Причина;Значение.
+        Значения с =,+,-,@ экранируются префиксом апострофа.
+      parameters:
+      - $ref: '#/components/parameters/ActorHeader'
+      - $ref: '#/components/parameters/RoleHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: import_id из ответа импорта
+      responses:
+        '200':
+          description: CSV с проблемными строками
+          content:
+            text/csv:
+              schema:
+                type: string
+        '403':
+          description: Требуется администратор
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Импорт не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: БД не настроена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /clients:
     get:
       tags:

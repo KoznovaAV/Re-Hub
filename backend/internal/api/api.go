@@ -47,6 +47,7 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/clients/{external_id}/actions", s.addClientAction)
 	mux.HandleFunc("POST /api/v1/pool", s.addToPool)
 	mux.HandleFunc("POST /api/v1/clients/import", s.importClients)
+	mux.HandleFunc("GET /api/v1/imports/{id}/errors.csv", s.downloadImportErrorsCSV)
 	mux.HandleFunc("GET /api/v1/call-list", s.callList)
 	mux.HandleFunc("GET /api/v1/today", s.today)
 	mux.HandleFunc("POST /api/v1/slices", s.importSnapshot)

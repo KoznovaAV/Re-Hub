@@ -316,6 +316,9 @@ func convertParserErrors(items []parser.Error) []store.ParsedError {
 		if message == "" {
 			message = item.Code
 		}
+		if strings.TrimSpace(item.Code) == "" {
+			continue
+		}
 		parsed := store.ParsedError{Scope: item.Scope, Code: item.Code, Message: message}
 		if item.Source != nil {
 			parsed.Sheet = item.Source.Sheet
@@ -334,9 +337,50 @@ func convertParserErrors(items []parser.Error) []store.ParsedError {
 		if item.KeyHint.PeriodCode != nil {
 			parsed.PeriodCode = *item.KeyHint.PeriodCode
 		}
+		// Production path keeps only CSV-complete errors for downstream download/storage.
+		if !CompleteForCSV(parsed) {
+			continue
+		}
 		result = append(result, parsed)
 	}
 	return result
+}
+
+func (s *Server) downloadImportErrorsCSV(w http.ResponseWriter, r *http.Request) {
+	if !s.ready(w) {
+		return
+	}
+	if !isAdmin(r) {
+		writeError(w, http.StatusForbidden, "FORBIDDEN", "Only an administrator can download import errors")
+		return
+	}
+	importID := strings.TrimSpace(r.PathValue("id"))
+	if importID == "" {
+		writeError(w, http.StatusBadRequest, "INVALID_IMPORT_ID", "import id is required")
+		return
+	}
+	exists, err := s.store.ImportExists(r.Context(), importID)
+	if err != nil {
+		log.Printf("import exists: %v", err)
+		writeError(w, http.StatusInternalServerError, "DB_ERROR", "Failed to read import")
+		return
+	}
+	if !exists {
+		writeError(w, http.StatusNotFound, "IMPORT_NOT_FOUND", "Import was not found")
+		return
+	}
+	items, err := s.store.ListImportErrors(r.Context(), importID)
+	if err != nil {
+		log.Printf("list import errors: %v", err)
+		writeError(w, http.StatusInternalServerError, "DB_ERROR", "Failed to read import errors")
+		return
+	}
+	body := ErrorsCSV(items)
+	w.Header().Set("Content-Type", "text/csv; charset=utf-8")
+	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="errors-%s.csv"`, importID))
+	w.Header().Set("Cache-Control", "no-store")
+	w.WriteHeader(http.StatusOK)
+	_, _ = io.WriteString(w, body)
 }
 
 func stringSlice(value any) []string {
