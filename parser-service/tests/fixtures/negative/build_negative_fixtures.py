@@ -39,7 +39,9 @@ def write_snapshot(path: Path, rows_by_period: dict[str, list[list]]) -> None:
     workbook.close()
 
 
-def build() -> None:
+def build(out_dir: Path | None = None) -> Path:
+    out = Path(out_dir) if out_dir is not None else ROOT
+    out.mkdir(parents=True, exist_ok=True)
     # One workbook that exercises parser-level negatives on 2026Q3 (+ sparse other tabs).
     rows = {
         "Y2025": [["NEG00001", None, None, 10, 1]],
@@ -54,7 +56,7 @@ def build() -> None:
             ["NEG00003", None, None, 10, None],  # INTEGER_REQUIRED on unsent
         ],
     }
-    write_snapshot(ROOT / "snapshot-negatives.xlsx", rows)
+    write_snapshot(out / "snapshot-negatives.xlsx", rows)
 
     # Pair for "client disappeared": present in snap1, absent in snap2 on 2026Q3.
     snap1 = {
@@ -69,8 +71,8 @@ def build() -> None:
         "2026Q2": [["NEG00010", None, None, 20, 2]],
         "2026Q3": [["NEG00011", None, None, 50, 5]],  # NEG00010 disappeared
     }
-    write_snapshot(ROOT / "snapshot-before-missing-client.xlsx", snap1)
-    write_snapshot(ROOT / "snapshot-after-missing-client.xlsx", snap2)
+    write_snapshot(out / "snapshot-before-missing-client.xlsx", snap1)
+    write_snapshot(out / "snapshot-after-missing-client.xlsx", snap2)
 
     context = {
         "contract_version": "1.0",
@@ -81,7 +83,7 @@ def build() -> None:
         "period_scope": list(PERIODS.values()),
         "coverage": "unknown",
     }
-    (ROOT / "snapshot.context.json").write_text(json.dumps(context, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    (out / "snapshot.context.json").write_text(json.dumps(context, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     expected = {
         "snapshot-negatives.xlsx": {
@@ -102,8 +104,9 @@ def build() -> None:
             "disappeared": ["NEG00010"],
         },
     }
-    (ROOT / "expected.json").write_text(json.dumps(expected, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(f"Wrote negative fixtures into {ROOT}")
+    (out / "expected.json").write_text(json.dumps(expected, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(f"Wrote negative fixtures into {out}")
+    return out
 
 
 if __name__ == "__main__":

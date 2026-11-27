@@ -2,6 +2,7 @@ import importlib.util
 import json
 import unittest
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from app.customer_clients import parse_file as parse_clients
 from app.customer_xlsx import parse_file as parse_snapshot
@@ -9,20 +10,27 @@ from app.customer_xlsx import parse_file as parse_snapshot
 PACK = Path(__file__).resolve().parents[2] / "contracts" / "testing" / "h00" / "s1-s8"
 
 
-def _build_pack() -> None:
+def _load_builder():
     path = PACK / "build_pilot_pack.py"
     spec = importlib.util.spec_from_file_location("build_h00_s1_s8", path)
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
     spec.loader.exec_module(module)
-    module.build()
+    return module
 
 
 class H00S1S8PilotTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        _build_pack()
-        cls.expected = json.loads((PACK / "expected.json").read_text(encoding="utf-8"))
+        cls._tmp = TemporaryDirectory()
+        out = Path(cls._tmp.name)
+        _load_builder().build(out_dir=out)
+        cls.out = out
+        cls.expected = json.loads((out / "expected.json").read_text(encoding="utf-8"))
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._tmp.cleanup()
 
     def test_pack_is_reproducible_and_covers_scenarios(self):
         self.assertEqual(self.expected["size"], 30)
@@ -33,8 +41,8 @@ class H00S1S8PilotTest(unittest.TestCase):
             self.assertIn(scenario, self.expected["scenario_clients"])
 
         clients = parse_clients(
-            PACK / "clients.xlsx",
-            json.loads((PACK / "clients.context.json").read_text(encoding="utf-8")),
+            self.out / "clients.xlsx",
+            json.loads((self.out / "clients.context.json").read_text(encoding="utf-8")),
         )
         self.assertEqual(clients["errors"], [])
         self.assertEqual(len(clients["rows"]), 30)
@@ -42,12 +50,12 @@ class H00S1S8PilotTest(unittest.TestCase):
         self.assertTrue(set(self.expected["reference_ids"]) <= client_ids)
 
         snap1 = parse_snapshot(
-            PACK / "snapshot_1.xlsx",
-            json.loads((PACK / "snapshot_1.context.json").read_text(encoding="utf-8")),
+            self.out / "snapshot_1.xlsx",
+            json.loads((self.out / "snapshot_1.context.json").read_text(encoding="utf-8")),
         )
         snap2 = parse_snapshot(
-            PACK / "snapshot_2.xlsx",
-            json.loads((PACK / "snapshot_2.context.json").read_text(encoding="utf-8")),
+            self.out / "snapshot_2.xlsx",
+            json.loads((self.out / "snapshot_2.context.json").read_text(encoding="utf-8")),
         )
         self.assertFalse(any(error["scope"] == "file" for error in snap1["errors"]))
         self.assertFalse(any(error["scope"] == "file" for error in snap2["errors"]))

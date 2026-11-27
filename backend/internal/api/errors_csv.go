@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"log"
 	"strings"
 	"unicode"
 
@@ -17,8 +18,10 @@ var errorCSVHeader = []string{"Лист", "Строка", "Колонка", "ID"
 func ErrorsCSV(items []store.ParsedError) string {
 	rows := make([][]string, 0, len(items)+1)
 	rows = append(rows, errorCSVHeader)
+	dropped := 0
 	for _, item := range items {
 		if !CompleteForCSV(item) {
+			dropped++
 			continue
 		}
 		rowText := ""
@@ -48,6 +51,9 @@ func ErrorsCSV(items []store.ParsedError) string {
 			}
 			builder.WriteString(csvEscape(cell))
 		}
+	}
+	if dropped > 0 {
+		log.Printf("ErrorsCSV: dropped %d incomplete error(s)", dropped)
 	}
 	return builder.String()
 }

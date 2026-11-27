@@ -2,7 +2,7 @@ import {csvCell} from "../composables/call-list.mjs";
 import {upload,reloadWorkspace,actorIDs} from "../composables/live-api.js";
 import { computed, defineComponent, ref } from "vue";
 import { importClients, importSlice, confirmClients, confirmSlice } from "../mock/api.js";
-import { TODAY, formatDate, store } from "../mock/data.js";
+import { TODAY, formatDate, store, users } from "../mock/data.js";
 import { pushToast } from "../composables/useToast.js";
 import UiCard from "../components/UiCard.js";
 import UiBadge from "../components/UiBadge.js";
@@ -130,8 +130,12 @@ export default defineComponent({
       const importId = result.value?.importId;
       if (store.live && importId) {
         try {
+          const actor = store.actor;
           const response = await fetch(`/api/v1/imports/${encodeURIComponent(importId)}/errors.csv`, {
-            headers: { "X-Role": "admin", "X-User-Id": actorIDs.admin },
+            headers: {
+              "X-Role": users[actor]?.role ?? "operator",
+              "X-User-Id": actorIDs[actor],
+            },
           });
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
           const blob = await response.blob();
@@ -142,11 +146,12 @@ export default defineComponent({
           document.body.appendChild(link);
           link.click();
           link.remove();
-          URL.revokeObjectURL(url);
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
           pushToast("Список ошибок скачан", "CSV загружен с сервера из БД.");
           return;
         } catch (error) {
           pushToast("Не удалось скачать CSV с сервера", error.message, "error");
+          return;
         }
       }
       const errors = result.value?.errors ?? [];
@@ -165,7 +170,7 @@ export default defineComponent({
       document.body.appendChild(link);
       link.click();
       link.remove();
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
       pushToast("Список ошибок скачан", "CSV с проблемными строками сохранён.");
     }
 

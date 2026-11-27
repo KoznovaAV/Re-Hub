@@ -25,8 +25,10 @@ REASONS = {
 }
 
 
-def build() -> None:
-    manifest = generate(ROOT, count=30, seed=42)
+def build(out_dir: Path | None = None) -> Path:
+    out = Path(out_dir) if out_dir is not None else ROOT
+    out.mkdir(parents=True, exist_ok=True)
+    manifest = generate(out, count=30, seed=42)
     expected = {
         "size": 30,
         "seed": 42,
@@ -42,8 +44,9 @@ def build() -> None:
             "S-6_pair": [SCENARIO_IDS["S-6a"], SCENARIO_IDS["S-6b"]],
         },
     }
-    (ROOT / "expected.json").write_text(json.dumps(expected, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps({"out": str(ROOT), "clients": 30, "scenarios": list(SCENARIO_IDS)}, ensure_ascii=False))
+    (out / "expected.json").write_text(json.dumps(expected, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps({"out": str(out), "clients": 30, "scenarios": list(SCENARIO_IDS)}, ensure_ascii=False))
+    return out
 
 
 if __name__ == "__main__":

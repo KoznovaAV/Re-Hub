@@ -161,11 +161,26 @@ func TestDownloadImportErrorsRequiresAdminAndDB(t *testing.T) {
 	mux := http.NewServeMux()
 	New(nil, nil, "http://parser").Register(mux)
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/imports/00000000-0000-0000-0000-000000000099/errors.csv", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/imports/abc/errors.csv", nil)
 	rec := httptest.NewRecorder()
 	mux.ServeHTTP(rec, req)
-	if rec.Code != http.StatusServiceUnavailable {
-		t.Fatalf("without db status = %d", rec.Code)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("invalid id status = %d", rec.Code)
+	}
+
+	req = httptest.NewRequest(http.MethodGet, "/api/v1/imports/00000000-0000-0000-0000-000000000099/errors.csv", nil)
+	req.Header.Set("X-Role", "operator")
+	rec = httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("operator status = %d", rec.Code)
+	}
+
+	req = httptest.NewRequest(http.MethodGet, "/api/v1/imports/00000000-0000-0000-0000-000000000099/errors.csv", nil)
+	rec = httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("missing role status = %d", rec.Code)
 	}
 
 	req = httptest.NewRequest(http.MethodGet, "/api/v1/imports/00000000-0000-0000-0000-000000000099/errors.csv", nil)

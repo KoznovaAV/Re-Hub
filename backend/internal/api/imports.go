@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -17,6 +18,12 @@ import (
 )
 
 const maxUploadBytes = 25 << 20
+
+var importIDRE = regexp.MustCompile(`(?i)^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
+
+func validImportID(id string) bool {
+	return importIDRE.MatchString(strings.TrimSpace(id))
+}
 
 func (s *Server) importClients(w http.ResponseWriter, r *http.Request) {
 	if !s.ready(w) {
@@ -311,12 +318,14 @@ func firstFileError(result *parser.Result) *parser.Error {
 
 func convertParserErrors(items []parser.Error) []store.ParsedError {
 	result := make([]store.ParsedError, 0, len(items))
+	dropped := 0
 	for _, item := range items {
 		message := strings.TrimSpace(item.Message)
 		if message == "" {
 			message = item.Code
 		}
 		if strings.TrimSpace(item.Code) == "" {
+			dropped++
 			continue
 		}
 		parsed := store.ParsedError{Scope: item.Scope, Code: item.Code, Message: message}
@@ -339,24 +348,28 @@ func convertParserErrors(items []parser.Error) []store.ParsedError {
 		}
 		// Production path keeps only CSV-complete errors for downstream download/storage.
 		if !CompleteForCSV(parsed) {
+			dropped++
 			continue
 		}
 		result = append(result, parsed)
+	}
+	if dropped > 0 {
+		log.Printf("convertParserErrors: dropped %d incomplete error(s)", dropped)
 	}
 	return result
 }
 
 func (s *Server) downloadImportErrorsCSV(w http.ResponseWriter, r *http.Request) {
-	if !s.ready(w) {
+	importID := strings.TrimSpace(r.PathValue("id"))
+	if !validImportID(importID) {
+		writeError(w, http.StatusBadRequest, "INVALID_IMPORT_ID", "import id must be a UUID")
 		return
 	}
 	if !isAdmin(r) {
 		writeError(w, http.StatusForbidden, "FORBIDDEN", "Only an administrator can download import errors")
 		return
 	}
-	importID := strings.TrimSpace(r.PathValue("id"))
-	if importID == "" {
-		writeError(w, http.StatusBadRequest, "INVALID_IMPORT_ID", "import id is required")
+	if !s.ready(w) {
 		return
 	}
 	exists, err := s.store.ImportExists(r.Context(), importID)
