@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/KoznovaAV/Re-Hub/backend/internal/parser"
+	"github.com/KoznovaAV/Re-Hub/backend/internal/store"
 )
 
 func TestParseLimitAndShare(t *testing.T) {
@@ -99,5 +100,94 @@ func TestConvertParserErrors(t *testing.T) {
 	}
 	if items[0].ExternalID != externalID || items[0].PeriodCode != period || items[0].RawValue != "bad" {
 		t.Fatalf("mapped error = %#v", items[0])
+	}
+	if !CompleteForCSV(items[0]) {
+		t.Fatalf("error incomplete for CSV: %#v", items[0])
+	}
+	csv := ErrorsCSV(items)
+	if !strings.Contains(csv, `"Лист";"Строка";"Колонка";"ID";"Период";"Код";"Причина";"Значение"`) {
+		t.Fatalf("csv header missing: %q", csv)
+	}
+	if !strings.Contains(csv, `"1 кв 2026";"7";"A";"AAA00001";"2026Q1";"INVALID_EXTERNAL_ID";"bad id";"bad"`) {
+		t.Fatalf("csv row missing fields: %q", csv)
+	}
+}
+
+func TestConvertParserErrorsFillsBlankReason(t *testing.T) {
+	column := "E"
+	item := parser.Error{
+		Scope: "row", Code: "INTEGER_REQUIRED", Message: "   ", RawValue: nil,
+		Source: &parser.Source{Sheet: "весь 2025 год", Row: 4, Column: &column},
+	}
+	items := convertParserErrors([]parser.Error{item})
+	if items[0].Message != "INTEGER_REQUIRED" {
+		t.Fatalf("message = %q", items[0].Message)
+	}
+	if !CompleteForCSV(items[0]) {
+		t.Fatalf("incomplete: %#v", items[0])
+	}
+}
+
+func TestCSVEscapeNeutralizesFormulas(t *testing.T) {
+	got := csvEscape("=1+1")
+	if got != `"'=1+1"` {
+		t.Fatalf("formula escape = %q", got)
+	}
+	got = csvEscape("+cmd")
+	if got != `"'+cmd"` {
+		t.Fatalf("plus escape = %q", got)
+	}
+	got = csvEscape("обычный")
+	if got != `"обычный"` {
+		t.Fatalf("plain escape = %q", got)
+	}
+}
+
+func TestErrorsCSVSkipsIncompleteRows(t *testing.T) {
+	row := 3
+	csv := ErrorsCSV([]store.ParsedError{
+		{Scope: "row", Code: "BAD", Message: "reason", Row: &row, Column: "A", RawValue: "=CMD"},
+		{Scope: "row", Code: "BAD", Message: "missing row"},
+	})
+	if !strings.Contains(csv, `"'=CMD"`) {
+		t.Fatalf("expected neutralized raw value, got %q", csv)
+	}
+	if strings.Count(csv, "\r\n") != 1 {
+		t.Fatalf("expected header + one data row, got %q", csv)
+	}
+}
+
+func TestDownloadImportErrorsRequiresAdminAndDB(t *testing.T) {
+	mux := http.NewServeMux()
+	New(nil, nil, "http://parser").Register(mux)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/imports/abc/errors.csv", nil)
+	rec := httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("invalid id status = %d", rec.Code)
+	}
+
+	req = httptest.NewRequest(http.MethodGet, "/api/v1/imports/00000000-0000-0000-0000-000000000099/errors.csv", nil)
+	req.Header.Set("X-Role", "operator")
+	rec = httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("operator status = %d", rec.Code)
+	}
+
+	req = httptest.NewRequest(http.MethodGet, "/api/v1/imports/00000000-0000-0000-0000-000000000099/errors.csv", nil)
+	rec = httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("missing role status = %d", rec.Code)
+	}
+
+	req = httptest.NewRequest(http.MethodGet, "/api/v1/imports/00000000-0000-0000-0000-000000000099/errors.csv", nil)
+	req.Header.Set("X-Role", "admin")
+	rec = httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Fatalf("admin without db status = %d", rec.Code)
 	}
 }

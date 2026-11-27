@@ -33,11 +33,11 @@
     {
       "scope": "row",
       "code": "INVALID_INTEGER",
-      "message": "unsent_docs must be an integer",
+      "message": "Invalid field at column E",
       "source": {
         "sheet": "snapshot",
         "row": 4,
-        "column": "unsent_docs"
+        "column": "E"
       },
       "raw_value": "12,5",
       "key_hint": {

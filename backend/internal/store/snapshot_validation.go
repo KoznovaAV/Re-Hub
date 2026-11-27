@@ -75,12 +75,18 @@ func validateSnapshot(ctx context.Context, q snapshotQuerier, scope []string, da
 		}
 		if code != "" {
 			e := rowError(r, code, message)
-			if code == "UNSENT_GT_TOTAL" || code == "INTEGER_OUT_OF_RANGE" {
+			switch code {
+			case "UNSENT_GT_TOTAL", "INTEGER_OUT_OF_RANGE":
 				e.Column = "E"
 				e.RawValue = strconv.Itoa(r.NotSent)
-			}
-			if code == "TOTAL_MISSING_FIRST_OBSERVATION" {
+			case "TOTAL_MISSING_FIRST_OBSERVATION":
 				e.Column = "D"
+			case "MISSING_KEY", "DUPLICATE_KEY", "CLIENT_UNKNOWN":
+				e.Column = "A"
+				e.RawValue = r.ExternalID
+			case "PERIOD_OUT_OF_SCOPE", "PERIOD_UNKNOWN":
+				e.Column = "B"
+				e.RawValue = r.PeriodCode
 			}
 			problems = append(problems, e)
 		} else {

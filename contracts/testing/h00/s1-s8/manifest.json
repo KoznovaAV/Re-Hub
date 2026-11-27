@@ -1,0 +1,43 @@
+{
+  "generator": "v03",
+  "seed": 42,
+  "client_count": 30,
+  "files": {
+    "clients": "clients.xlsx",
+    "snapshot_1": "snapshot_1.xlsx",
+    "snapshot_2": "snapshot_2.xlsx"
+  },
+  "scenario_clients": {
+    "S-1": "AAA00001",
+    "S-2": "AAA00002",
+    "S-3": "AAA00003",
+    "S-4": "AAA00004",
+    "S-5": "AAA00005",
+    "S-6a": "AAA00006",
+    "S-6b": "AAA00007",
+    "S-7": "AAA00008",
+    "S-8": "AAA00009"
+  },
+  "snapshot_row_counts": {
+    "snapshot_1": {
+      "Y2025": 30,
+      "2026Q1": 30,
+      "2026Q2": 30,
+      "2026Q3": 29
+    },
+    "snapshot_2": {
+      "Y2025": 30,
+      "2026Q1": 30,
+      "2026Q2": 30,
+      "2026Q3": 29
+    }
+  },
+  "excluded_count": 5,
+  "inactive_count": 5,
+  "notes": [
+    "Clients workbook matches customer_kcr_directory_v1.",
+    "Snapshots match customer_october_tabs_v1 with two dates for repeat-slice checks.",
+    "S-7 is present in snapshot_1 and omitted from snapshot_2 on 2026Q3.",
+    "S-8 has total_docs omitted on snapshot_2 for 2026Q3."
+  ]
+}

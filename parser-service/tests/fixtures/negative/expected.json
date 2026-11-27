@@ -1,0 +1,34 @@
+{
+  "snapshot-negatives.xlsx": {
+    "parser_error_codes": [
+      "INVALID_EXTERNAL_ID",
+      "INVALID_EXTERNAL_ID",
+      "INTEGER_REQUIRED"
+    ],
+    "parsed_external_ids": [
+      "NEG00001",
+      "NEG00001",
+      "NEG00002"
+    ],
+    "missing_total_external_id": "NEG00002",
+    "duplicate_external_id": "NEG00001",
+    "notes": {
+      "duplicate": "Parser keeps both duplicate rows; Go domain emits DUPLICATE_KEY",
+      "unknown_code": "BADCODE -> INVALID_EXTERNAL_ID",
+      "na": "#N/A -> INVALID_EXTERNAL_ID",
+      "missing_total": "empty Всего -> total_docs null in rows"
+    }
+  },
+  "missing-client-pair": {
+    "before_ids_2026Q3": [
+      "NEG00010",
+      "NEG00011"
+    ],
+    "after_ids_2026Q3": [
+      "NEG00011"
+    ],
+    "disappeared": [
+      "NEG00010"
+    ]
+  }
+}
