@@ -157,6 +157,7 @@ def q01(admin: Api, operator: Api, second_operator: Api):
         _, snapshot = import_snapshot(admin, root, "snapshot_1")
         expect(snapshot["data"]["counters"]["rows_ok"] > 0,
                f"snapshot import counters: {snapshot['data']['counters']}")
+        import_snapshot(admin, root, "snapshot_2")
         import_snapshot(operator, root, "snapshot_1", expected=403)
 
         _, call_list = admin.call("GET", f"/api/v1/call-list?period={PERIOD}")
@@ -289,6 +290,7 @@ def q04(admin: Api, operator: Api):
     try:
         import_clients(admin, root)
         import_snapshot(admin, root, "snapshot_1")
+        import_snapshot(admin, root, "snapshot_2")
 
         admin.call("GET", "/api/v1/call-list?period=UNKNOWN", expected=422)
         for query in ("min_unsent=-1", "min_share=NaN", "contacted=maybe"):
