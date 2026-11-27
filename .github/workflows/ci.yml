@@ -117,6 +117,8 @@ jobs:
         run: make up smoke smoke-recovery
       - name: Verify parser imports through Go and PostgreSQL
         run: docker compose exec -T parser-service python - < scripts/smoke-parser.py
+      - name: QA scenarios Q-01, Q-02, Q-04
+        run: docker compose exec -T parser-service python - < scripts/qa/run_qa.py
       - name: Show service logs
         if: failure()
         run: docker compose logs --tail=150

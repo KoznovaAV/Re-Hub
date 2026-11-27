@@ -1,4 +1,4 @@
-import {csvCell} from "../composables/call-list.mjs";
+import {buildErrorsCsv} from "../composables/import-errors.mjs";
 import {upload,reloadWorkspace} from "../composables/live-api.js";
 import { computed, defineComponent, ref } from "vue";
 import { importClients, importSlice, confirmClients, confirmSlice } from "../mock/api.js";
@@ -127,13 +127,7 @@ export default defineComponent({
 
     function downloadErrors() {
       const errors = result.value?.errors ?? [];
-      const rows = [
-        ["Лист", "Строка", "Колонка", "ID", "Период", "Код", "Причина", "Значение"],
-        ...errors.map((error) => [error.sheet, error.row, error.column, error.external_id, error.period_code, error.code, error.message, error.value ?? error.raw_value]),
-      ];
-      const csv = rows
-        .map((row) => row.map(csvCell).join(";"))
-        .join("\r\n");
+      const csv = buildErrorsCsv(errors);
       const blob = new Blob([`\ufeff${csv}`], { type: "text/csv;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
