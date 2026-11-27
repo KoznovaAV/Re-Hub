@@ -1,10 +1,13 @@
-.PHONY: up smoke smoke-recovery down
+.PHONY: up smoke smoke-recovery down qa
 
 up:
 	docker compose up --build -d --wait
 
 smoke:
 	docker compose exec -T frontend node --input-type=module - < scripts/smoke.mjs
+
+qa:
+	docker compose exec -T parser-service python - < scripts/qa/run_qa.py
 
 smoke-recovery:
 	docker compose stop parser-service

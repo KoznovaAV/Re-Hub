@@ -8,6 +8,7 @@
 | Схема компонентов | [Актуальная схема и путь данных](architecture/components.md) |
 | Разделение Python и Go | [Граница записи](architecture/ownership.md), [JSON-схемы](../contracts/) |
 | Парсер XLSX и V-02 | [parser-service README](../parser-service/README.md), [V-02](../reports/V-02-synthetic-results.md) |
+| QA Q-01…Q-04 | [QA-отчёты](../reports/qa/README.md), [M-05](scenarios/M-05-pilot-protocol.md) |
 | Готовность и следующие проверки | [Свидетельства спринта](../reports/sprint-evidence.md), [GitHub Project](https://github.com/users/KoznovaAV/projects/5/views/1) |
 
 При расхождении документов используйте [журнал решений](decisions/change-log.md). Материалы с рабочими строками заказчика остаются в закрытом контуре команды.
