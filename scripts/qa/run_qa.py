@@ -25,7 +25,7 @@ from urllib.request import Request, urlopen
 
 try:
     ROOT = Path(__file__).resolve().parents[2]
-except NameError:  # запуск через ``python -`` внутри контейнера
+except (NameError, IndexError, OSError):  # запуск через ``python -`` внутри контейнера
     ROOT = Path.cwd()
 for candidate in (ROOT, ROOT / "parser-service", Path.cwd(), Path.cwd() / "parser-service"):
     if candidate.exists():
